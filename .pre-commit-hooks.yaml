@@ -1,0 +1,4 @@
+- id: duolingo
+  name: Duolingo
+  entry: /entry
+  language: docker
