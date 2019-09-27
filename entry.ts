@@ -7,10 +7,12 @@ import { dirname } from "path";
 const PYTHON_LINE_LENGTH = 100;
 
 /** Runs a shell command, promising combined stdout and stderr */
-const run = (command: string[]) =>
+const run = (command: string | string[]) =>
   new Promise<string>((resolve, reject) => {
     exec(
-      command.map(arg => `'${arg}'`).join(" "),
+      typeof command === "string"
+        ? command
+        : command.map(arg => `'${arg}'`).join(" "),
       { maxBuffer: Infinity },
       (ex, stdout, stderr) => (ex ? reject : resolve)(stdout + stderr),
     );
@@ -40,16 +42,16 @@ const HOOKS: {
 }[] = [
   {
     action: async sources => {
-      // Assume Python 2 if Dockerfile mentions it
+      // Detect Python 2 based on its syntax and common functions
       let python2Args: string[] = [];
       try {
-        if (
-          (await run(["grep", "-iE", "py(thon)?2", "Dockerfile"])).trim().length
-        ) {
-          python2Args = ["--fast", "--target-version", "py27"];
-        }
+        // Would just use `git grep -q` but it doesn't seem to exit early?!
+        (await run(
+          `git grep -E "^([^#]*[^#.]\\b(basestring|(iter(items|keys|values)|raw_input|unicode|xrange)\\()| *print[ '\\"])" '*.py' | grep -qE .`,
+        )).trim().length;
+        python2Args = ["--fast", "--target-version", "py27"];
       } catch (ex) {
-        // Probably failed because Dockerfile doesn't exist
+        // Python 3
       }
 
       await run([
