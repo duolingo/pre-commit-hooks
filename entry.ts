@@ -43,15 +43,15 @@ const HOOKS: {
   {
     action: async sources => {
       // Detect Python 2 based on its syntax and common functions
-      let python2Args: string[] = [];
+      let pythonVersionArgs: string[];
       try {
         // Would just use `git grep -q` but it doesn't seem to exit early?!
         (await run(
           `git grep -E "^([^#]*[^#.]\\b(basestring|(iter(items|keys|values)|raw_input|unicode|xrange)\\()| *print[ '\\"])" '*.py' | grep -qE .`,
         )).trim().length;
-        python2Args = ["--fast", "--target-version", "py27"];
+        pythonVersionArgs = ["--fast", "--target-version", "py27"];
       } catch (ex) {
-        // Python 3
+        pythonVersionArgs = ["--target-version", "py36"];
       }
 
       await run([
@@ -59,7 +59,7 @@ const HOOKS: {
         "--line-length",
         `${PYTHON_LINE_LENGTH}`,
         "--quiet",
-        ...python2Args,
+        ...pythonVersionArgs,
         ...sources,
       ]);
     },
