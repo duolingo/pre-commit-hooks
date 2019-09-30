@@ -36,8 +36,18 @@ const transformFile = (path: string, transform: (before: string) => string) =>
     });
   });
 
-/** Hooks expressed in a format similar to .pre-commit-config.yaml */
-const HOOKS: {
+const enum HookName {
+  Black = "Black",
+  GoogleJavaFormat = "google-java-format",
+  Ktlint = "ktlint",
+  PrettierJs = "Prettier (JS)",
+  PrettierNonJs = "Prettier (non-JS)",
+  Svgo = "SVGO",
+  TerraformFmt = "terraform fmt",
+  WhitespaceTrimmer = "Whitespace trimmer",
+}
+
+interface Hook {
   /**
    * Runs the tool and throws a display message iff violations were found that
    * the user must fix manually.
@@ -51,14 +61,35 @@ const HOOKS: {
    * the many linters that exit with nonzero iff there are violations.
    */
   action: (sources: string[]) => Promise<unknown>;
+  /** Hooks that must complete before this one begins */
+  dependsOn?: HookName[];
   /** Source files to exclude */
   exclude?: RegExp;
   /** Source files to include */
   include: RegExp;
-  /** Human-readable tool name */
-  name: string;
-}[] = [
-  {
+}
+
+interface LockableHook extends Hook {
+  /** Upon resolution, indicates that this hook has completed */
+  lock: Promise<unknown>;
+  /** Promise that must resolve before this hook begins execution */
+  locksToWaitFor?: Promise<unknown>;
+  /** Marks this hook as complete */
+  unlock: () => void;
+}
+
+/** Wraps a non-lockable hook to add properties used for locking */
+const createLockableHook = (hook: Hook): LockableHook => {
+  let unlock = () => undefined as void;
+  const lock = new Promise(resolve => {
+    unlock = resolve;
+  });
+  return { ...hook, lock, unlock };
+};
+
+/** Hooks expressed in a format similar to .pre-commit-config.yaml */
+const HOOKS: Record<HookName, LockableHook> = {
+  [HookName.Black]: createLockableHook({
     action: async sources => {
       // Detect Python 2 based on its syntax and common functions
       let pythonVersionArgs: string[];
@@ -81,10 +112,10 @@ const HOOKS: {
         ...sources,
       ]);
     },
+    dependsOn: [HookName.WhitespaceTrimmer],
     include: /\.py$/,
-    name: "Black",
-  },
-  {
+  }),
+  [HookName.GoogleJavaFormat]: createLockableHook({
     action: sources =>
       run([
         "java",
@@ -93,10 +124,10 @@ const HOOKS: {
         "--replace",
         ...sources,
       ]),
+    dependsOn: [HookName.WhitespaceTrimmer],
     include: /\.java$/,
-    name: "google-java-format",
-  },
-  {
+  }),
+  [HookName.Ktlint]: createLockableHook({
     action: async sources => {
       try {
         return await run([
@@ -110,23 +141,23 @@ const HOOKS: {
         return ex;
       }
     },
+    dependsOn: [HookName.WhitespaceTrimmer],
     include: /\.kt$/,
-    name: "ktlint",
-  },
-  {
-    action: sources =>
-      run(["prettier", "--trailing-comma", "all", "--write", ...sources]),
-    include: /\.(markdown|md|tsx?|ya?ml)$/,
-    name: "Prettier",
-  },
-  {
+  }),
+  [HookName.PrettierJs]: createLockableHook({
     action: sources =>
       run(["prettier", "--trailing-comma", "es5", "--write", ...sources]),
+    dependsOn: [HookName.WhitespaceTrimmer],
     exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
     include: /\.js$/,
-    name: "Prettier",
-  },
-  {
+  }),
+  [HookName.PrettierNonJs]: createLockableHook({
+    action: sources =>
+      run(["prettier", "--trailing-comma", "all", "--write", ...sources]),
+    dependsOn: [HookName.WhitespaceTrimmer],
+    include: /\.(markdown|md|tsx?|ya?ml)$/,
+  }),
+  [HookName.Svgo]: createLockableHook({
     action: sources =>
       run([
         "svgo",
@@ -183,20 +214,20 @@ const HOOKS: {
         "--quiet",
         ...sources,
       ]),
+    dependsOn: [HookName.WhitespaceTrimmer],
     include: /\.svg$/,
-    name: "SVGO",
-  },
-  {
+  }),
+  [HookName.TerraformFmt]: createLockableHook({
     action: async sources => {
       const dirs = Array.from(new Set(sources.map(source => dirname(source))));
       return (await Promise.all(
         dirs.map(dir => run(["terraform", "fmt", "-write=true", dir])),
       )).join("\n");
     },
+    dependsOn: [HookName.WhitespaceTrimmer],
     include: /\.tf$/,
-    name: "terraform fmt",
-  },
-  {
+  }),
+  [HookName.WhitespaceTrimmer]: createLockableHook({
     action: sources =>
       Promise.all(
         sources.map(source =>
@@ -207,16 +238,17 @@ const HOOKS: {
         ),
       ),
     include: /./,
-    name: "Whitespace trimmer",
-  },
-];
+  }),
+};
 
 /** Files that match this pattern should never be processed */
 const GLOBAL_EXCLUDES = /(^|\/)(build|node_modules)\//;
 
 /** Prefixes a string to all nonempty lines of input */
 const prefixLines = (() => {
-  const maxPrefixLength = Math.max(...HOOKS.map(hook => hook.name.length));
+  const maxPrefixLength = Math.max(
+    ...Object.keys(HOOKS).map(name => name.length),
+  );
   return (prefix: string, lines: string) =>
     lines
       .split("\n")
@@ -225,30 +257,51 @@ const prefixLines = (() => {
       .join("\n");
 })();
 
-// Run all hooks in parallel
 (async () => {
+  // Determine list of source files to process
   const sources = process.argv.slice(2); // Strips ['/usr/bin/node', '/entry']
+
+  // Set up hook locks
+  Object.values(HOOKS).forEach(hook => {
+    if (hook.dependsOn) {
+      hook.locksToWaitFor = Promise.all(
+        hook.dependsOn.map(hookName => HOOKS[hookName].lock),
+      );
+    }
+  });
+
+  // Run all hooks in parallel
   let success = true;
   await Promise.all(
-    HOOKS.map(async ({ action, exclude, include, name }) => {
-      // Determine set of source files to process
-      const includedSources = sources.filter(
-        source =>
-          include.test(source) &&
-          !GLOBAL_EXCLUDES.test(source) &&
-          !(exclude && exclude.test(source)),
-      );
+    Object.entries(HOOKS).map(
+      async ([name, { action, exclude, include, locksToWaitFor, unlock }]) => {
+        // Wait until necessary hooks have completed
+        await locksToWaitFor;
 
-      // Run hook
-      if (includedSources.length) {
-        try {
-          await action(includedSources);
-        } catch (ex) {
-          success = false;
-          console.error(prefixLines(name, `${ex}`));
+        // Determine set of source files to process
+        const includedSources = sources.filter(
+          source =>
+            include.test(source) &&
+            !GLOBAL_EXCLUDES.test(source) &&
+            !(exclude && exclude.test(source)),
+        );
+
+        // Run hook
+        if (includedSources.length) {
+          try {
+            await action(includedSources);
+          } catch (ex) {
+            success = false;
+            console.error(prefixLines(name, `${ex}`));
+          }
         }
-      }
-    }),
+
+        // Mark this hook as complete
+        unlock();
+      },
+    ),
   );
+
+  // Exit with appropriate code
   success || process.exit(1);
 })();
