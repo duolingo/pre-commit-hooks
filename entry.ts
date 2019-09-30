@@ -156,14 +156,28 @@ const HOOKS: Record<HookName, LockableHook> = {
   }),
   [HookName.PrettierJs]: createLockableHook({
     action: sources =>
-      run(["prettier", "--trailing-comma", "es5", "--write", ...sources]),
+      run([
+        "prettier",
+        "--no-config",
+        "--trailing-comma",
+        "es5",
+        "--write",
+        ...sources,
+      ]),
     dependsOn: [HookName.WhitespaceFixer],
     exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
     include: /\.js$/,
   }),
   [HookName.PrettierNonJs]: createLockableHook({
     action: sources =>
-      run(["prettier", "--trailing-comma", "all", "--write", ...sources]),
+      run([
+        "prettier",
+        "--no-config",
+        "--trailing-comma",
+        "all",
+        "--write",
+        ...sources,
+      ]),
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.(html?|markdown|md|tsx?|ya?ml)$/,
   }),
