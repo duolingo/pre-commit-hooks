@@ -23,16 +23,27 @@ const run = (command: string | string[]) =>
 const transformFile = (path: string, transform: (before: string) => string) =>
   new Promise<string>((resolve, reject) => {
     readFile(path, "utf8", (err, data) => {
+      // File unreadable
       if (err) {
         reject(err);
         return;
       }
+
+      // File empty
+      if (data === "") {
+        resolve();
+        return;
+      }
+
+      // File unmodified
       const after = transform(data);
-      data === after || data === ""
-        ? resolve()
-        : writeFile(path, after, "utf8", err =>
-            err ? reject(err) : resolve(),
-          );
+      if (data === after) {
+        resolve();
+        return;
+      }
+
+      // File modified
+      writeFile(path, after, "utf8", err => (err ? reject(err) : resolve()));
     });
   });
 
