@@ -96,7 +96,7 @@ const HOOKS: Record<HookName, LockableHook> = {
       try {
         // Would just use `git grep -q` but it doesn't seem to exit early?!
         (await run(
-          `git grep -E "^([^#]*[^#.]\\b(basestring|(iter(items|keys|values)|raw_input|unicode|xrange)\\()| *print[ '\\"])" '*.py' | grep -qE .`,
+          `git grep -E "^([^#]*[^#.]\\b(basestring|(iter(items|keys|values)|raw_input|unicode|xrange)\\()| *print ['\\"])" '*.py' | grep -qE .`,
         )).trim().length;
         pythonVersionArgs = ["--fast", "--target-version", "py27"];
       } catch (ex) {
