@@ -165,7 +165,7 @@ const HOOKS: Record<HookName, LockableHook> = {
     action: sources =>
       run(["prettier", "--trailing-comma", "all", "--write", ...sources]),
     dependsOn: [HookName.WhitespaceFixer],
-    include: /\.(markdown|md|tsx?|ya?ml)$/,
+    include: /\.(html?|markdown|md|tsx?|ya?ml)$/,
   }),
   [HookName.Svgo]: createLockableHook({
     action: sources =>
