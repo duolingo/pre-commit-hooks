@@ -17,7 +17,7 @@ Repo owners can declare this hook in `.pre-commit-config.yaml`:
 
 ```yaml
 - repo: https://github.com/duolingo/pre-commit-hooks
-  rev: 0.1.0
+  rev: 0.2.1
   hooks:
     - id: duolingo
 ```
