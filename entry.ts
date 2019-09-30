@@ -44,7 +44,7 @@ const enum HookName {
   PrettierNonJs = "Prettier (non-JS)",
   Svgo = "SVGO",
   TerraformFmt = "terraform fmt",
-  WhitespaceTrimmer = "Whitespace trimmer",
+  WhitespaceFixer = "Whitespace fixer",
 }
 
 interface Hook {
@@ -112,7 +112,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         ...sources,
       ]);
     },
-    dependsOn: [HookName.WhitespaceTrimmer],
+    dependsOn: [HookName.WhitespaceFixer],
     include: /\.py$/,
   }),
   [HookName.GoogleJavaFormat]: createLockableHook({
@@ -124,7 +124,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         "--replace",
         ...sources,
       ]),
-    dependsOn: [HookName.WhitespaceTrimmer],
+    dependsOn: [HookName.WhitespaceFixer],
     include: /\.java$/,
   }),
   [HookName.Ktlint]: createLockableHook({
@@ -141,20 +141,20 @@ const HOOKS: Record<HookName, LockableHook> = {
         return ex;
       }
     },
-    dependsOn: [HookName.WhitespaceTrimmer],
+    dependsOn: [HookName.WhitespaceFixer],
     include: /\.kt$/,
   }),
   [HookName.PrettierJs]: createLockableHook({
     action: sources =>
       run(["prettier", "--trailing-comma", "es5", "--write", ...sources]),
-    dependsOn: [HookName.WhitespaceTrimmer],
+    dependsOn: [HookName.WhitespaceFixer],
     exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
     include: /\.js$/,
   }),
   [HookName.PrettierNonJs]: createLockableHook({
     action: sources =>
       run(["prettier", "--trailing-comma", "all", "--write", ...sources]),
-    dependsOn: [HookName.WhitespaceTrimmer],
+    dependsOn: [HookName.WhitespaceFixer],
     include: /\.(markdown|md|tsx?|ya?ml)$/,
   }),
   [HookName.Svgo]: createLockableHook({
@@ -214,7 +214,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         "--quiet",
         ...sources,
       ]),
-    dependsOn: [HookName.WhitespaceTrimmer],
+    dependsOn: [HookName.WhitespaceFixer],
     include: /\.svg$/,
   }),
   [HookName.TerraformFmt]: createLockableHook({
@@ -224,17 +224,28 @@ const HOOKS: Record<HookName, LockableHook> = {
         dirs.map(dir => run(["terraform", "fmt", "-write=true", dir])),
       )).join("\n");
     },
-    dependsOn: [HookName.WhitespaceTrimmer],
+    dependsOn: [HookName.WhitespaceFixer],
     include: /\.tf$/,
   }),
-  [HookName.WhitespaceTrimmer]: createLockableHook({
+  [HookName.WhitespaceFixer]: createLockableHook({
     action: sources =>
       Promise.all(
         sources.map(source =>
-          transformFile(
-            source,
-            data => data.replace(/\s+$/g, "").trim() + "\n",
-          ),
+          transformFile(source, data => {
+            const maxConsecutiveNewlines = source.endsWith(".py") ? 3 : 2;
+            return (
+              data
+                // Strip trailing whitespace
+                .replace(/\s+$/g, "")
+                // Collapse blank lines
+                .replace(
+                  new RegExp(`\n{${maxConsecutiveNewlines + 1},}`, "g"),
+                  "\n".repeat(maxConsecutiveNewlines),
+                )
+                // Strip BOF whitespace, require single EOF newline
+                .trim() + "\n"
+            );
+          }),
         ),
       ),
     include: /./,
