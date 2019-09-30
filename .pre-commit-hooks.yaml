@@ -2,3 +2,4 @@
   name: Duolingo
   entry: /entry
   language: docker
+  types: [text]

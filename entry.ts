@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { exec } from "child_process";
+import { readFile, writeFile } from "fs";
 import { dirname } from "path";
 
 /** Maximum characters per line in Python */
@@ -16,6 +17,23 @@ const run = (command: string | string[]) =>
       { maxBuffer: Infinity },
       (ex, stdout, stderr) => (ex ? reject : resolve)(stdout + stderr),
     );
+  });
+
+/** Reads a file, transforms its contents, and writes the result if different */
+const transformFile = (path: string, transform: (before: string) => string) =>
+  new Promise<string>((resolve, reject) => {
+    readFile(path, "utf8", (err, data) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      const after = transform(data);
+      data === after || data === ""
+        ? resolve()
+        : writeFile(path, after, "utf8", err =>
+            err ? reject(err) : resolve(),
+          );
+    });
   });
 
 /** Hooks expressed in a format similar to .pre-commit-config.yaml */
@@ -177,6 +195,19 @@ const HOOKS: {
     },
     include: /\.tf$/,
     name: "terraform fmt",
+  },
+  {
+    action: sources =>
+      Promise.all(
+        sources.map(source =>
+          transformFile(
+            source,
+            data => data.replace(/\s+$/g, "").trim() + "\n",
+          ),
+        ),
+      ),
+    include: /./,
+    name: "Whitespace trimmer",
   },
 ];
 
