@@ -141,7 +141,7 @@ const HOOKS: Record<HookName, LockableHook> = {
   [HookName.Ktlint]: createLockableHook({
     action: async sources => {
       try {
-        return await run([
+        await run([
           "/ktlint",
           "--experimental", // Enables indentation formatting
           "--format",
@@ -149,7 +149,6 @@ const HOOKS: Record<HookName, LockableHook> = {
         ]);
       } catch (ex) {
         // ktlint just failed to autocorrect some stuff, e.g. long lines
-        return ex;
       }
     },
     dependsOn: [HookName.WhitespaceFixer],
@@ -231,9 +230,9 @@ const HOOKS: Record<HookName, LockableHook> = {
   [HookName.TerraformFmt]: createLockableHook({
     action: async sources => {
       const dirs = Array.from(new Set(sources.map(source => dirname(source))));
-      return (await Promise.all(
+      await Promise.all(
         dirs.map(dir => run(["terraform", "fmt", "-write=true", dir])),
-      )).join("\n");
+      );
     },
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.tf$/,
