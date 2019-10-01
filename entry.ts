@@ -270,7 +270,7 @@ const HOOKS: Record<HookName, LockableHook> = {
                   "\n".repeat(maxConsecutiveNewlines),
                 )
                 // Strip BOF whitespace, require single EOF newline
-                .trim() + "\n"
+                .replace(/^\n+|\s+$/g, "") + "\n"
             );
           }),
         ),
