@@ -288,7 +288,7 @@ const prefixLines = (() => {
     lines
       .split("\n")
       .filter(line => line.trim().length)
-      .map(line => `[${prefix}]`.padEnd(maxPrefixLength + 3) + line)
+      .map(line => `${prefix}:`.padEnd(maxPrefixLength + 2) + line)
       .join("\n");
 })();
 
