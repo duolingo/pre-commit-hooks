@@ -7,8 +7,21 @@ import { dirname } from "path";
 /** Maximum characters per line in Python */
 const PYTHON_LINE_LENGTH = 100;
 
+/**
+ * Path to an empty file that we can provide to linters/formatters as a config
+ * file in order to force those tools' default behavior
+ */
+const EMPTY_FILE = "/emptyfile";
+
 /** CLI options to use in all Prettier invocations */
-const PRETTIER_OPTIONS = ["--loglevel", "warn", "--no-config", "--write"];
+const PRETTIER_OPTIONS = [
+  "--ignore-path",
+  EMPTY_FILE,
+  "--loglevel",
+  "warn",
+  "--no-config",
+  "--write",
+];
 
 /** Runs a shell command, promising combined stdout and stderr */
 const run = (command: string | string[]) =>
@@ -119,9 +132,8 @@ const HOOKS: Record<HookName, LockableHook> = {
 
       await run([
         "black",
-        // Force defaults by specifying empty file as config file
         "--config",
-        "/emptyfile",
+        EMPTY_FILE,
         "--line-length",
         `${PYTHON_LINE_LENGTH}`,
         "--quiet",
