@@ -20,6 +20,7 @@ const PRETTIER_OPTIONS = [
   "--loglevel",
   "warn",
   "--no-config",
+  "--no-editorconfig",
   "--write",
 ];
 
