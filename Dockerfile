@@ -30,7 +30,6 @@ RUN npm config set unsafe-perm true && npm install -g \
     @types/node@12.7.8
 
 # Local files
-COPY entry.ts entry.ts
+COPY . .
 RUN tsc --noUnusedLocals --noUnusedParameters --strict entry.ts \
-  && mv entry.js entry && chmod +x entry
-COPY .editorconfig .editorconfig
+  && mv entry.js entry && chmod +x entry && touch /emptyfile

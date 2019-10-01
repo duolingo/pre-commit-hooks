@@ -116,6 +116,9 @@ const HOOKS: Record<HookName, LockableHook> = {
 
       await run([
         "black",
+        // Force defaults by specifying empty file as config file
+        "--config",
+        "/emptyfile",
         "--line-length",
         `${PYTHON_LINE_LENGTH}`,
         "--quiet",
