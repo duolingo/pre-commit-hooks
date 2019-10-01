@@ -268,25 +268,15 @@ const HOOKS: Record<HookName, LockableHook> = {
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.tf$/,
   }),
+  // Strip trailing whitespace, strip BOF newlines, require single EOF newline
   [HookName.WhitespaceFixer]: createLockableHook({
     action: sources =>
       Promise.all(
         sources.map(source =>
-          transformFile(source, data => {
-            const maxConsecutiveNewlines = source.endsWith(".py") ? 3 : 2;
-            return (
-              data
-                // Strip trailing whitespace
-                .replace(/\s+$/g, "")
-                // Collapse blank lines
-                .replace(
-                  new RegExp(`\n{${maxConsecutiveNewlines + 1},}`, "g"),
-                  "\n".repeat(maxConsecutiveNewlines),
-                )
-                // Strip BOF whitespace, require single EOF newline
-                .replace(/^\n+|\s+$/g, "") + "\n"
-            );
-          }),
+          transformFile(
+            source,
+            data => data.replace(/\s+$/gm, "").replace(/^\n+|\s+$/g, "") + "\n",
+          ),
         ),
       ),
     include: /./,
