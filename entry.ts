@@ -7,6 +7,9 @@ import { dirname } from "path";
 /** Maximum characters per line in Python */
 const PYTHON_LINE_LENGTH = 100;
 
+/** CLI options to use in all Prettier invocations */
+const PRETTIER_OPTIONS = ["--loglevel", "warn", "--no-config", "--write"];
+
 /** Runs a shell command, promising combined stdout and stderr */
 const run = (command: string | string[]) =>
   new Promise<string>((resolve, reject) => {
@@ -161,10 +164,9 @@ const HOOKS: Record<HookName, LockableHook> = {
     action: sources =>
       run([
         "prettier",
-        "--no-config",
+        ...PRETTIER_OPTIONS,
         "--trailing-comma",
         "es5",
-        "--write",
         ...sources,
       ]),
     dependsOn: [HookName.WhitespaceFixer],
@@ -175,10 +177,9 @@ const HOOKS: Record<HookName, LockableHook> = {
     action: sources =>
       run([
         "prettier",
-        "--no-config",
+        ...PRETTIER_OPTIONS,
         "--trailing-comma",
         "all",
-        "--write",
         ...sources,
       ]),
     dependsOn: [HookName.WhitespaceFixer],
