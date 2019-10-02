@@ -275,7 +275,8 @@ const HOOKS: Record<HookName, LockableHook> = {
         sources.map(source =>
           transformFile(
             source,
-            data => data.replace(/\s+$/gm, "").replace(/^\n+|\s+$/g, "") + "\n",
+            data =>
+              data.replace(/[^\S\n]+$/gm, "").replace(/^\n+|\s+$/g, "") + "\n",
           ),
         ),
       ),
