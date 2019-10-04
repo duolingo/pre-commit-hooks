@@ -14,7 +14,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 Repo maintainers can declare this hook in `.pre-commit-config.yaml`:
 
 ```yaml
-- repo: https://github.com/duolingo/pre-commit-hooks
+- repo: https://github.com/duolingo/pre-commit-hooks.git
   rev: 0.2.2
   hooks:
     - id: duolingo
