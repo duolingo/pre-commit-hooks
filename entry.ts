@@ -273,11 +273,13 @@ const HOOKS: Record<HookName, LockableHook> = {
     action: sources =>
       Promise.all(
         sources.map(source =>
-          transformFile(
-            source,
-            data =>
-              data.replace(/[^\S\n]+$/gm, "").replace(/^\n+|\s+$/g, "") + "\n",
-          ),
+          transformFile(source, data => {
+            const eol = /\r/.test(data) ? "\r\n" : "\n";
+            return (
+              data.replace(/[^\S\r\n]+$/gm, "").replace(/^[\r\n]+|\s+$/g, "") +
+              eol
+            );
+          }),
         ),
       ),
     include: /./,
