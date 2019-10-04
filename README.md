@@ -1,6 +1,6 @@
 # pre-commit hooks
 
-Despite its name, this repo currently contains only a single [pre-commit](https://pre-commit.com/) hook that internally runs several tools in parallel.
+This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several tools in parallel.
 
 - [Prettier](https://github.com/prettier/prettier)
 - [Black](https://github.com/psf/black)
@@ -11,9 +11,7 @@ Despite its name, this repo currently contains only a single [pre-commit](https:
 
 ## Usage
 
-Developers can copy or symlink this repo's `.editorconfig` file to their home directory in order to have their [text editors and IDEs](https://editorconfig.org/) automatically pick up the same linter/formatter settings that this hook uses.
-
-Repo owners can declare this hook in `.pre-commit-config.yaml`:
+Repo maintainers can declare this hook in `.pre-commit-config.yaml`:
 
 ```yaml
 - repo: https://github.com/duolingo/pre-commit-hooks
@@ -21,5 +19,7 @@ Repo owners can declare this hook in `.pre-commit-config.yaml`:
   hooks:
     - id: duolingo
 ```
+
+Contributors can copy this repo's `.editorconfig` file to their home directory in order to have their [text editors and IDEs](https://editorconfig.org/) automatically pick up the same linter/formatter settings that this hook uses.
 
 _Duolingo is hiring! Apply at https://www.duolingo.com/careers_
