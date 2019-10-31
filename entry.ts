@@ -75,6 +75,10 @@ const enum HookName {
   WhitespaceFixer = "Whitespace fixer",
 }
 
+/** Arguments passed into this hook via the `args` pre-commit config key */
+type Args = Partial<Record<Arg, string>>;
+type Arg = "python-version";
+
 interface Hook {
   /**
    * Runs the tool and throws a display message iff violations were found that
@@ -88,7 +92,7 @@ interface Hook {
    * linter crashes are surfaced to the user and for simplicity in the case of
    * the many linters that exit with nonzero iff there are violations.
    */
-  action: (sources: string[]) => Promise<unknown>;
+  action: (sources: string[], args: Args) => Promise<unknown>;
   /** Hooks that must complete before this one begins */
   dependsOn?: HookName[];
   /** Source files to exclude */
@@ -118,19 +122,10 @@ const createLockableHook = (hook: Hook): LockableHook => {
 /** Hooks expressed in a format similar to .pre-commit-config.yaml */
 const HOOKS: Record<HookName, LockableHook> = {
   [HookName.Black]: createLockableHook({
-    action: async sources => {
-      // Detect Python 2 based on its syntax and common functions
-      let pythonVersionArgs: string[];
-      try {
-        // Would just use `git grep -q` but it doesn't seem to exit early?!
-        (await run(
-          `git grep -E "^([^#]*[^#.]\\b(basestring|(iter(items|keys|values)|raw_input|unicode|xrange)\\()| *print ['\\"])" '*.py' | grep -qE .`,
-        )).trim().length;
-        pythonVersionArgs = ["--fast", "--target-version", "py27"];
-      } catch (ex) {
-        pythonVersionArgs = ["--target-version", "py36"];
-      }
-
+    action: async (sources, args) => {
+      const pythonVersionArgs = (args["python-version"] || "").startsWith("2")
+        ? ["--fast", "--target-version", "py27"]
+        : ["--target-version", "py36"];
       await run([
         "black",
         "--config",
@@ -303,8 +298,18 @@ const prefixLines = (() => {
 })();
 
 (async () => {
-  // Determine list of source files to process
-  const sources = process.argv.slice(2); // Strips ['/usr/bin/node', '/entry']
+  // Determine hook arguments and list of source files to process
+  const sources: string[] = process.argv.slice(2); // Strips ['/usr/bin/node', '/entry']
+  const args: Args = {};
+  while (sources.length && /^--[\w-]+=./.test(sources[0])) {
+    const arg = sources.shift();
+    if (arg) {
+      const matches = arg.match(/--([^=]+)=(.+)/);
+      if (matches && matches[1] && matches[2]) {
+        args[matches[1] as Arg] = matches[2] as string;
+      }
+    }
+  }
 
   // Set up hook locks
   Object.values(HOOKS).forEach(hook => {
@@ -334,7 +339,7 @@ const prefixLines = (() => {
         // Run hook
         if (includedSources.length) {
           try {
-            await action(includedSources);
+            await action(includedSources, args);
           } catch (ex) {
             success = false;
             console.error(prefixLines(name, `${ex}`));
