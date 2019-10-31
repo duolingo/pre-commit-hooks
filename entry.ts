@@ -287,7 +287,7 @@ const HOOKS: Record<HookName, LockableHook> = {
 };
 
 /** Files that match this pattern should never be processed */
-const GLOBAL_EXCLUDES = /(^|\/)(build|node_modules)\//;
+const GLOBAL_EXCLUDES = /(^|\/)(build|node_modules)\/|\.proto$/;
 
 /** Prefixes a string to all nonempty lines of input */
 const prefixLines = (() => {
