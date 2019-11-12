@@ -23,7 +23,7 @@ RUN wget https://github.com/shyiko/ktlint/releases/download/0.34.2/ktlint && chm
 # NPM packages
 # https://github.com/npm/npm/issues/20861#issuecomment-400786321
 RUN npm config set unsafe-perm true && npm install -g \
-    prettier@1.18.2 \
+    prettier@1.19.1 \
     svgo@1.3.0 \
     typescript@3.6.3 \
   && npm install \
