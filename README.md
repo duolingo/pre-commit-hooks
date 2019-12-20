@@ -15,7 +15,7 @@ Repo maintainers can declare this hook in `.pre-commit-config.yaml`:
 
 ```yaml
 - repo: https://github.com/duolingo/pre-commit-hooks.git
-  rev: 1.0.1
+  rev: 1.0.2
   hooks:
     - id: duolingo
       args: [--python-version=2] # Optional, defaults to Python 3
