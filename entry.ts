@@ -179,7 +179,7 @@ const HOOKS: Record<HookName, LockableHook> = {
       ]),
     dependsOn: [HookName.WhitespaceFixer],
     exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
-    include: /\.js$/,
+    include: /\.jsx?$/,
   }),
   [HookName.PrettierNonJs]: createLockableHook({
     action: sources =>
