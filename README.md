@@ -6,6 +6,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [Black](https://github.com/psf/black)
 - [google-java-format](https://github.com/google/google-java-format)
 - [ktlint](https://github.com/pinterest/ktlint)
+- [shfmt](https://github.com/mvdan/sh)
 - [terraform fmt](https://github.com/hashicorp/terraform)
 - [SVGO](https://github.com/svg/svgo)
 
