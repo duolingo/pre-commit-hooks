@@ -1,14 +1,14 @@
 # pre-commit hooks
 
-This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several tools in parallel.
+This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
 
-- [Prettier](https://github.com/prettier/prettier)
-- [Black](https://github.com/psf/black)
-- [google-java-format](https://github.com/google/google-java-format)
-- [ktlint](https://github.com/pinterest/ktlint)
-- [shfmt](https://github.com/mvdan/sh)
-- [terraform fmt](https://github.com/hashicorp/terraform)
-- [SVGO](https://github.com/svg/svgo)
+- [Prettier](https://github.com/prettier/prettier) v1.19.1 for HTML, JS, JSX, Markdown, TypeScript, YAML
+- [Black](https://github.com/psf/black) v19.3b0 for Python
+- [google-java-format](https://github.com/google/google-java-format) v1.7 for Java
+- [ktlint](https://github.com/pinterest/ktlint) v0.34.2 for Kotlin
+- [shfmt](https://github.com/mvdan/sh) v3.0.1 for Shell
+- [terraform fmt](https://github.com/hashicorp/terraform) v0.11.7 for Terraform
+- [SVGO](https://github.com/svg/svgo) v1.3.0 for SVG
 
 ## Usage
 
