@@ -70,6 +70,7 @@ const enum HookName {
   Ktlint = "ktlint",
   PrettierJs = "Prettier (JS)",
   PrettierNonJs = "Prettier (non-JS)",
+  Shfmt = "shfmt",
   Svgo = "SVGO",
   TerraformFmt = "terraform fmt",
   WhitespaceFixer = "Whitespace fixer",
@@ -118,6 +119,18 @@ const createLockableHook = (hook: Hook): LockableHook => {
   });
   return { ...hook, lock, unlock };
 };
+
+/**
+ * Gets the given paths' parent directories for the sake of tools that process
+ * directories rather than individual file paths.
+ *
+ * TODO: Disable parallel runs in this hook's config and instead implement
+ * that feature ourselves? In the case of tools like `terraform fmt` that
+ * process directories, parallel runs can result in double formatting when
+ * sibling source files get randomly assigned to different hook instances
+ */
+const getParentDirs = (files: string[]) =>
+  Array.from(new Set(files.map(file => dirname(file)))).sort();
 
 /** Hooks expressed in a format similar to .pre-commit-config.yaml */
 const HOOKS: Record<HookName, LockableHook> = {
@@ -193,6 +206,43 @@ const HOOKS: Record<HookName, LockableHook> = {
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.(html?|markdown|md|tsx?|ya?ml)$/,
   }),
+  [HookName.Shfmt]: createLockableHook({
+    action: async sources => {
+      // When given a directory to recurse through, shfmt processes only files
+      // that have a shell extension or shebang. However, no such filtering is
+      // done when individual files are passed to shfmt. To avoid shfmt-ing
+      // non-shell source files, we first use `shfmt -f` to list all files
+      // inside of the given source files' parent directories that are shell
+      // files and then run shfmt only on source files contained in that list.
+      const shellFilesInParentDirs = (
+        await run([
+          "/shfmt",
+          "-f", // Find
+          ...getParentDirs(sources),
+        ])
+      ).split("\n");
+      const shellSources = sources.filter(source =>
+        shellFilesInParentDirs.includes(source),
+      );
+      if (!shellSources.length) {
+        return;
+      }
+
+      await run([
+        "/shfmt",
+        "-bn", // Binary operator at start of line
+        "-ci", // Indent switch cases
+        "-i=2", // Indent 2 spaces
+        // https://github.com/mvdan/sh/blob/fa1b438/syntax/simplify.go#L13-L18
+        "-s", // Simplify code
+        "-sr", // Add space after redirect operators
+        "-w", // Write
+        ...shellSources,
+      ]);
+    },
+    dependsOn: [HookName.WhitespaceFixer],
+    include: /./,
+  }),
   [HookName.Svgo]: createLockableHook({
     action: sources =>
       run([
@@ -254,12 +304,12 @@ const HOOKS: Record<HookName, LockableHook> = {
     include: /\.svg$/,
   }),
   [HookName.TerraformFmt]: createLockableHook({
-    action: async sources => {
-      const dirs = Array.from(new Set(sources.map(source => dirname(source))));
-      await Promise.all(
-        dirs.map(dir => run(["terraform", "fmt", "-write=true", dir])),
-      );
-    },
+    action: sources =>
+      Promise.all(
+        getParentDirs(sources).map(dir =>
+          run(["terraform", "fmt", "-write=true", dir]),
+        ),
+      ),
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.tf$/,
   }),
