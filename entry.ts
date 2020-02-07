@@ -25,12 +25,10 @@ const PRETTIER_OPTIONS = [
 ];
 
 /** Runs a shell command, promising combined stdout and stderr */
-const run = (command: string | string[]) =>
+const run = (...args: string[]) =>
   new Promise<string>((resolve, reject) => {
     exec(
-      typeof command === "string"
-        ? command
-        : command.map(arg => `'${arg}'`).join(" "),
+      args.map(arg => `'${arg}'`).join(" "),
       { maxBuffer: Infinity },
       (ex, stdout, stderr) => (ex ? reject : resolve)(stdout + stderr),
     );
@@ -140,7 +138,7 @@ const HOOKS: Record<HookName, LockableHook> = {
       const pythonVersionArgs = (args["python-version"] || "").startsWith("2")
         ? ["--fast", "--target-version", "py27"]
         : ["--target-version", "py36"];
-      await run([
+      await run(
         "black",
         "--config",
         EMPTY_FILE,
@@ -149,43 +147,43 @@ const HOOKS: Record<HookName, LockableHook> = {
         "--quiet",
         ...pythonVersionArgs,
         ...sources,
-      ]);
+      );
     },
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.py$/,
   }),
   [HookName.ClangFormat]: createLockableHook({
     action: sources =>
-      run([
+      run(
         "clang-format",
         "-i", // Edit files in-place
         "--style=Google",
         ...sources,
-      ]),
+      ),
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.proto$/,
   }),
   [HookName.GoogleJavaFormat]: createLockableHook({
     action: sources =>
-      run([
+      run(
         "java",
         "-jar",
         "/google-java-format-1.7-all-deps.jar",
         "--replace",
         ...sources,
-      ]),
+      ),
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.java$/,
   }),
   [HookName.Ktlint]: createLockableHook({
     action: async sources => {
       try {
-        await run([
+        await run(
           "/ktlint",
           "--experimental", // Enables indentation formatting
           "--format",
           ...sources,
-        ]);
+        );
       } catch (ex) {
         // ktlint just failed to autocorrect some stuff, e.g. long lines
       }
@@ -195,26 +193,26 @@ const HOOKS: Record<HookName, LockableHook> = {
   }),
   [HookName.PrettierJs]: createLockableHook({
     action: sources =>
-      run([
+      run(
         "prettier",
         ...PRETTIER_OPTIONS,
         "--trailing-comma",
         "es5",
         ...sources,
-      ]),
+      ),
     dependsOn: [HookName.WhitespaceFixer],
     exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
     include: /\.jsx?$/,
   }),
   [HookName.PrettierNonJs]: createLockableHook({
     action: sources =>
-      run([
+      run(
         "prettier",
         ...PRETTIER_OPTIONS,
         "--trailing-comma",
         "all",
         ...sources,
-      ]),
+      ),
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.(html?|markdown|md|tsx?|ya?ml)$/,
   }),
@@ -227,11 +225,11 @@ const HOOKS: Record<HookName, LockableHook> = {
       // inside of the given source files' parent directories that are shell
       // files and then run shfmt only on source files contained in that list.
       const shellFilesInParentDirs = (
-        await run([
+        await run(
           "/shfmt",
           "-f", // Find
           ...getParentDirs(sources),
-        ])
+        )
       ).split("\n");
       const shellSources = sources.filter(source =>
         shellFilesInParentDirs.includes(source),
@@ -240,7 +238,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         return;
       }
 
-      await run([
+      await run(
         "/shfmt",
         "-bn", // Binary operator at start of line
         "-ci", // Indent switch cases
@@ -250,7 +248,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         "-sr", // Add space after redirect operators
         "-w", // Write
         ...shellSources,
-      ]);
+      );
     },
     dependsOn: [HookName.WhitespaceFixer],
     // pre-commit's `types: [text]` config option sometimes has false positives,
@@ -260,7 +258,7 @@ const HOOKS: Record<HookName, LockableHook> = {
   }),
   [HookName.Svgo]: createLockableHook({
     action: sources =>
-      run([
+      run(
         "svgo",
         `--disable=${[
           "addAttributesToSVGElement",
@@ -314,7 +312,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         `--enable=${["cleanupAttrs", "removeComments"].join(",")}`,
         "--quiet",
         ...sources,
-      ]),
+      ),
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.svg$/,
   }),
@@ -322,7 +320,7 @@ const HOOKS: Record<HookName, LockableHook> = {
     action: sources =>
       Promise.all(
         getParentDirs(sources).map(dir =>
-          run(["terraform", "fmt", "-write=true", dir]),
+          run("terraform", "fmt", "-write=true", dir),
         ),
       ),
     dependsOn: [HookName.WhitespaceFixer],
