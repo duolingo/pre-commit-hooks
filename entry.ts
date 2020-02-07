@@ -66,6 +66,7 @@ const transformFile = (path: string, transform: (before: string) => string) =>
 
 const enum HookName {
   Black = "Black",
+  ClangFormat = "ClangFormat",
   GoogleJavaFormat = "google-java-format",
   Ktlint = "ktlint",
   PrettierJs = "Prettier (JS)",
@@ -152,6 +153,17 @@ const HOOKS: Record<HookName, LockableHook> = {
     },
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.py$/,
+  }),
+  [HookName.ClangFormat]: createLockableHook({
+    action: sources =>
+      run([
+        "clang-format",
+        "-i", // Edit files in-place
+        "--style=Google",
+        ...sources,
+      ]),
+    dependsOn: [HookName.WhitespaceFixer],
+    include: /\.proto$/,
   }),
   [HookName.GoogleJavaFormat]: createLockableHook({
     action: sources =>
@@ -241,6 +253,9 @@ const HOOKS: Record<HookName, LockableHook> = {
       ]);
     },
     dependsOn: [HookName.WhitespaceFixer],
+    // pre-commit's `types: [text]` config option sometimes has false positives,
+    // and removing a binary .proto file's trailing newline may corrupt it
+    exclude: /\.proto$/,
     include: /./,
   }),
   [HookName.Svgo]: createLockableHook({
@@ -332,7 +347,7 @@ const HOOKS: Record<HookName, LockableHook> = {
 };
 
 /** Files that match this pattern should never be processed */
-const GLOBAL_EXCLUDES = /(^|\/)(build|node_modules)\/|\.proto$/;
+const GLOBAL_EXCLUDES = /(^|\/)(build|node_modules)\//;
 
 /** Prefixes a string to all nonempty lines of input */
 const prefixLines = (() => {

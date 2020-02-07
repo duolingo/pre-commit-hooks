@@ -10,6 +10,7 @@ RUN apk update && apk upgrade && apk add --no-cache \
 
 # Alpine tool packages
 RUN apk update && apk upgrade && apk add --no-cache \
+  clang \
   terraform
 
 # Python packages

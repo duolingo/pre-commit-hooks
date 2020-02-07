@@ -8,6 +8,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [ktlint](https://github.com/pinterest/ktlint) v0.34.2 for Kotlin
 - [shfmt](https://github.com/mvdan/sh) v3.0.1 for Shell
 - [terraform fmt](https://github.com/hashicorp/terraform) v0.11.7 for Terraform
+- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v5.0.1 for Protobuf
 - [SVGO](https://github.com/svg/svgo) v1.3.0 for SVG
 
 ## Usage
