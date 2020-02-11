@@ -119,15 +119,7 @@ const createLockableHook = (hook: Hook): LockableHook => {
   return { ...hook, lock, unlock };
 };
 
-/**
- * Gets the given paths' parent directories for the sake of tools that process
- * directories rather than individual file paths.
- *
- * TODO: Disable parallel runs in this hook's config and instead implement
- * that feature ourselves? In the case of tools like `terraform fmt` that
- * process directories, parallel runs can result in double formatting when
- * sibling source files get randomly assigned to different hook instances
- */
+/** Gets the given paths' parent directories */
 const getParentDirs = (files: string[]) =>
   Array.from(new Set(files.map(file => dirname(file)))).sort();
 
@@ -319,9 +311,16 @@ const HOOKS: Record<HookName, LockableHook> = {
   [HookName.TerraformFmt]: createLockableHook({
     action: sources =>
       Promise.all(
-        getParentDirs(sources).map(dir =>
-          run("terraform", "fmt", "-write=true", dir),
-        ),
+        // Officially `terraform fmt` only accepts a directory to recurse
+        // through as its sole argument, but it secretly does still support the
+        // more convenient route of supplying a single .tf file as the argument.
+        // (Our problem with providing a directory as the argument is that it
+        // can lead to double-formatting in the case that two sibling source
+        // files get randomly assigned to different processes when pre-commit
+        // parallelizes multiple runs of this hook. This in turn can create a
+        // race condition that results in a source file getting unintentionally
+        // deleted!) https://github.com/hashicorp/terraform/pull/20040
+        sources.map(source => run("terraform", "fmt", "-write=true", source)),
       ),
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.tf$/,
