@@ -344,7 +344,13 @@ const HOOKS: Record<HookName, LockableHook> = {
 };
 
 /** Files that match this pattern should never be processed */
-const GLOBAL_EXCLUDES = /(^|\/)(build|node_modules)\//;
+const GLOBAL_EXCLUDES = (() => {
+  const FOLDER_EXCLUDES = ["build", "node_modules"];
+  const FILE_EXCLUDES = ["gradlew"];
+  return RegExp(
+    `(^|/)((${FOLDER_EXCLUDES.join("|")})/|(${FILE_EXCLUDES.join("|")})$)`,
+  );
+})();
 
 /** Prefixes a string to all nonempty lines of input */
 const prefixLines = (() => {
