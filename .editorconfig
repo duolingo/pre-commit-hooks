@@ -16,5 +16,5 @@ combine_as_imports=true
 force_grid_wrap=0
 include_trailing_comma=true
 indent_size=4
-line_length=100
+max_line_length=100
 multi_line_output=3
