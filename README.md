@@ -8,7 +8,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [google-java-format](https://github.com/google/google-java-format) v1.7 for Java
 - [ktlint](https://github.com/pinterest/ktlint) v0.36.0 for Kotlin
 - [shfmt](https://github.com/mvdan/sh) v3.0.2 for Shell
-- [terraform fmt](https://github.com/hashicorp/terraform) v0.12.17 for Terraform
+- [terraform fmt](https://github.com/hashicorp/terraform) v0.11.7 for Terraform
 - [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v9.0.0 for Protobuf
 - [SVGO](https://github.com/svg/svgo) v1.3.2 for SVG
 
