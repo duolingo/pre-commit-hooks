@@ -10,19 +10,21 @@ RUN apk update && apk upgrade && apk add --no-cache \
 
 # Alpine tool packages
 RUN apk update && apk upgrade && apk add --no-cache \
-  clang \
-  terraform
+  clang
 
 # Python packages
 RUN pip3 install --upgrade pip && pip3 install \
   black==19.3b0
 
-# GitHub binaries
+# Standalone binaries
 RUN wget https://github.com/google/google-java-format/releases/download/google-java-format-1.7/google-java-format-1.7-all-deps.jar
 RUN wget https://github.com/shyiko/ktlint/releases/download/0.34.2/ktlint \
   && chmod +x ktlint
 RUN wget https://github.com/mvdan/sh/releases/download/v3.0.1/shfmt_v3.0.1_linux_amd64 -O shfmt \
   && chmod +x shfmt
+RUN wget https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_linux_amd64.zip -O tf.zip \
+  && unzip tf.zip \
+  && rm tf.zip
 
 # Scala packages
 RUN wget https://github.com/coursier/coursier/releases/download/v2.0.0-RC6-24/coursier -O /bin/coursier \
