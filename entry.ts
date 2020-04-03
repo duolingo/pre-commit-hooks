@@ -199,14 +199,7 @@ const HOOKS: Record<HookName, LockableHook> = {
     include: /\.kt$/,
   }),
   [HookName.PrettierJs]: createLockableHook({
-    action: sources =>
-      run(
-        "prettier",
-        ...PRETTIER_OPTIONS,
-        "--trailing-comma",
-        "es5",
-        ...sources,
-      ),
+    action: sources => run("prettier", ...PRETTIER_OPTIONS, ...sources),
     dependsOn: [HookName.WhitespaceFixer],
     exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
     include: /\.jsx?$/,
