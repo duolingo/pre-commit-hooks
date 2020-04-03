@@ -4,6 +4,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 
 - [Prettier](https://github.com/prettier/prettier) v1.19.1 for HTML, JS, JSX, Markdown, TypeScript, YAML
 - [Black](https://github.com/psf/black) v19.3b0 for Python
+- [autoflake](https://github.com/myint/autoflake) v1.4 for Python
 - [google-java-format](https://github.com/google/google-java-format) v1.7 for Java
 - [ktlint](https://github.com/pinterest/ktlint) v0.39.0 for Kotlin
 - [scalafmt](https://scalameta.org/scalafmt/) v2.6.4 for Scala 2.12

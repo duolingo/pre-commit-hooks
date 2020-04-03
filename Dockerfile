@@ -14,6 +14,7 @@ RUN apk update && apk upgrade && apk add --no-cache \
 
 # Python packages
 RUN pip3 install --upgrade pip && pip3 install \
+  autoflake==1.4 \
   black==19.3b0
 
 # Standalone binaries
