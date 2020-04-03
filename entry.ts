@@ -63,6 +63,7 @@ const transformFile = (path: string, transform: (before: string) => string) =>
   });
 
 const enum HookName {
+  Autoflake = "autoflake",
   Black = "Black",
   ClangFormat = "ClangFormat",
   GoogleJavaFormat = "google-java-format",
@@ -125,6 +126,20 @@ const getParentDirs = (files: string[]) =>
 
 /** Hooks expressed in a format similar to .pre-commit-config.yaml */
 const HOOKS: Record<HookName, LockableHook> = {
+  [HookName.Autoflake]: createLockableHook({
+    action: sources =>
+      run(
+        "autoflake",
+        "--ignore-init-module-imports",
+        "--imports=boto,flask,pyramid,requests,simplejson",
+        "--in-place",
+        "--remove-duplicate-keys",
+        "--remove-unused-variables",
+        ...sources,
+      ),
+    dependsOn: [HookName.WhitespaceFixer],
+    include: /\.py$/,
+  }),
   [HookName.Black]: createLockableHook({
     action: async (sources, args) => {
       const pythonVersionArgs = (args["python-version"] || "").startsWith("2")
@@ -141,7 +156,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         ...sources,
       );
     },
-    dependsOn: [HookName.WhitespaceFixer],
+    dependsOn: [HookName.Autoflake],
     include: /\.py$/,
   }),
   [HookName.ClangFormat]: createLockableHook({
