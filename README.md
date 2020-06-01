@@ -11,6 +11,8 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v5.0.1 for Protobuf
 - [SVGO](https://github.com/svg/svgo) v1.3.0 for SVG
 
+We run this hook on developer workstations and enforce it in CI for all production repos at Duolingo.
+
 ## Usage
 
 Repo maintainers can declare this hook in `.pre-commit-config.yaml`:
