@@ -94,12 +94,12 @@ interface Hook {
    * the many linters that exit with nonzero iff there are violations.
    */
   action: (sources: string[], args: Args) => Promise<unknown>;
-  /** Hooks that must complete before this one begins */
-  dependsOn?: HookName[];
   /** Source files to exclude */
   exclude?: RegExp;
   /** Source files to include */
   include: RegExp;
+  /** Hooks that must complete before this one begins */
+  runAfter?: HookName[];
 }
 
 interface LockableHook extends Hook {
@@ -142,8 +142,8 @@ const HOOKS: Record<HookName, LockableHook> = {
         ...sources,
       );
     },
-    dependsOn: [HookName.WhitespaceFixer],
     include: /\.py$/,
+    runAfter: [HookName.WhitespaceFixer],
   }),
   [HookName.ClangFormat]: createLockableHook({
     action: sources =>
@@ -153,8 +153,8 @@ const HOOKS: Record<HookName, LockableHook> = {
         "--style=Google",
         ...sources,
       ),
-    dependsOn: [HookName.WhitespaceFixer],
     include: /\.proto$/,
+    runAfter: [HookName.WhitespaceFixer],
   }),
   [HookName.GoogleJavaFormat]: createLockableHook({
     action: sources =>
@@ -165,8 +165,8 @@ const HOOKS: Record<HookName, LockableHook> = {
         "--replace",
         ...sources,
       ),
-    dependsOn: [HookName.WhitespaceFixer],
     include: /\.java$/,
+    runAfter: [HookName.WhitespaceFixer],
   }),
   [HookName.Ktlint]: createLockableHook({
     action: async sources => {
@@ -181,8 +181,8 @@ const HOOKS: Record<HookName, LockableHook> = {
         // ktlint just failed to autocorrect some stuff, e.g. long lines
       }
     },
-    dependsOn: [HookName.WhitespaceFixer],
     include: /\.kt$/,
+    runAfter: [HookName.WhitespaceFixer],
   }),
   [HookName.PrettierJs]: createLockableHook({
     action: sources =>
@@ -193,9 +193,9 @@ const HOOKS: Record<HookName, LockableHook> = {
         "es5",
         ...sources,
       ),
-    dependsOn: [HookName.WhitespaceFixer],
     exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
     include: /\.jsx?$/,
+    runAfter: [HookName.WhitespaceFixer],
   }),
   [HookName.PrettierNonJs]: createLockableHook({
     action: sources =>
@@ -206,8 +206,8 @@ const HOOKS: Record<HookName, LockableHook> = {
         "all",
         ...sources,
       ),
-    dependsOn: [HookName.WhitespaceFixer],
     include: /\.(html?|markdown|md|tsx?|ya?ml)$/,
+    runAfter: [HookName.WhitespaceFixer],
   }),
   [HookName.Scalafmt]: createLockableHook({
     action: sources =>
@@ -248,11 +248,11 @@ const HOOKS: Record<HookName, LockableHook> = {
         ...shellSources,
       );
     },
-    dependsOn: [HookName.WhitespaceFixer],
     // pre-commit's `types: [text]` config option sometimes has false positives,
     // and removing a binary .proto file's trailing newline may corrupt it
     exclude: /\.proto$/,
     include: /./,
+    runAfter: [HookName.WhitespaceFixer],
   }),
   [HookName.Svgo]: createLockableHook({
     action: sources =>
@@ -311,8 +311,8 @@ const HOOKS: Record<HookName, LockableHook> = {
         "--quiet",
         ...sources,
       ),
-    dependsOn: [HookName.WhitespaceFixer],
     include: /\.svg$/,
+    runAfter: [HookName.WhitespaceFixer],
   }),
   [HookName.TerraformFmt]: createLockableHook({
     action: sources =>
@@ -328,8 +328,8 @@ const HOOKS: Record<HookName, LockableHook> = {
         // deleted!) https://github.com/hashicorp/terraform/pull/20040
         sources.map(source => run("terraform", "fmt", "-write=true", source)),
       ),
-    dependsOn: [HookName.WhitespaceFixer],
     include: /\.tf$/,
+    runAfter: [HookName.WhitespaceFixer],
   }),
   // Strip trailing whitespace, strip BOF newlines, require single EOF newline
   [HookName.WhitespaceFixer]: createLockableHook({
@@ -387,9 +387,9 @@ const prefixLines = (() => {
 
   // Set up hook locks
   Object.values(HOOKS).forEach(hook => {
-    if (hook.dependsOn) {
+    if (hook.runAfter) {
       hook.locksToWaitFor = Promise.all(
-        hook.dependsOn.map(hookName => HOOKS[hookName].lock),
+        hook.runAfter.map(hookName => HOOKS[hookName].lock),
       );
     }
   });
