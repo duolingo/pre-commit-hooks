@@ -213,6 +213,7 @@ const HOOKS: Record<HookName, LockableHook> = {
     action: sources =>
       run("/scalafmt", "--config-str", "preset=IntelliJ", ...sources),
     include: /\.(scala|sbt|sc)$/,
+    runAfter: [HookName.WhitespaceFixer],
   }),
   [HookName.Shfmt]: createLockableHook({
     action: async sources => {
