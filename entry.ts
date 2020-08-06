@@ -69,6 +69,7 @@ const enum HookName {
   Ktlint = "ktlint",
   PrettierJs = "Prettier (JS)",
   PrettierNonJs = "Prettier (non-JS)",
+  Scalafmt = "scalafmt",
   Shfmt = "shfmt",
   Svgo = "SVGO",
   TerraformFmt = "terraform fmt",
@@ -207,6 +208,11 @@ const HOOKS: Record<HookName, LockableHook> = {
       ),
     dependsOn: [HookName.WhitespaceFixer],
     include: /\.(html?|markdown|md|tsx?|ya?ml)$/,
+  }),
+  [HookName.Scalafmt]: createLockableHook({
+    action: sources =>
+      run("/scalafmt", "--config-str", "preset=IntelliJ", ...sources),
+    include: /\.(scala|sbt|sc)$/,
   }),
   [HookName.Shfmt]: createLockableHook({
     action: async sources => {
