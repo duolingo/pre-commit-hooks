@@ -3,3 +3,10 @@ repos:
     rev: 1.1.2
     hooks:
       - id: duolingo
+  - repo: local
+    hooks:
+      - id: test
+        name: Tests
+        entry: make test
+        language: system
+        always_run: true

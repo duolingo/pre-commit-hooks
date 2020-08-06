@@ -1,3 +1,6 @@
+MAKEFLAGS += --silent
+SHELL = /usr/bin/env bash
+
 # Bumps this project's version number. Example:
 #   $ make release V=1.0.3
 release:
@@ -7,3 +10,8 @@ release:
 	git add -A
 	git commit -m "Release ${V}" -n
 	git tag "${V}"
+
+# Runs tests
+test:
+	docker run --rm "$$(docker build -q .)" bash -c \
+		"echo 1 > /tmp/a.js && /entry /tmp/a.js && grep -q ';' /tmp/a.js"
