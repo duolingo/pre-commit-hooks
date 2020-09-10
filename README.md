@@ -2,7 +2,7 @@
 
 This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
 
-- [Prettier](https://github.com/prettier/prettier) v1.19.1 for HTML, JS, JSX, Markdown, TypeScript, YAML
+- [Prettier](https://github.com/prettier/prettier) v2.1.1 for HTML, JS, JSX, Markdown, TypeScript, YAML
 - [Black](https://github.com/psf/black) v19.3b0 for Python
 - [google-java-format](https://github.com/google/google-java-format) v1.7 for Java
 - [ktlint](https://github.com/pinterest/ktlint) v0.34.2 for Kotlin
@@ -20,7 +20,7 @@ Repo maintainers can declare this hook in `.pre-commit-config.yaml`:
 
 ```yaml
 - repo: https://github.com/duolingo/pre-commit-hooks.git
-  rev: 1.2.0
+  rev: 1.3.0
   hooks:
     - id: duolingo
       args: [--python-version=2] # Optional, defaults to Python 3
