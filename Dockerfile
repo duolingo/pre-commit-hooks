@@ -1,4 +1,4 @@
-FROM alpine:3.8
+FROM alpine:3.12
 
 # Alpine base packages
 RUN apk update && apk upgrade && apk add --no-cache \
@@ -6,7 +6,8 @@ RUN apk update && apk upgrade && apk add --no-cache \
   git \
   nodejs-npm \
   openjdk8 \
-  python3
+  python3 \
+  py3-pip
 
 # Alpine tool packages
 RUN apk update && apk upgrade && apk add --no-cache \
@@ -37,7 +38,7 @@ RUN coursier bootstrap org.scalameta:scalafmt-cli_2.12:2.6.4 \
 # NPM packages
 # https://github.com/npm/npm/issues/20861#issuecomment-400786321
 RUN npm config set unsafe-perm true && npm install -g \
-    prettier@1.19.1 \
+    prettier@2.1.1 \
     svgo@1.3.0 \
     typescript@3.6.3 \
   && npm install \
