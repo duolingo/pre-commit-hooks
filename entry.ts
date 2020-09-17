@@ -329,9 +329,9 @@ const HOOKS: Record<HookName, LockableHook> = {
         // deleted!) https://github.com/hashicorp/terraform/pull/20040
         sources.map(source => {
           try {
-            run("/terraform", "fmt", "-write=true", source);
+            await run("/terraform", "fmt", "-write=true", source);
           } catch (ex) {
-            run("/terraform0.12", "fmt", "-write=true", source);
+            await run("/terraform0.12", "fmt", "-write=true", source);
           }
         }),
       ),
