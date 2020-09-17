@@ -332,6 +332,7 @@ const HOOKS: Record<HookName, LockableHook> = {
             run("/terraform", "fmt", "-write=true", source);
           } catch (ex) {
             run("/terraform0.12", "fmt", "-write=true", source);
+            console.error(${ex});
           }
         }),
       ),
