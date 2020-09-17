@@ -22,7 +22,11 @@ RUN wget https://github.com/shyiko/ktlint/releases/download/0.34.2/ktlint \
   && chmod +x ktlint
 RUN wget https://github.com/mvdan/sh/releases/download/v3.0.1/shfmt_v3.0.1_linux_amd64 -O shfmt \
   && chmod +x shfmt
-RUN wget https://releases.hashicorp.com/terraform/0.11.7/terraform_0.11.7_linux_amd64.zip -O tf.zip \
+RUN wget https://releases.hashicorp.com/terraform/0.12.29/terraform_0.12.29_linux_amd64.zip -O tf.zip \
+  && unzip tf.zip \
+  && rm tf.zip \
+  && mv terraform terraform0.12
+RUN wget https://releases.hashicorp.com/terraform/0.11.14/terraform_0.11.14_linux_amd64.zip -O tf.zip \
   && unzip tf.zip \
   && rm tf.zip
 
