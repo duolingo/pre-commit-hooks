@@ -327,11 +327,11 @@ const HOOKS: Record<HookName, LockableHook> = {
         // parallelizes multiple runs of this hook. This in turn can create a
         // race condition that results in a source file getting unintentionally
         // deleted!) https://github.com/hashicorp/terraform/pull/20040
-        sources.map(source => {
+        sources.map(async source => {
           try {
-            run("/terraform", "fmt", "-write=true", source);
+            await run("/terraform", "fmt", "-write=true", source);
           } catch (ex) {
-            run("/terraform0.12", "fmt", "-write=true", source);
+            await run("/terraform0.12", "fmt", "-write=true", source);
           }
         }),
       ),
