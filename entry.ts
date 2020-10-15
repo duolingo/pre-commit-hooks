@@ -171,12 +171,7 @@ const HOOKS: Record<HookName, LockableHook> = {
   [HookName.Ktlint]: createLockableHook({
     action: async sources => {
       try {
-        await run(
-          "/ktlint",
-          "--experimental", // Enables indentation formatting
-          "--format",
-          ...sources,
-        );
+        await run("/ktlint", "--format", ...sources);
       } catch (ex) {
         // ktlint just failed to autocorrect some stuff, e.g. long lines
       }
