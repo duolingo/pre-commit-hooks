@@ -18,7 +18,7 @@ RUN pip3 install --upgrade pip && pip3 install \
 
 # Standalone binaries
 RUN wget https://github.com/google/google-java-format/releases/download/google-java-format-1.7/google-java-format-1.7-all-deps.jar
-RUN wget https://github.com/shyiko/ktlint/releases/download/0.34.2/ktlint \
+RUN wget https://github.com/shyiko/ktlint/releases/download/0.39.0/ktlint \
   && chmod +x ktlint
 RUN wget https://github.com/mvdan/sh/releases/download/v3.0.1/shfmt_v3.0.1_linux_amd64 -O shfmt \
   && chmod +x shfmt
