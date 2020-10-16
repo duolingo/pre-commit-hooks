@@ -3,6 +3,10 @@ indent_style=space
 insert_final_newline=true
 trim_trailing_whitespace=true
 
+[*.{kt,kts}]
+# https://github.com/pinterest/ktlint#custom-ktlint-specific-editorconfig-properties
+kotlin_imports_layout=ascii
+
 [*.{gradle,java,kt,sh,xml,yaml,yml}]
 indent_size=2
 max_line_length=100
