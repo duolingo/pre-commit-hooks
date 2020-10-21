@@ -170,10 +170,26 @@ const HOOKS: Record<HookName, LockableHook> = {
   }),
   [HookName.Ktlint]: createLockableHook({
     action: async sources => {
-      try {
-        await run("/ktlint", "--format", ...sources);
-      } catch (ex) {
-        // ktlint just failed to autocorrect some stuff, e.g. long lines
+      // TODO: Switch back to this line once this bug is fixed:
+      // https://github.com/pinterest/ktlint/issues/942
+      // await run("/ktlint", "--format", ...sources);
+
+      // TODO: Delete this once this bug is fixed:
+      // https://github.com/pinterest/ktlint/issues/942
+      const sourcesByDir: Record<string, string[]> = {};
+      for (const source of sources) {
+        const dir = source.includes("/")
+          ? source.slice(0, source.lastIndexOf("/"))
+          : ".";
+        sourcesByDir[dir] = [...(sourcesByDir[dir] || []), source];
+      }
+      for (const dirSources of Object.values(sourcesByDir)) {
+        // Process chunks serially to avoid OOM
+        try {
+          await run("/ktlint", "--format", ...dirSources);
+        } catch (ex) {
+          // ktlint just failed to autocorrect some stuff, e.g. long lines
+        }
       }
     },
     include: /\.kt$/,
