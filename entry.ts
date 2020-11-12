@@ -213,7 +213,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         "all",
         ...sources,
       ),
-    include: /\.(html?|markdown|md|tsx?|ya?ml)$/,
+    include: /\.(html?|markdown|md|scss|tsx?|ya?ml)$/,
     runAfter: [HookName.WhitespaceFixer],
   }),
   [HookName.Scalafmt]: createLockableHook({
