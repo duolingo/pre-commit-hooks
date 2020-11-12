@@ -2,16 +2,16 @@
 
 This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
 
-- [Prettier](https://github.com/prettier/prettier) v1.19.1 for HTML, JS, JSX, Markdown, TypeScript, YAML
-- [Black](https://github.com/psf/black) v19.3b0 for Python
+- [Prettier](https://github.com/prettier/prettier) v2.1.2 for HTML, JS, JSX, Markdown, TypeScript, YAML
+- [Black](https://github.com/psf/black) v20.8b1 for Python
 - [autoflake](https://github.com/myint/autoflake) v1.4 for Python
-- [google-java-format](https://github.com/google/google-java-format) v1.7 for Java
+- [google-java-format](https://github.com/google/google-java-format) v1.9 for Java
 - [ktlint](https://github.com/pinterest/ktlint) v0.39.0 for Kotlin
-- [scalafmt](https://scalameta.org/scalafmt/) v2.6.4 for Scala 2.12
-- [shfmt](https://github.com/mvdan/sh) v3.0.1 for Shell
+- [scalafmt](https://scalameta.org/scalafmt/) v2.7.5 for Scala
+- [shfmt](https://github.com/mvdan/sh) v3.2.0 for Shell
 - [terraform fmt](https://github.com/hashicorp/terraform) v0.11.14 and v0.12.29 for Terraform
-- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v5.0.1 for Protobuf
-- [SVGO](https://github.com/svg/svgo) v1.3.0 for SVG
+- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v10.0.0 for Protobuf
+- [SVGO](https://github.com/svg/svgo) v1.3.2 for SVG
 
 We run this hook on developer workstations and enforce it in CI for all production repos at Duolingo.
 

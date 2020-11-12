@@ -15,6 +15,10 @@ const EMPTY_FILE = "/emptyfile";
 
 /** CLI options to use in all Prettier invocations */
 const PRETTIER_OPTIONS = [
+  "--arrow-parens",
+  "avoid",
+  "--end-of-line",
+  "auto",
   "--ignore-path",
   EMPTY_FILE,
   "--loglevel",
@@ -176,7 +180,7 @@ const HOOKS: Record<HookName, LockableHook> = {
       run(
         "java",
         "-jar",
-        "/google-java-format-1.7-all-deps.jar",
+        "/google-java-format-1.9-all-deps.jar",
         "--replace",
         ...sources,
       ),
@@ -195,14 +199,7 @@ const HOOKS: Record<HookName, LockableHook> = {
     runAfter: [HookName.WhitespaceFixer],
   }),
   [HookName.PrettierJs]: createLockableHook({
-    action: sources =>
-      run(
-        "prettier",
-        ...PRETTIER_OPTIONS,
-        "--trailing-comma",
-        "es5",
-        ...sources,
-      ),
+    action: sources => run("prettier", ...PRETTIER_OPTIONS, ...sources),
     exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
     include: /\.jsx?$/,
     runAfter: [HookName.WhitespaceFixer],
