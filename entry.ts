@@ -75,10 +75,10 @@ const enum HookName {
   PrettierJs = "Prettier (JS)",
   PrettierNonJs = "Prettier (non-JS)",
   Scalafmt = "scalafmt",
+  Sed = "sed",
   Shfmt = "shfmt",
   Svgo = "SVGO",
   TerraformFmt = "terraform fmt",
-  WhitespaceFixer = "Whitespace fixer",
 }
 
 /** Arguments passed into this hook via the `args` pre-commit config key */
@@ -143,11 +143,11 @@ const HOOKS: Record<HookName, LockableHook> = {
         ...sources,
       ),
     include: /\.py$/,
-    runAfter: [HookName.WhitespaceFixer],
+    runAfter: [HookName.Sed],
   }),
   [HookName.Black]: createLockableHook({
     action: async (sources, args) => {
-      const pythonVersionArgs = (args["python-version"] || "").startsWith("2")
+      const pythonVersionArgs = args["python-version"]?.startsWith("2")
         ? ["--fast", "--target-version", "py27"]
         : ["--target-version", "py36"];
       await run(
@@ -173,7 +173,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         ...sources,
       ),
     include: /\.proto$/,
-    runAfter: [HookName.WhitespaceFixer],
+    runAfter: [HookName.Sed],
   }),
   [HookName.GoogleJavaFormat]: createLockableHook({
     action: sources =>
@@ -185,7 +185,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         ...sources,
       ),
     include: /\.java$/,
-    runAfter: [HookName.WhitespaceFixer],
+    runAfter: [HookName.Sed],
   }),
   [HookName.Ktlint]: createLockableHook({
     action: async sources => {
@@ -196,13 +196,13 @@ const HOOKS: Record<HookName, LockableHook> = {
       }
     },
     include: /\.kt$/,
-    runAfter: [HookName.WhitespaceFixer],
+    runAfter: [HookName.Sed],
   }),
   [HookName.PrettierJs]: createLockableHook({
     action: sources => run("prettier", ...PRETTIER_OPTIONS, ...sources),
     exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
     include: /\.jsx?$/,
-    runAfter: [HookName.WhitespaceFixer],
+    runAfter: [HookName.Sed],
   }),
   [HookName.PrettierNonJs]: createLockableHook({
     action: sources =>
@@ -214,13 +214,74 @@ const HOOKS: Record<HookName, LockableHook> = {
         ...sources,
       ),
     include: /\.(html?|markdown|md|scss|tsx?|ya?ml)$/,
-    runAfter: [HookName.WhitespaceFixer],
+    runAfter: [HookName.Sed],
   }),
   [HookName.Scalafmt]: createLockableHook({
     action: sources =>
       run("/scalafmt", "--config-str", "preset=IntelliJ", ...sources),
     include: /\.(scala|sbt|sc)$/,
-    runAfter: [HookName.WhitespaceFixer],
+    runAfter: [HookName.Sed],
+  }),
+  // Mimic sed by applying arbitrary regex transformations. Before proposing a
+  // new transformation, please make sure that it's both (1) safe and (2) likely
+  // to ever actually be needed. At Duolingo, we determine the latter criterion
+  // empirically by seeing how many existing violations our codebase contains
+  [HookName.Sed]: createLockableHook({
+    action: (sources, args) =>
+      Promise.all(
+        sources.map(source =>
+          transformFile(source, data => {
+            // Strip trailing whitespace, strip BOF newlines, require single EOF
+            // newline
+            const eol = /\r/.test(data) ? "\r\n" : "\n";
+            data =
+              data.replace(/[^\S\r\n]+$/gm, "").replace(/^[\r\n]+|\s+$/g, "") +
+              eol;
+
+            // Transform Kotlin
+            if (source.endsWith(".kt")) {
+              // Replace empty immutable collections with singletons to avoid
+              // unnecessary allocations. Fun fact: Python's empty tuple `()`
+              // is similarly implemented as a singleton
+              data = data
+                .replace(/\barrayOf\(\)/g, "emptyArray()")
+                .replace(/\blistOf\(\)/g, "emptyList()")
+                .replace(/\bmapOf\(\)/g, "emptyMap()")
+                .replace(/\bsequenceOf\(\)/g, "emptySequence()")
+                .replace(/\bsetOf\(\)/g, "emptySet()");
+
+              // Remove unnecessary constructor keyword
+              data = data.replace(/(?<=\bclass \S+) constructor(?=\()/g, "");
+            }
+
+            // Transform Python
+            if (source.endsWith(".py")) {
+              // Prefer empty collection literals for simplicity
+              data = data.replace(/(?<=^|[ ([{=])dict\(\)/gm, "{}");
+              data = data.replace(/(?<=^|[ ([{=])list\(\)/gm, "[]");
+              data = data.replace(/(?<=^|[ ([{=])tuple\(\)/gm, "()");
+
+              // Remove unnecessary [] from empty sets
+              data = data.replace(
+                /(?<=(?:^|[ ([{=])(?:frozen)?set\()\[\](?=\))/gm,
+                "",
+              );
+
+              // Transform Python 3
+              if (!args["python-version"]?.startsWith("2")) {
+                // Remove unnecessary encoding declarations
+                data = data.replace(/^# -\*- coding: utf-?8.*?\n/gim, "");
+
+                // Remove unnecessary base class declarations
+                data = data.replace(/(?<=^ *class \S+?)\(object\)(?=:)/gm, "");
+              }
+            }
+
+            return data;
+          }),
+        ),
+      ),
+    include: /./,
   }),
   [HookName.Shfmt]: createLockableHook({
     action: async sources => {
@@ -260,7 +321,7 @@ const HOOKS: Record<HookName, LockableHook> = {
     // and removing a binary .proto file's trailing newline may corrupt it
     exclude: /\.proto$/,
     include: /./,
-    runAfter: [HookName.WhitespaceFixer],
+    runAfter: [HookName.Sed],
   }),
   [HookName.Svgo]: createLockableHook({
     action: sources =>
@@ -320,7 +381,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         ...sources,
       ),
     include: /\.svg$/,
-    runAfter: [HookName.WhitespaceFixer],
+    runAfter: [HookName.Sed],
   }),
   [HookName.TerraformFmt]: createLockableHook({
     action: sources =>
@@ -343,23 +404,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         }),
       ),
     include: /\.tf$/,
-    runAfter: [HookName.WhitespaceFixer],
-  }),
-  // Strip trailing whitespace, strip BOF newlines, require single EOF newline
-  [HookName.WhitespaceFixer]: createLockableHook({
-    action: sources =>
-      Promise.all(
-        sources.map(source =>
-          transformFile(source, data => {
-            const eol = /\r/.test(data) ? "\r\n" : "\n";
-            return (
-              data.replace(/[^\S\r\n]+$/gm, "").replace(/^[\r\n]+|\s+$/g, "") +
-              eol
-            );
-          }),
-        ),
-      ),
-    include: /./,
+    runAfter: [HookName.Sed],
   }),
 };
 
