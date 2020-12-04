@@ -13,5 +13,5 @@ release:
 
 # Runs tests
 test:
-	docker run --rm "$$(docker build -q .)" bash -c \
+	docker run --rm "$$(docker build --network=host -q .)" bash -c \
 		"echo 1 > /tmp/a.js && /entry /tmp/a.js && grep -q ';' /tmp/a.js"
