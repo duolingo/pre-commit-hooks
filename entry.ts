@@ -281,7 +281,7 @@ const HOOKS: Record<HookName, LockableHook> = {
   [HookName.Shfmt]: createLockableHook({
     action: async sources => {
       // Find source files that are Shell files
-      const shellSources = await run("/shfmt", "-f", ...sources);
+      const shellSources = (await run("/shfmt", "-f", ...sources)).trim();
       if (!shellSources) {
         return;
       }
