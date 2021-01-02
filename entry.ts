@@ -2,7 +2,6 @@
 
 import { exec } from "child_process";
 import { readFile, writeFile } from "fs";
-import { dirname } from "path";
 
 /** Maximum characters per line in Python */
 const PYTHON_LINE_LENGTH = 100;
@@ -124,10 +123,6 @@ const createLockableHook = (hook: Hook): LockableHook => {
   });
   return { ...hook, lock, unlock };
 };
-
-/** Gets the given paths' parent directories */
-const getParentDirs = (files: string[]) =>
-  Array.from(new Set(files.map(file => dirname(file)))).sort();
 
 /** Hooks expressed in a format similar to .pre-commit-config.yaml */
 const HOOKS: Record<HookName, LockableHook> = {
@@ -285,23 +280,9 @@ const HOOKS: Record<HookName, LockableHook> = {
   }),
   [HookName.Shfmt]: createLockableHook({
     action: async sources => {
-      // When given a directory to recurse through, shfmt processes only files
-      // that have a shell extension or shebang. However, no such filtering is
-      // done when individual files are passed to shfmt. To avoid shfmt-ing
-      // non-shell source files, we first use `shfmt -f` to list all files
-      // inside of the given source files' parent directories that are shell
-      // files and then run shfmt only on source files contained in that list.
-      const shellFilesInParentDirs = (
-        await run(
-          "/shfmt",
-          "-f", // Find
-          ...getParentDirs(sources),
-        )
-      ).split("\n");
-      const shellSources = sources.filter(source =>
-        shellFilesInParentDirs.includes(source),
-      );
-      if (!shellSources.length) {
+      // Find source files that are Shell files
+      const shellSources = await run("/shfmt", "-f", ...sources);
+      if (!shellSources) {
         return;
       }
 
@@ -314,7 +295,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         "-s", // Simplify code
         "-sr", // Add space after redirect operators
         "-w", // Write
-        ...shellSources,
+        ...shellSources.split("\n"),
       );
     },
     // pre-commit's `types: [text]` config option sometimes has false positives,
