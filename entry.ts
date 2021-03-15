@@ -70,7 +70,7 @@ const enum HookName {
   Black = "Black",
   ClangFormat = "ClangFormat",
   GoogleJavaFormat = "google-java-format",
-  Ktlint = "ktlint",
+  Ktfmt = "ktfmt",
   PrettierJs = "Prettier (JS)",
   PrettierNonJs = "Prettier (non-JS)",
   Scalafmt = "scalafmt",
@@ -182,14 +182,15 @@ const HOOKS: Record<HookName, LockableHook> = {
     include: /\.java$/,
     runAfter: [HookName.Sed],
   }),
-  [HookName.Ktlint]: createLockableHook({
-    action: async sources => {
-      try {
-        await run("/ktlint", "--format", ...sources);
-      } catch (ex) {
-        // ktlint just failed to autocorrect some stuff, e.g. long lines
-      }
-    },
+  [HookName.Ktfmt]: createLockableHook({
+    action: sources =>
+      run(
+        "java",
+        "-jar",
+        "/ktfmt-0.22-jar-with-dependencies.jar",
+        "--google-style",
+        ...sources,
+      ),
     include: /\.kt$/,
     runAfter: [HookName.Sed],
   }),
