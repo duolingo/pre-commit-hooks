@@ -186,6 +186,11 @@ const HOOKS: Record<HookName, LockableHook> = {
     action: sources =>
       run(
         "java",
+        // By default, ktfmt was OOMing our 36-core CI server with crazy errors like "There is
+        // insufficient memory for the Java Runtime Environment to continue. Native memory
+        // allocation (mmap) failed to map 3697278976 bytes for committing reserved memory." Capping
+        // at 256m works and only increases my laptop's time to format a test repo from 64s to 72s
+        "-Xmx256m",
         "-jar",
         "/ktfmt-0.22-jar-with-dependencies.jar",
         "--google-style",
