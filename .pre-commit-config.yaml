@@ -1,6 +1,6 @@
 repos:
   - repo: .
-    rev: 1.4.0
+    rev: 1.4.1
     hooks:
       - id: duolingo
   - repo: local
