@@ -209,7 +209,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         "all",
         ...sources,
       ),
-    include: /\.(html?|markdown|md|scss|tsx?|ya?ml)$/,
+    include: /\.(css|html?|markdown|md|scss|tsx?|ya?ml)$/,
     runAfter: [HookName.Sed],
   }),
   [HookName.Scalafmt]: createLockableHook({
