@@ -12,6 +12,11 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [terraform fmt](https://github.com/hashicorp/terraform) v0.11.14 and v0.12.29 for Terraform
 - [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v10.0.0 for Protobuf
 - [SVGO](https://github.com/svg/svgo) v1.3.2 for SVG
+- Custom regex transformations (basically [sed](https://en.wikipedia.org/wiki/Sed)), for example:
+  - Trimming trailing whitespace and newlines
+  - Removing unnecessary `coding` pragmas and `object` base classes in Python 3
+  - Replacing empty Python collections like `list()` with literal equivalents
+  - Replacing empty Kotlin collections like `arrayOf()` with `empty` equivalents
 
 We run this hook on developer workstations and enforce it in CI for all production repos at Duolingo.
 
