@@ -192,7 +192,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         // at 256m works and only increases my laptop's time to format a test repo from 64s to 72s
         "-Xmx256m",
         "-jar",
-        "/ktfmt-0.22-jar-with-dependencies.jar",
+        "/ktfmt-0.24-jar-with-dependencies.jar",
         "--google-style",
         ...sources,
       ),
