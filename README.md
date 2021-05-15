@@ -32,6 +32,8 @@ Repo maintainers can declare this hook in `.pre-commit-config.yaml`:
       args: [--python-version=2] # Optional, defaults to Python 3
 ```
 
+Directories named `build` and `node_modules` are excluded by default - no need to declare them in the hook's `exclude` key.
+
 Contributors can copy this repo's `.editorconfig` file to their home directory in order to have their [text editors and IDEs](https://editorconfig.org/) automatically pick up the same linter/formatter settings that this hook uses.
 
 _Duolingo is hiring! Apply at https://www.duolingo.com/careers_
