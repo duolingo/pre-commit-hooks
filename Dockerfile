@@ -21,7 +21,7 @@ RUN pip3 install --upgrade pip && pip3 install \
 
 # Standalone binaries
 RUN wget https://github.com/google/google-java-format/releases/download/google-java-format-1.9/google-java-format-1.9-all-deps.jar
-RUN wget https://search.maven.org/remotecontent?filepath=com/facebook/ktfmt/0.22/ktfmt-0.22-jar-with-dependencies.jar
+RUN wget https://search.maven.org/remotecontent?filepath=com/facebook/ktfmt/0.25/ktfmt-0.25-jar-with-dependencies.jar
 RUN wget https://github.com/mvdan/sh/releases/download/v3.2.0/shfmt_v3.2.0_linux_amd64 -O shfmt \
   && chmod +x shfmt
 RUN wget https://releases.hashicorp.com/terraform/0.12.29/terraform_0.12.29_linux_amd64.zip -O tf.zip \
