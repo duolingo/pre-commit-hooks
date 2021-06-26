@@ -76,6 +76,7 @@ const enum HookName {
   Scalafmt = "scalafmt",
   Sed = "sed",
   Shfmt = "shfmt",
+  Styler = "styler",
   Svgo = "SVGO",
   TerraformFmt = "terraform fmt",
 }
@@ -308,6 +309,36 @@ const HOOKS: Record<HookName, LockableHook> = {
     // and removing a binary .proto file's trailing newline may corrupt it
     exclude: /\.proto$/,
     include: /./,
+    runAfter: [HookName.Sed],
+  }),
+  [HookName.Styler]: createLockableHook({
+    action: async sources => {
+      const output = await run(
+        "Rscript",
+        "-e",
+        // We need to set `R.cache.rootPath` ourselves because otherwise Styler
+        // fails (but only when actually run via pre-commit, not when tested
+        // directly in a `docker run [...] bash` terminal?!) with this error:
+        //
+        // When processing foobar.r: .onLoad failed in loadNamespace
+        // () for 'R.cache', details:
+        //   call: mkdirs.default(parent, mustWork = mustWork, maxTries =
+        //   maxTries,
+        //   error: Failed to create directory (tried 5 times), most likely
+        //   because of lack of file permissions (directory '/' exists but
+        //   nothing beyond): //.cache
+        `options(R.cache.rootPath = "/tmp/rcache");${sources
+          .map(s => `styler::style_file("${s}", scope = "line_breaks")`)
+          .join(";")}`,
+      );
+
+      // R doesn't exit with nonzero code upon failure, so we have to detect
+      // failure ourselves :/
+      if (!/\s0\s+Styling threw an error/.test(output)) {
+        throw output;
+      }
+    },
+    include: /\.(R|Rmd|Rnw|Rprofile)$/i,
     runAfter: [HookName.Sed],
   }),
   [HookName.Svgo]: createLockableHook({
