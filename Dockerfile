@@ -1,4 +1,4 @@
-FROM alpine:3.12.1
+FROM alpine:3.14.1
 
 # Dependencies
 RUN apk add --no-cache --virtual .build-deps \
@@ -15,18 +15,17 @@ RUN apk add --no-cache --virtual .build-deps \
   && pip3 install --no-cache-dir --upgrade pip \
   && pip3 install --no-cache-dir \
     autoflake==1.4 \
-    black==20.8b1 \
+    black==21.7b0 \
     isort==5.9.3 \
   && npm install -g \
-    prettier@2.1.2 \
+    @types/node@16.6.2 \
+    prettier@2.3.2 \
     svgo@1.3.2 \
-    typescript@4.0.5 \
-  && npm install \
-    @types/node@14.14.7 \
+    typescript@4.3.5 \
   && apk del .build-deps \
-  && wget https://github.com/google/google-java-format/releases/download/google-java-format-1.9/google-java-format-1.9-all-deps.jar \
-  && wget https://search.maven.org/remotecontent?filepath=com/facebook/ktfmt/0.25/ktfmt-0.25-jar-with-dependencies.jar \
-  && wget https://github.com/mvdan/sh/releases/download/v3.2.0/shfmt_v3.2.0_linux_amd64 -O shfmt \
+  && wget https://github.com/google/google-java-format/releases/download/v1.11.0/google-java-format-1.11.0-all-deps.jar -O google-java-format \
+  && wget https://search.maven.org/remotecontent?filepath=com/facebook/ktfmt/0.27/ktfmt-0.27-jar-with-dependencies.jar -O ktfmt \
+  && wget https://github.com/mvdan/sh/releases/download/v3.3.1/shfmt_v3.3.1_linux_amd64 -O shfmt \
   && chmod +x shfmt \
   && wget https://releases.hashicorp.com/terraform/0.12.29/terraform_0.12.29_linux_amd64.zip -O tf.zip \
   && unzip tf.zip \
@@ -45,7 +44,12 @@ RUN apk add --no-cache --virtual .build-deps \
 
 # Local files
 COPY . .
-RUN tsc --noUnusedLocals --noUnusedParameters --strict entry.ts \
+RUN tsc \
+    --noUnusedLocals \
+    --noUnusedParameters \
+    --strict \
+    --typeRoots /usr/local/lib/node_modules/@types \
+    entry.ts \
   && mv entry.js entry \
   && chmod +x entry \
   && touch /emptyfile

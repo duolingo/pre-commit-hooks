@@ -2,16 +2,16 @@
 
 This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
 
-- [Prettier](https://github.com/prettier/prettier) v2.1.2 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, YAML
-- [Black](https://github.com/psf/black) v20.8b1 for Python
+- [Prettier](https://github.com/prettier/prettier) v2.3.2 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, YAML
+- [Black](https://github.com/psf/black) v21.7b0 for Python
 - [autoflake](https://github.com/myint/autoflake) v1.4 for Python
 - [isort](https://github.com/PyCQA/isort) v5.9.3 for Python
-- [google-java-format](https://github.com/google/google-java-format) v1.9 for Java
-- [ktfmt](https://github.com/facebookincubator/ktfmt) v0.25 for Kotlin
+- [google-java-format](https://github.com/google/google-java-format) v1.11.0 for Java
+- [ktfmt](https://github.com/facebookincubator/ktfmt) v0.27 for Kotlin
 - [scalafmt](https://scalameta.org/scalafmt/) v2.7.5 for Scala
-- [shfmt](https://github.com/mvdan/sh) v3.2.0 for Shell
+- [shfmt](https://github.com/mvdan/sh) v3.3.1 for Shell
 - [terraform fmt](https://github.com/hashicorp/terraform) v0.11.14 and v0.12.29 for Terraform
-- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v10.0.0 for Protobuf
+- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v11.1.0 for Protobuf
 - [SVGO](https://github.com/svg/svgo) v1.3.2 for SVG
 - Custom regex transformations (basically [sed](https://en.wikipedia.org/wiki/Sed)), for example:
   - Trimming trailing whitespace and newlines

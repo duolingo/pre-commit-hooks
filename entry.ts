@@ -39,7 +39,7 @@ const run = (...args: string[]) =>
 
 /** Reads a file, transforms its contents, and writes the result if different */
 const transformFile = (path: string, transform: (before: string) => string) =>
-  new Promise<string>((resolve, reject) => {
+  new Promise<void>((resolve, reject) => {
     readFile(path, "utf8", (err, data) => {
       // File unreadable
       if (err) {
@@ -119,7 +119,7 @@ interface LockableHook extends Hook {
 /** Wraps a non-lockable hook to add properties used for locking */
 const createLockableHook = (hook: Hook): LockableHook => {
   let unlock = () => undefined as void;
-  const lock = new Promise(resolve => {
+  const lock = new Promise<void>(resolve => {
     unlock = resolve;
   });
   return { ...hook, lock, unlock };
@@ -173,13 +173,7 @@ const HOOKS: Record<HookName, LockableHook> = {
   }),
   [HookName.GoogleJavaFormat]: createLockableHook({
     action: sources =>
-      run(
-        "java",
-        "-jar",
-        "/google-java-format-1.9-all-deps.jar",
-        "--replace",
-        ...sources,
-      ),
+      run("java", "-jar", "/google-java-format", "--replace", ...sources),
     include: /\.java$/,
     runAfter: [HookName.Sed],
   }),
@@ -198,7 +192,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         // at 256m works and only increases my laptop's time to format a test repo from 64s to 72s
         "-Xmx256m",
         "-jar",
-        "/ktfmt-0.25-jar-with-dependencies.jar",
+        "/ktfmt",
         "--google-style",
         ...sources,
       ),
