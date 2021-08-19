@@ -70,6 +70,7 @@ const enum HookName {
   Black = "Black",
   ClangFormat = "ClangFormat",
   GoogleJavaFormat = "google-java-format",
+  Isort = "isort",
   Ktfmt = "ktfmt",
   PrettierJs = "Prettier (JS)",
   PrettierNonJs = "Prettier (non-JS)",
@@ -157,7 +158,7 @@ const HOOKS: Record<HookName, LockableHook> = {
       );
     },
     include: /\.py$/,
-    runAfter: [HookName.Autoflake],
+    runAfter: [HookName.Isort],
   }),
   [HookName.ClangFormat]: createLockableHook({
     action: sources =>
@@ -181,6 +182,11 @@ const HOOKS: Record<HookName, LockableHook> = {
       ),
     include: /\.java$/,
     runAfter: [HookName.Sed],
+  }),
+  [HookName.Isort]: createLockableHook({
+    action: sources => run("isort", ...sources),
+    include: /\.py$/,
+    runAfter: [HookName.Autoflake],
   }),
   [HookName.Ktfmt]: createLockableHook({
     action: sources =>

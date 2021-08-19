@@ -17,7 +17,8 @@ RUN apk update && apk upgrade && apk add --no-cache \
 # Python packages
 RUN pip3 install --upgrade pip && pip3 install \
   autoflake==1.4 \
-  black==20.8b1
+  black==20.8b1 \
+  isort==5.9.3
 
 # Standalone binaries
 RUN wget https://github.com/google/google-java-format/releases/download/google-java-format-1.9/google-java-format-1.9-all-deps.jar
