@@ -7,7 +7,7 @@ RUN apk add --no-cache --virtual .build-deps \
     npm \
     python3-dev \
   && apk add --no-cache \
-    clang \
+    clang-extra-tools \
     nodejs \
     openjdk11-jre-headless \
     py3-pip \
