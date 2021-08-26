@@ -1,5 +1,5 @@
 - id: duolingo
   name: Duolingo
-  entry: duolingo/pre-commit-hooks:1.5.1 /entry
+  entry: duolingo/pre-commit-hooks:1.5.2 /entry
   language: docker_image
   types: [text]
