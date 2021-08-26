@@ -196,7 +196,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         "--google-style",
         ...sources,
       ),
-    include: /\.kt$/,
+    include: /\.kts?$/,
     runAfter: [HookName.Sed],
   }),
   [HookName.PrettierJs]: createLockableHook({

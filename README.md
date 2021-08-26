@@ -7,7 +7,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [autoflake](https://github.com/myint/autoflake) v1.4 for Python
 - [isort](https://github.com/PyCQA/isort) v5.9.3 for Python
 - [google-java-format](https://github.com/google/google-java-format) v1.11.0 for Java
-- [ktfmt](https://github.com/facebookincubator/ktfmt) v0.27 for Kotlin
+- [ktfmt](https://github.com/facebookincubator/ktfmt) v0.28 for Kotlin
 - [scalafmt](https://scalameta.org/scalafmt/) v2.7.5 for Scala
 - [shfmt](https://github.com/mvdan/sh) v3.3.1 for Shell
 - [terraform fmt](https://github.com/hashicorp/terraform) v0.11.14 and v0.12.29 for Terraform
