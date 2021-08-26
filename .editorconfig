@@ -3,7 +3,7 @@ indent_style=space
 insert_final_newline=true
 trim_trailing_whitespace=true
 
-[*.{gradle,java,kt,sh,xml,yaml,yml}]
+[*.{gradle,java,kt,kts,sh,xml,yaml,yml}]
 indent_size=2
 max_line_length=100
 
