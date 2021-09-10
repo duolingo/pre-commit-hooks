@@ -132,8 +132,8 @@ const HOOKS: Record<HookName, LockableHook> = {
       run(
         "autoflake",
         "--ignore-init-module-imports",
-        "--imports=attrs,boto,boto3,flask,pyramid,pytest,pytz,requests,simplejson,six",
         "--in-place",
+        "--remove-all-unused-imports",
         "--remove-duplicate-keys",
         "--remove-unused-variables",
         ...sources,
