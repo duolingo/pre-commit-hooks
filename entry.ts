@@ -77,6 +77,7 @@ const enum HookName {
   Scalafmt = "scalafmt",
   Sed = "sed",
   Shfmt = "shfmt",
+  SqlFormatter = "SQL Formatter",
   Svgo = "SVGO",
   TerraformFmt = "terraform fmt",
 }
@@ -308,6 +309,24 @@ const HOOKS: Record<HookName, LockableHook> = {
     // and removing a binary .proto file's trailing newline may corrupt it
     exclude: /\.proto$/,
     include: /./,
+    runAfter: [HookName.Sed],
+  }),
+  [HookName.SqlFormatter]: createLockableHook({
+    action: sources =>
+      Promise.all(
+        sources.map(source =>
+          run(
+            "sql-formatter",
+            "--output",
+            source,
+            "--language",
+            "mysql",
+            "--uppercase",
+            source,
+          ),
+        ),
+      ),
+    include: /\.sql$/,
     runAfter: [HookName.Sed],
   }),
   [HookName.Svgo]: createLockableHook({
