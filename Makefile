@@ -27,11 +27,11 @@ release: test
 # use Docker Hub's autobuild feature anymore because it only supports amd64 :/
 # https://github.com/docker/roadmap/issues/109
 push: test
-	docker buildx build --platform linux/amd64,linux/arm64 \
+	docker buildx inspect | grep -q docker-container || docker buildx create --use
+	docker buildx build --push --platform linux/amd64,linux/arm64 \
 		-t "$(_IMAGE_NAME):$(git tag | tail -1)" \
 		-t "$(_IMAGE_NAME):latest" \
 		.
-	docker push "$(_IMAGE_NAME)"
 
 # Runs tests
 test:
