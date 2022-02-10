@@ -3,6 +3,9 @@ indent_style=space
 insert_final_newline=true
 trim_trailing_whitespace=true
 
+[makefile]
+indent_style=tab
+
 [*.{gradle,java,kt,kts,sh,xml,yaml,yml}]
 indent_size=2
 max_line_length=100
