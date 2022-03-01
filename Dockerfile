@@ -20,7 +20,6 @@ RUN apk add --no-cache --virtual .build-deps \
   && npm install -g \
     @types/node@16.6.2 \
     prettier@2.3.2 \
-    sql-formatter@4.0.2 \
     svgo@1.3.2 \
     typescript@4.3.5 \
   && apk del .build-deps \
