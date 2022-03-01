@@ -17,6 +17,7 @@ RUN apk add --no-cache --virtual .build-deps \
     autoflake==1.4 \
     black==21.7b0 \
     isort==5.9.3 \
+    sqlfluff==0.10.1 \
   && npm install -g \
     @types/node@16.6.2 \
     prettier@2.3.2 \
