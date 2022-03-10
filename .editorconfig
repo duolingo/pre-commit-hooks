@@ -15,7 +15,14 @@ indent_size=2
 max_line_length=80
 
 [*.py]
-combine_as_imports=true
+# TODO: We originally set this value to true, but an isort bug caused it to be
+# ignored for several months. We now have a workaround for that bug, but we set
+# this value to false in order to preserve existing behavior and avoid diff
+# churn unrelated to the bug workaround (which is much higher urgency than
+# combine_as_imports). We should set this value back to true the next time we
+# upgrade Black, which will probably cause significant diff churn anyway.
+# https://github.com/duolingo/pre-commit-hooks/pull/28
+combine_as_imports=false
 force_grid_wrap=0
 include_trailing_comma=true
 indent_size=4
