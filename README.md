@@ -3,7 +3,7 @@
 This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
 
 - [Prettier](https://github.com/prettier/prettier) v2.3.2 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, YAML
-- [Black](https://github.com/psf/black) v21.7b0 for Python
+- [Black](https://github.com/psf/black) v21.7b0<!-- TODO: The next time we upgrade Black, we should also address the isort comment in .editorconfig --> for Python
 - [autoflake](https://github.com/myint/autoflake) v1.4 for Python
 - [isort](https://github.com/PyCQA/isort) v5.9.3 for Python
 - [google-java-format](https://github.com/google/google-java-format) v1.11.0 for Java

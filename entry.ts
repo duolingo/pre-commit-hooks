@@ -178,7 +178,10 @@ const HOOKS: Record<HookName, LockableHook> = {
     runAfter: [HookName.Sed],
   }),
   [HookName.Isort]: createLockableHook({
-    action: sources => run("isort", ...sources),
+    // isort's automatic config file detection is broken
+    // https://github.com/PyCQA/isort/issues/1907
+    // https://github.com/samueljsb/qaz/pull/104
+    action: sources => run("isort", "--settings", "/.editorconfig", ...sources),
     include: /\.py$/,
     runAfter: [HookName.Autoflake],
   }),
