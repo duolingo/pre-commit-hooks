@@ -27,9 +27,13 @@ release: test
 # use Docker Hub's autobuild feature anymore because it only supports amd64 :/
 # https://github.com/docker/roadmap/issues/109
 push: test
+	grep -qF 'docker.io/' "$${HOME}/.docker/config.json" \
+		|| { echo 'Run `docker login` to log into Docker Hub'; false; }
 	docker buildx inspect | grep -q docker-container || docker buildx create --use
+	# https://stackoverflow.com/a/69987949
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 	docker buildx build --push --platform linux/amd64,linux/arm64 \
-		-t "$(_IMAGE_NAME):$(git tag | tail -1)" \
+		-t "$(_IMAGE_NAME):$$(git tag | tail -1)" \
 		-t "$(_IMAGE_NAME):latest" \
 		.
 
