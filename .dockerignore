@@ -2,3 +2,4 @@
 !.editorconfig
 !entry.ts
 !stylesheet.xml
+!svgo.config.js

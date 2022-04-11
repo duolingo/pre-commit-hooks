@@ -84,7 +84,7 @@ const enum HookName {
 
 /** Arguments passed into this hook via the `args` pre-commit config key */
 type Args = Partial<Record<Arg, string>>;
-type Arg = "python-version";
+type Arg = "python-version" | "scala-version";
 
 interface Hook {
   /**
@@ -143,21 +143,22 @@ const HOOKS: Record<HookName, LockableHook> = {
     runAfter: [HookName.Sed],
   }),
   [HookName.Black]: createLockableHook({
-    action: async (sources, args) => {
-      const pythonVersionArgs = args["python-version"]?.startsWith("2")
-        ? ["--fast", "--target-version", "py27"]
-        : ["--target-version", "py36"];
-      await run(
-        "black",
+    action: async (sources, args) =>
+      run(
+        // Black 21.x was the last major version with Python 2 support. It also
+        // had a bug that requires pinning click==8.0.4. Both packages should
+        // be removed once we drop Python 2 support.
+        // https://github.com/psf/black/issues/2964
+        ...(args["python-version"]?.startsWith("2")
+          ? ["black21", "--fast", "--target-version", "py27"]
+          : ["black", "--target-version", "py310"]),
         "--config",
         EMPTY_FILE,
         "--line-length",
         `${PYTHON_LINE_LENGTH}`,
         "--quiet",
-        ...pythonVersionArgs,
         ...sources,
-      );
-    },
+      ),
     include: /\.py$/,
     runAfter: [HookName.Isort],
   }),
@@ -222,8 +223,26 @@ const HOOKS: Record<HookName, LockableHook> = {
     runAfter: [HookName.Sed, HookName.Xsltproc],
   }),
   [HookName.Scalafmt]: createLockableHook({
-    action: sources =>
-      run("/scalafmt", "--config-str", "preset=IntelliJ", ...sources),
+    action: async (sources, args) =>
+      run(
+        "/scalafmt",
+        "--config-str",
+        Object.entries({
+          "docstrings.oneline": "fold",
+          "docstrings.wrap": "no",
+          preset: "IntelliJ",
+          "runner.dialect": `scala${(args["scala-version"] ?? "2.12")
+            .split(".")
+            .slice(0, 2)
+            .join("")}`,
+          version: (await run("/scalafmt", "--version")).split(" ")[1],
+        })
+          .map(kv => kv.join("="))
+          .join(","),
+        "--non-interactive",
+        "--quiet",
+        ...sources,
+      ),
     include: /\.(scala|sbt|sc)$/,
     runAfter: [HookName.Sed],
   }),
@@ -315,62 +334,7 @@ const HOOKS: Record<HookName, LockableHook> = {
     runAfter: [HookName.Sed],
   }),
   [HookName.Svgo]: createLockableHook({
-    action: sources =>
-      run(
-        "svgo",
-        `--disable=${[
-          "addAttributesToSVGElement",
-          "addClassesToSVGElement",
-          "cleanupEnableBackground",
-          "cleanupIDs",
-          "cleanupListOfValues",
-          "cleanupNumericValues",
-          "collapseGroups", // Can cause shape misalignment
-          "convertColors",
-          "convertEllipseToCircle",
-          "convertPathData",
-          "convertShapeToPath",
-          "convertStyleToAttrs",
-          "convertTransform",
-          "inlineStyles",
-          "mergePaths",
-          "minifyStyles",
-          "moveElemsAttrsToGroup",
-          "moveGroupAttrsToElems",
-          "prefixIds",
-          "removeAttributesBySelector",
-          "removeAttrs",
-          "removeDesc",
-          "removeDimensions",
-          "removeDoctype",
-          "removeEditorsNSData",
-          "removeElementsByAttr",
-          "removeEmptyAttrs",
-          "removeEmptyContainers",
-          "removeEmptyText",
-          "removeHiddenElems",
-          "removeMetadata",
-          "removeNonInheritableGroupAttrs",
-          "removeOffCanvasPaths",
-          "removeRasterImages",
-          "removeScriptElement",
-          "removeStyleElement",
-          "removeTitle",
-          "removeUnknownsAndDefaults", // Can turn shapes black
-          "removeUnusedNS",
-          "removeUselessDefs", // Blows away SVG fonts
-          "removeUselessStrokeAndFill",
-          "removeViewBox",
-          "removeXMLNS",
-          "removeXMLProcInst",
-          "reusePaths",
-          "sortAttrs",
-          "sortDefsChildren",
-        ].join(",")}`,
-        `--enable=${["cleanupAttrs", "removeComments"].join(",")}`,
-        "--quiet",
-        ...sources,
-      ),
+    action: sources => run("svgo", "--config", "/svgo.config.js", ...sources),
     include: /\.svg$/,
     runAfter: [HookName.Sed],
   }),
@@ -388,9 +352,9 @@ const HOOKS: Record<HookName, LockableHook> = {
         // deleted!) https://github.com/hashicorp/terraform/pull/20040
         sources.map(async source => {
           try {
-            await run("/terraform", "fmt", "-write=true", source);
+            await run("/terraform0.11", "fmt", "-write=true", source);
           } catch (ex) {
-            await run("/terraform0.12", "fmt", "-write=true", source);
+            await run("/terraform", "fmt", "-write=true", source);
           }
         }),
       ),
@@ -427,6 +391,8 @@ const prefixLines = (() => {
     lines
       .split("\n")
       .filter(line => line.trim().length)
+      // Black 21.12b0 spams this when running on Python 2 source code
+      .filter(line => !line.includes("DEPRECATION: Python 2 support"))
       .map(line => `${prefix}:`.padEnd(maxPrefixLength + 2) + line)
       .join("\n");
 })();

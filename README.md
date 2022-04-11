@@ -2,18 +2,18 @@
 
 This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
 
-- [Prettier](https://github.com/prettier/prettier) v2.3.2 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
-- [Black](https://github.com/psf/black) v21.7b0<!-- TODO: The next time we upgrade Black, we should also address the isort comment in .editorconfig --> for Python
+- [Prettier](https://github.com/prettier/prettier) v2.6.2 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
+- [Black](https://github.com/psf/black) v22.3.0 for Python 3, v21.12b0 for Python 2
 - [autoflake](https://github.com/myint/autoflake) v1.4 for Python
-- [isort](https://github.com/PyCQA/isort) v5.9.3 for Python
-- [google-java-format](https://github.com/google/google-java-format) v1.11.0 for Java
-- [ktfmt](https://github.com/facebookincubator/ktfmt) v0.28 for Kotlin
-- [scalafmt](https://scalameta.org/scalafmt/) v2.7.5 for Scala
-- [shfmt](https://github.com/mvdan/sh) v3.3.1 for Shell
+- [isort](https://github.com/PyCQA/isort) v5.10.1 for Python
+- [google-java-format](https://github.com/google/google-java-format) v1.15.0 for Java
+- [ktfmt](https://github.com/facebookincubator/ktfmt) v0.35 for Kotlin
+- [scalafmt](https://scalameta.org/scalafmt/) v3.5.1 for Scala
+- [shfmt](https://github.com/mvdan/sh) v3.4.3 for Shell
 - [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10135 for XML
-- [terraform fmt](https://github.com/hashicorp/terraform) v0.11.14 and v0.12.29 for Terraform
-- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v11.1.0 for Protobuf
-- [SVGO](https://github.com/svg/svgo) v1.3.2 for SVG
+- [terraform fmt](https://github.com/hashicorp/terraform) v0.11.14 and v1.1.8 for Terraform
+- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v13.0.1 for Protobuf
+- [SVGO](https://github.com/svg/svgo) v2.8.0 for SVG
 - Custom regex transformations (basically [sed](https://en.wikipedia.org/wiki/Sed)), for example:
   - Trimming trailing whitespace and newlines
   - Removing unnecessary `coding` pragmas and `object` base classes in Python 3
@@ -31,11 +31,13 @@ Repo maintainers can declare this hook in `.pre-commit-config.yaml`:
   rev: 1.5.4
   hooks:
     - id: duolingo
-      args: [--python-version=2] # Optional, defaults to Python 3
+      args: # Optional
+        - --python-version=2 # Defaults to Python 3
+        - --scala-version=3 # Defaults to Scala 2.12
 ```
 
 Directories named `build` and `node_modules` are excluded by default - no need to declare them in the hook's `exclude` key.
 
-Contributors can copy this repo's `.editorconfig` file to their home directory in order to have their [text editors and IDEs](https://editorconfig.org/) automatically pick up the same linter/formatter settings that this hook uses.
+Contributors can copy or symlink this repo's `.editorconfig` file to their home directory in order to have their [text editors and IDEs](https://editorconfig.org/) automatically pick up the same linter/formatter settings that this hook uses.
 
 _Duolingo is hiring! Apply at https://www.duolingo.com/careers_
