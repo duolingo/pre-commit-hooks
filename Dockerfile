@@ -16,6 +16,7 @@ RUN apk add --no-cache --virtual .build-deps \
   && pip3 install --no-cache-dir \
     autoflake==1.4 \
     black==21.7b0 \
+    click==8.0.4 \
     isort==5.9.3 \
   && npm install -g \
     @types/node@16.6.2 \
