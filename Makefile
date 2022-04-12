@@ -9,6 +9,7 @@ _IMAGE_NAME = duolingo/pre-commit-hooks
 #
 # After running this, you should push master and tags to GitHub and create a
 # corresponding GitHub release.
+.PHONY: release
 release: test
 	# Validate
 	[[ -n "${V}" ]]
@@ -26,6 +27,7 @@ release: test
 # Pushes to Docker Hub. Should be run when creating a GitHub release. We don't
 # use Docker Hub's autobuild feature anymore because it only supports amd64 :/
 # https://github.com/docker/roadmap/issues/109
+.PHONY: push
 push: test
 	grep -qF 'docker.io/' "$${HOME}/.docker/config.json" || docker login
 	docker buildx inspect | grep -q docker-container || docker buildx create --use
@@ -37,10 +39,15 @@ push: test
 		.
 
 # Opens a shell in the container for debugging
+.PHONY: shell
 shell:
 	docker run --rm -it "$$(docker build -q .)" sh
 
 # Runs tests
+.PHONY: test
 test:
-	docker run --rm "$$(docker build -q .)" sh -c \
-		"echo 1 > /tmp/a.js && /entry /tmp/a.js && grep -q ';' /tmp/a.js"
+	docker run --rm -v "$${PWD}/test:/test" "$$(docker build -q .)" sh -c \
+		'cp -r /test/before /tmp \
+			&& /entry /tmp/before/* \
+			&& diff -r /tmp/before /test/after \
+			&& echo "All tests passed!"'
