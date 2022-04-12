@@ -36,7 +36,11 @@ push: test
 		-t "$(_IMAGE_NAME):latest" \
 		.
 
+# Opens a shell in the container for debugging
+shell:
+	docker run --rm -it "$$(docker build -q .)" sh
+
 # Runs tests
 test:
-	docker run --rm "$$(docker build --network=host -q . | head -1)" sh -c \
+	docker run --rm "$$(docker build -q .)" sh -c \
 		"echo 1 > /tmp/a.js && /entry /tmp/a.js && grep -q ';' /tmp/a.js"
