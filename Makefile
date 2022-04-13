@@ -47,7 +47,8 @@ shell:
 .PHONY: test
 test:
 	docker run --rm -v "$${PWD}/test:/test" "$$(docker build -q .)" sh -c \
-		'cp -r /test/before /tmp \
-			&& /entry /tmp/before/* \
-			&& diff -r /tmp/before /test/after \
+		'cp -r /test/before /tmp/actual \
+			&& cp -r /test/after /tmp/expected \
+			&& /entry /tmp/actual/* \
+			&& diff -r /tmp/expected /tmp/actual \
 			&& echo "All tests passed!"'

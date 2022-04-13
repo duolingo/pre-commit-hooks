@@ -3,7 +3,7 @@ repos:
     rev: 1.5.4
     hooks:
       - id: duolingo
-        exclude: test/before
+        exclude: test/malformatted
   - repo: local
     hooks:
       - id: test
