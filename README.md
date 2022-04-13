@@ -2,7 +2,7 @@
 
 This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
 
-- [Prettier](https://github.com/prettier/prettier) v2.3.2 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, YAML
+- [Prettier](https://github.com/prettier/prettier) v2.3.2 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
 - [Black](https://github.com/psf/black) v21.7b0<!-- TODO: The next time we upgrade Black, we should also address the isort comment in .editorconfig --> for Python
 - [autoflake](https://github.com/myint/autoflake) v1.4 for Python
 - [isort](https://github.com/PyCQA/isort) v5.9.3 for Python
@@ -10,6 +10,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [ktfmt](https://github.com/facebookincubator/ktfmt) v0.28 for Kotlin
 - [scalafmt](https://scalameta.org/scalafmt/) v2.7.5 for Scala
 - [shfmt](https://github.com/mvdan/sh) v3.3.1 for Shell
+- [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10135 for XML
 - [terraform fmt](https://github.com/hashicorp/terraform) v0.11.14 and v0.12.29 for Terraform
 - [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v11.1.0 for Protobuf
 - [SVGO](https://github.com/svg/svgo) v1.3.2 for SVG
