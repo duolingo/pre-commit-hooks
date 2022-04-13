@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xsl:stylesheet
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  version="1.0"
+>
+  <!-- Indent output -->
+  <xsl:strip-space elements="*" />
+  <xsl:output encoding="utf-8" indent="yes" method="xml" />
+  <!-- Document root -->
+  <xsl:template match="/">
+    <xsl:apply-templates />
+  </xsl:template>
+  <!-- Sort non-text nodes' attributes -->
+  <xsl:template match="*">
+    <xsl:copy>
+      <xsl:for-each select="@*">
+        <xsl:sort select="name(.)" />
+        <xsl:copy />
+      </xsl:for-each>
+      <xsl:apply-templates />
+    </xsl:copy>
+  </xsl:template>
+  <!-- Leave text nodes untouched -->
+  <xsl:template match="text()|comment()|processing-instruction()">
+    <xsl:copy />
+  </xsl:template>
+</xsl:stylesheet>

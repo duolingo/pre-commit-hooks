@@ -79,6 +79,7 @@ const enum HookName {
   Shfmt = "shfmt",
   Svgo = "SVGO",
   TerraformFmt = "terraform fmt",
+  Xsltproc = "xsltproc",
 }
 
 /** Arguments passed into this hook via the `args` pre-commit config key */
@@ -217,8 +218,8 @@ const HOOKS: Record<HookName, LockableHook> = {
         "all",
         ...sources,
       ),
-    include: /\.(css|html?|markdown|md|scss|tsx?|ya?ml)$/,
-    runAfter: [HookName.Sed],
+    include: /\.(css|html?|markdown|md|scss|tsx?|xml|ya?ml)$/,
+    runAfter: [HookName.Sed, HookName.Xsltproc],
   }),
   [HookName.Scalafmt]: createLockableHook({
     action: sources =>
@@ -394,6 +395,16 @@ const HOOKS: Record<HookName, LockableHook> = {
         }),
       ),
     include: /\.tf$/,
+    runAfter: [HookName.Sed],
+  }),
+  [HookName.Xsltproc]: createLockableHook({
+    action: sources =>
+      Promise.all(
+        sources.map(source =>
+          run("xsltproc", "--output", source, "/stylesheet.xml", source),
+        ),
+      ),
+    include: /\.xml$/,
     runAfter: [HookName.Sed],
   }),
 };

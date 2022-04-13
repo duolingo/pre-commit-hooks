@@ -8,6 +8,7 @@ RUN apk add --no-cache --virtual .build-deps \
     python3-dev \
   && apk add --no-cache \
     clang-extra-tools \
+    libxslt \
     nodejs \
     openjdk11-jre-headless \
     py3-pip \
@@ -19,6 +20,7 @@ RUN apk add --no-cache --virtual .build-deps \
     click==8.0.4 \
     isort==5.9.3 \
   && npm install -g \
+    @prettier/plugin-xml@2.0.1 \
     @types/node@16.6.2 \
     prettier@2.3.2 \
     svgo@1.3.2 \
