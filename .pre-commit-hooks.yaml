@@ -3,3 +3,14 @@
   entry: duolingo/pre-commit-hooks:1.5.4 /entry
   language: docker_image
   types: [text]
+
+# Nobody should ever use this hook in production. It's just for testing PRs in
+# the duolingo/pre-commit-hooks repo more easily without having to tag and push
+# temporary images to Docker Hub. Usage: edit a consumer repo's `id: duolingo`
+# hook config to instead declare `id: duolingo-dev` and `rev: <PR branch SHA>`,
+# then run `pre-commit run duolingo-dev --all-files`
+- id: duolingo-dev
+  name: Duolingo (dev)
+  entry: /entry
+  language: docker
+  types: [text]
