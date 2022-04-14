@@ -11,7 +11,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [scalafmt](https://scalameta.org/scalafmt/) v3.5.1 for Scala
 - [shfmt](https://github.com/mvdan/sh) v3.4.3 for Shell
 - [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10135 for XML
-- [terraform fmt](https://github.com/hashicorp/terraform) v0.11.14 and v1.1.8 for Terraform
+- [terraform fmt](https://github.com/hashicorp/terraform) v1.1.8 for Terraform
 - [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v13.0.1 for Protobuf
 - [SVGO](https://github.com/svg/svgo) v2.8.0 for SVG
 - Custom regex transformations (basically [sed](https://en.wikipedia.org/wiki/Sed)), for example:
