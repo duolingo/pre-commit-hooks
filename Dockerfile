@@ -1,5 +1,8 @@
 FROM alpine:3.15.4
 
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_NO_CACHE_DIR=1
+
 # Dependencies
 RUN apk add --no-cache --virtual .build-deps \
     gcc \
@@ -13,14 +16,13 @@ RUN apk add --no-cache --virtual .build-deps \
     openjdk11-jre-headless \
     py3-pip \
     python3 \
-  && pip3 install --no-cache-dir --upgrade pip \
-  && pip3 install --no-cache-dir \
+  && pip3 install \
     autoflake==1.4 \
     black==22.3.0 \
     isort==5.10.1 \
   && python3 -m venv /black21-venv \
   && source /black21-venv/bin/activate \
-  && pip3 install --no-cache-dir black==21.12b0 click==8.0.4 \
+  && pip3 install black==21.12b0 click==8.0.4 \
   && deactivate \
   && echo 'source /black21-venv/bin/activate && black "$@"' > /usr/bin/black21 \
   && chmod +x /usr/bin/black21 \
