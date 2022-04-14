@@ -3,11 +3,11 @@ repos:
     rev: 1.5.4
     hooks:
       - id: duolingo
-        exclude: test/before
+        exclude: test/
   - repo: local
     hooks:
       - id: test
         name: Tests
         entry: make test
         language: system
-        always_run: true
+        pass_filenames: false
