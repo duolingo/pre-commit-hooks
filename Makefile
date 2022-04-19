@@ -41,12 +41,12 @@ push: test
 # Opens a shell in the container for debugging
 .PHONY: shell
 shell:
-	docker run --rm -it "$$(docker build -q .)" sh
+	docker run --rm -it "$$(docker build --network=host -q .)" sh
 
 # Runs tests
 .PHONY: test
 test:
-	docker run --rm -v "$${PWD}/test:/test" "$$(docker build -q .)" sh -c \
+	docker run --rm -v "$${PWD}/test:/test" "$$(docker build --network=host -q .)" sh -c \
 		'cd /tmp \
 			&& cp -r /test/before actual \
 			&& cp -r /test/after expected \
