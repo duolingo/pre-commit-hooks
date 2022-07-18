@@ -313,7 +313,14 @@ const HOOKS: Record<HookName, LockableHook> = {
   }),
   [HookName.SqlFluff]: createLockableHook({
     action: sources =>
-      run("sqlfluff", "fix", "--force", "--ignore-local-config", "--dialect bigquery", ...sources),
+      run(
+        "sqlfluff",
+        "fix",
+        "--dialect bigquery",
+        "--force",
+        "--ignore-local-config",
+        ...sources,
+      ),
     include: /\.sql$/,
     runAfter: [HookName.Sed],
   }),
