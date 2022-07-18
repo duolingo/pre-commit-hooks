@@ -1,0 +1,3 @@
+message Hello {
+  string world = 1;
+}
