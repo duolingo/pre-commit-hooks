@@ -346,7 +346,8 @@ const HOOKS: Record<HookName, LockableHook> = {
       run(
         "sqlfluff",
         "fix",
-        "--dialect bigquery",
+        "--dialect",
+        "bigquery",
         "--force",
         "--ignore-local-config",
         ...sources,
