@@ -29,6 +29,7 @@ RUN apk add --no-cache --virtual .build-deps \
   && npm install -g \
     @prettier/plugin-xml@2.0.1 \
     @types/node@17.0.23 \
+    npm-groovy-lint@10.1.0 \
     prettier@2.6.2 \
     svgo@2.8.0 \
     typescript@4.6.3 \

@@ -1,0 +1,9 @@
+{
+    "extends": "recommended",
+    "rules": {
+        "formatting.Indentation": {
+            "spacesPerIndentLevel": 2,
+            "severity": "error"
+        }
+    }
+}

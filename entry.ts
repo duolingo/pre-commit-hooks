@@ -72,6 +72,7 @@ const enum HookName {
   GoogleJavaFormat = "google-java-format",
   Isort = "isort",
   Ktfmt = "ktfmt",
+  NpmGroovy = "npm-groovy-lint",
   PrettierJs = "Prettier (JS)",
   PrettierNonJs = "Prettier (non-JS)",
   Scalafmt = "scalafmt",
@@ -209,6 +210,17 @@ const HOOKS: Record<HookName, LockableHook> = {
       }
     },
     include: /\.kts?$/,
+    runAfter: [HookName.Sed],
+  }),
+  [HookName.NpmGroovy]: createLockableHook({
+    action: sources => run(
+      "npm-groovy-lint",
+      "--fix",
+      "--config",
+      "/.groovylintrc.json",
+      ...sources
+    ),
+    include: /\.groovy?$/,
     runAfter: [HookName.Sed],
   }),
   [HookName.PrettierJs]: createLockableHook({

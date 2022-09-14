@@ -1,5 +1,6 @@
 *
 !.editorconfig
+!.groovylintrc.json
 !entry.ts
 !stylesheet.xml
 !svgo.config.js
