@@ -71,6 +71,7 @@ const enum HookName {
   ClangFormat = "ClangFormat",
   GoogleJavaFormat = "google-java-format",
   Isort = "isort",
+  JenkinsLint = "jenkins-lint",
   Ktfmt = "ktfmt",
   PrettierJs = "Prettier (JS)",
   PrettierNonJs = "Prettier (non-JS)",
@@ -84,7 +85,7 @@ const enum HookName {
 
 /** Arguments passed into this hook via the `args` pre-commit config key */
 type Args = Partial<Record<Arg, string>>;
-type Arg = "python-version" | "scala-version";
+type Arg = "jenkins-url" | "python-version" | "scala-version";
 
 interface Hook {
   /**
@@ -186,6 +187,46 @@ const HOOKS: Record<HookName, LockableHook> = {
     action: sources => run("isort", "--settings", "/.editorconfig", ...sources),
     include: /\.py$/,
     runAfter: [HookName.Autoflake],
+  }),
+  [HookName.JenkinsLint]: createLockableHook({
+    // Use the Jenkins Pipeline Linter as described here:
+    // https://www.jenkins.io/doc/book/pipeline/development/#linter
+    action: async (sources, args) => {
+      const JENKINS_URL =
+        args["jenkins-url"] ?? "https://jenkins-ci.duolingo.com";
+      const JENKINS_CRUMB = await run(
+        "curl",
+        "--fail",
+        "--silent",
+        `${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)`,
+      );
+
+      // Request failed. Can either auto-succeed or auto-fail. I vote auto-fail. @Reviewer?
+      if (!JENKINS_CRUMB.startsWith("Jenkins")) {
+        console.error("not sure what to do here yet");
+      } else {
+        for (const source of sources) {
+          let lint_response = await run(
+            "curl",
+            "--fail",
+            "--silent",
+            "-X",
+            "POST",
+            "-H",
+            `${JENKINS_CRUMB}`,
+            "-F",
+            `jenkinsfile=<${source}`,
+            `${JENKINS_URL}/pipeline-model-converter/validate`,
+          );
+
+          if (lint_response != "Jenkinsfile successfully validated.") {
+            console.error(lint_response);
+          }
+        }
+      }
+    },
+    include: /\.jenkinsfile?$/,
+    runAfter: [HookName.Sed],
   }),
   [HookName.Ktfmt]: createLockableHook({
     action: async sources => {
