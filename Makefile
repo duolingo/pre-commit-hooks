@@ -52,4 +52,5 @@ test:
 			&& cp -r /test/after expected \
 			&& /entry actual/* \
 			&& diff -r expected actual \
+			&& sh /test/check_linters.sh \
 			&& echo "All tests passed!"'

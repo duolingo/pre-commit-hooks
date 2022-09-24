@@ -201,7 +201,9 @@ const HOOKS: Record<HookName, LockableHook> = {
         `${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)`,
       );
 
-      // Request failed. Can either auto-succeed or auto-fail. I vote auto-fail. @Reviewer?
+      // Request failed. Can either auto-succeed or auto-fail. Auto-fail seems natural to
+      // me because in some sense the check failed, but in this case perhaps it's better
+      // to just let people push and they'll discover the errors when they run. @Reviewer?
       if (!JENKINS_CRUMB.startsWith("Jenkins")) {
         console.error("not sure what to do here yet");
       } else {

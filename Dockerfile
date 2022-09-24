@@ -46,7 +46,8 @@ RUN apk add --no-cache --virtual .build-deps \
     -r sonatype:snapshots --main org.scalafmt.cli.Cli \
     --standalone \
     -o scalafmt \
-  && rm /bin/coursier
+  && rm /bin/coursier \
+  && apk add curl
 
 # Local files
 COPY . .
