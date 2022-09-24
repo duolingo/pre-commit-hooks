@@ -200,12 +200,14 @@ const HOOKS: Record<HookName, LockableHook> = {
         "--silent",
         `${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)`,
       );
+      let success = true;
 
       // Request failed. Can either auto-succeed or auto-fail. Auto-fail seems natural to
       // me because in some sense the check failed, but in this case perhaps it's better
       // to just let people push and they'll discover the errors when they run. @Reviewer?
       if (!JENKINS_CRUMB.startsWith("Jenkins")) {
         console.error("not sure what to do here yet");
+        success = false;
       } else {
         for (const source of sources) {
           let lint_response = await run(
@@ -221,11 +223,14 @@ const HOOKS: Record<HookName, LockableHook> = {
             `${JENKINS_URL}/pipeline-model-converter/validate`,
           );
 
-          if (lint_response != "Jenkinsfile successfully validated.") {
+          if (lint_response.trim() != "Jenkinsfile successfully validated.") {
             console.error(lint_response);
+            success = false;
           }
         }
       }
+
+      success || process.exit(1);
     },
     include: /\.jenkinsfile?$/,
     runAfter: [HookName.Sed],
