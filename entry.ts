@@ -200,6 +200,14 @@ const HOOKS: Record<HookName, LockableHook> = {
         "--silent",
         `${JENKINS_URL}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)`,
       );
+
+      // The linter output always begins with "WorkflowScript: <Issue Number>:",
+      // and we would like to replace this with the file name.
+      const PREFIX_REGEX = /WorkflowScript: (\d+):/g;
+
+      // The output will always start with this line, which makes less sense
+      // when we're displaying information for many different files.
+      const PREAMBLE_REGEX = /Errors encountered validating Jenkinsfile:\n/g;
       let success = true;
 
       // Request failed. Can either auto-succeed or auto-fail. Auto-fail seems natural to
@@ -209,8 +217,9 @@ const HOOKS: Record<HookName, LockableHook> = {
         console.error("not sure what to do here yet");
         success = false;
       } else {
-        for (const source of sources) {
-          let lint_response = await run(
+        for (let index = 0; index < sources.length; index++) {
+          const source = sources[index];
+          let lintResponse = await run(
             "curl",
             "--fail",
             "--silent",
@@ -223,8 +232,13 @@ const HOOKS: Record<HookName, LockableHook> = {
             `${JENKINS_URL}/pipeline-model-converter/validate`,
           );
 
-          if (lint_response.trim() != "Jenkinsfile successfully validated.") {
-            console.error(lint_response);
+          if (lintResponse.trim() != "Jenkinsfile successfully validated.") {
+            lintResponse = lintResponse
+              .trim()
+              .replace(PREFIX_REGEX, `${source}:`)
+              // We use this ternary to make the spacing consistent
+              .replace(PREAMBLE_REGEX, index == 0 ? "" : "\n");
+            console.error(lintResponse);
             success = false;
           }
         }
