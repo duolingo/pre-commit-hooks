@@ -48,6 +48,8 @@ RUN apk add --no-cache --virtual .build-deps \
     -o scalafmt \
   && rm /bin/coursier
 
+RUN pip install pre-commit
+
 # Local files
 COPY . .
 RUN tsc \
