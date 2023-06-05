@@ -16,7 +16,7 @@ release: test
 	[[ -z "$$(git status --porcelain)" ]]
 
 	# Update source files and commit
-	git grep --cached -z -l '' | xargs -0 sed -E -i \
+	git grep --cached -z -l '' | xargs -0 sed -E -i '' -e \
 		"s@( rev: | entry: $(_IMAGE_NAME):)$$(git tag | tail -1)@\1${V}@g"
 	git add -A
 	git commit -m "Release ${V}" -n
