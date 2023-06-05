@@ -27,11 +27,11 @@ RUN apk add --no-cache --virtual .build-deps \
   && echo 'source /black21-venv/bin/activate && black "$@"' > /usr/bin/black21 \
   && chmod +x /usr/bin/black21 \
   && npm install -g \
-    @prettier/plugin-xml@2.0.1 \
-    @types/node@17.0.23 \
-    prettier@2.6.2 \
+    @prettier/plugin-xml@2.2.0 \
+    @types/node@18.16.0 \
+    prettier@2.8.8 \
     svgo@2.8.0 \
-    typescript@4.6.3 \
+    typescript@5.0.4 \
   && apk del .build-deps \
   && wget https://github.com/google/google-java-format/releases/download/v1.15.0/google-java-format-1.15.0-all-deps.jar -O google-java-format \
   && wget https://search.maven.org/remotecontent?filepath=com/facebook/ktfmt/0.35/ktfmt-0.35-jar-with-dependencies.jar -O ktfmt \

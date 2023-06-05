@@ -2,7 +2,7 @@
 
 This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
 
-- [Prettier](https://github.com/prettier/prettier) v2.6.2 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
+- [Prettier](https://github.com/prettier/prettier) v2.8.8 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
 - [Black](https://github.com/psf/black) v22.3.0 for Python 3, v21.12b0 for Python 2
 - [autoflake](https://github.com/myint/autoflake) v1.4 for Python
 - [isort](https://github.com/PyCQA/isort) v5.10.1 for Python
@@ -28,7 +28,7 @@ Repo maintainers can declare this hook in `.pre-commit-config.yaml`:
 
 ```yaml
 - repo: https://github.com/duolingo/pre-commit-hooks.git
-  rev: 1.6.1
+  rev: 1.6.2
   hooks:
     - id: duolingo
       args: # Optional
