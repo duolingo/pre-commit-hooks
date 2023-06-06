@@ -3,26 +3,27 @@ SHELL = /usr/bin/env bash
 
 _IMAGE_NAME = duolingo/pre-commit-hooks
 
-# Bumps this project's version number. Example:
-#
-#   $ make release V=1.0.3
-#
-# After running this, you should push master and tags to GitHub and create a
-# corresponding GitHub release.
+# Bumps this project's version number. Example: make release V=1.0.3
 .PHONY: release
 release: test
 	# Validate
-	[[ -n "${V}" ]]
-	[[ -z "$$(git status --porcelain)" ]]
+	[[ "$$(whoami)" = art ]] # Currently only @artnc can push to Docker Hub etc.
+	[[ -n "${V}" ]] # New version number was provided
+	[[ -z "$$(git status --porcelain)" ]] # Master is clean
 
 	# Update source files and commit
+	echo 'Creating release commit...'
 	git grep --cached -z -l '' | xargs -0 sed -E -i '' -e \
 		"s@( rev: | entry: $(_IMAGE_NAME):)$$(git tag | tail -1)@\1${V}@g"
 	git add -A
 	git commit -m "Release ${V}" -n
 
 	# Tag
+	echo 'Creating release tag...'
 	git tag "${V}"
+
+	echo 'Done! Now you should `git push`, `git push --tags`, create a new'
+	echo 'GitHub release for this tag, and run `make push` to update Docker Hub'
 
 # Pushes to Docker Hub. Should be run when creating a GitHub release. We don't
 # use Docker Hub's autobuild feature anymore because it only supports amd64 :/
