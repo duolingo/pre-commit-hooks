@@ -10,6 +10,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [ktfmt](https://github.com/facebookincubator/ktfmt) v0.35 for Kotlin
 - [scalafmt](https://scalameta.org/scalafmt/) v3.5.1 for Scala
 - [shfmt](https://github.com/mvdan/sh) v3.4.3 for Shell
+- [SQLFluff](https://github.com/sqlfluff/sqlfluff) v1.4.5 for SQL
 - [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10135 for XML
 - [terraform fmt](https://github.com/hashicorp/terraform) v1.1.8 for Terraform
 - [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v13.0.1 for Protobuf

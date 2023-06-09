@@ -77,6 +77,7 @@ const enum HookName {
   Scalafmt = "scalafmt",
   Sed = "sed",
   Shfmt = "shfmt",
+  SqlFluff = "SQLFluff",
   Svgo = "SVGO",
   TerraformFmt = "terraform fmt",
   Xsltproc = "xsltproc",
@@ -338,6 +339,20 @@ const HOOKS: Record<HookName, LockableHook> = {
     // and removing a binary .proto file's trailing newline may corrupt it
     exclude: /\.proto$/,
     include: /./,
+    runAfter: [HookName.Sed],
+  }),
+  [HookName.SqlFluff]: createLockableHook({
+    action: sources =>
+      run(
+        "sqlfluff",
+        "fix",
+        "--dialect",
+        "bigquery",
+        "--force",
+        "--ignore-local-config",
+        ...sources,
+      ),
+    include: /\.sql$/,
     runAfter: [HookName.Sed],
   }),
   [HookName.Svgo]: createLockableHook({
