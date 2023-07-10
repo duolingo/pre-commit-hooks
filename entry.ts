@@ -2,6 +2,8 @@
 
 import { exec } from "child_process";
 import { readFile, writeFile } from "fs";
+import axios from "axios";
+import * as dotenv from "dotenv";
 
 /** Maximum characters per line in Python */
 const PYTHON_LINE_LENGTH = 100;
@@ -37,6 +39,138 @@ const run = (...args: string[]) =>
     );
   });
 
+// tutors-backend API URLS
+const TUTORS_BASE_URL = "https://duolingo-tutors-prod.duolingo.com";
+
+const MODEL_NAME = "text-alpha-002-duolingo";
+const _PLAIN_FMT = "{prompt}";
+
+const TEST_JWT =
+  "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjYzMDcyMDAwMDAsImlhdCI6MCwic3ViIjoxMTUxMjE4MH0.N6MyhxIVXaSj52MhAmoW5YD6FqMxTg2GlFINcuEyWec";
+
+dotenv.config();
+const tutorsSession = axios.create({
+  baseURL: TUTORS_BASE_URL,
+  headers: {
+    Authorization: `Bearer ${TEST_JWT}`,
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  },
+});
+
+function buildPrompt(file: string): string {
+  // Build the prompt for the tutors-backend API.
+  let fileContent: string;
+  try {
+    fileContent = readFile(file);
+  } catch (err) {
+    console.error("Error reading file:", err);
+    return "";
+  }
+  const requestString = "Add Comments to this code: " + fileContent;
+  return requestString;
+}
+
+type Optional<T> = T | null;
+type Dict<T> = { [key: string]: T };
+function _create_completion_request_data(
+  prompt: string,
+  model: string,
+  stop_tokens: Optional<string[]>,
+  max_tokens: number,
+  temperature: number,
+  top_p: number,
+  logit_bias: Dict<number> | null = null,
+): Dict<any> {
+  return {
+    model: model,
+    temperature: temperature,
+    top_p: top_p,
+    max_tokens: max_tokens,
+    prompt: prompt,
+    stop: stop_tokens,
+    logit_bias: logit_bias || {},
+  };
+}
+
+type GetCompletionSingle = (
+  prompt: string,
+  stopTokens?: string[] | null,
+  maxTokens?: number,
+  temperature?: number,
+  topP?: number,
+  model?: string,
+  logitBias?: { [key: string]: number } | null,
+  fmt?: (arg: { prompt: string }) => string,
+) => Promise<string>;
+
+const getCompletionSingle: GetCompletionSingle = async (
+  prompt,
+  stopTokens = null,
+  maxTokens = 128,
+  temperature = 1.0,
+  topP = 0.8,
+  model = "text-alpha-002-duolingo",
+  logitBias = null,
+  fmt = ({ prompt }) => prompt,
+) => {
+  const tutorsEndpoint = `https://duolingo-tutors-prod.duolingo.com/2017-06-30/tutors/ai/completion_request`;
+  const promptFormatted = fmt({ prompt });
+  const data = JSON.stringify(
+    _create_completion_request_data(
+      promptFormatted,
+      model,
+      stopTokens,
+      maxTokens,
+      temperature,
+      topP,
+      logitBias,
+    ),
+  );
+
+  const response = await tutorsSession.post(tutorsEndpoint, data);
+  response.status;
+
+  // TODO: Handle failure
+  return response.data;
+};
+
+const transformFileAsync = async (
+  path: string,
+  transform: (before: string) => Promise<string>,
+) =>
+  new Promise<void>((resolve, reject) => {
+    readFile(path, "utf8", async (err, data) => {
+      // File unreadable
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      // File empty
+      if (data === "") {
+        resolve();
+        return;
+      }
+
+      // Apply the transformation
+      try {
+        const after = await transform(data);
+
+        // File unmodified
+        if (data === after) {
+          resolve();
+          return;
+        }
+
+        // File modified
+        writeFile(path, after, "utf8", err => (err ? reject(err) : resolve()));
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+
 /** Reads a file, transforms its contents, and writes the result if different */
 const transformFile = (path: string, transform: (before: string) => string) =>
   new Promise<void>((resolve, reject) => {
@@ -69,6 +203,7 @@ const enum HookName {
   Autoflake = "autoflake",
   Black = "Black",
   ClangFormat = "ClangFormat",
+  Comments = "Comments",
   GoogleJavaFormat = "google-java-format",
   Isort = "isort",
   Ktfmt = "ktfmt",
@@ -172,6 +307,21 @@ const HOOKS: Record<HookName, LockableHook> = {
       ),
     include: /\.proto$/,
     runAfter: [HookName.Sed],
+  }),
+  [HookName.Comments]: createLockableHook({
+    action: sources =>
+      Promise.all(
+        sources.map(source =>
+          transformFileAsync(source, async source => {
+            const getResult = async () => {
+              return await getCompletionSingle(buildPrompt(source), [";"]);
+            };
+            const result = await getResult();
+            return result;
+          }),
+        ),
+      ),
+    include: /./,
   }),
   [HookName.GoogleJavaFormat]: createLockableHook({
     action: sources =>
