@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@types/node": "^20.4.1"
+  },
+  "dependencies": {
+    "http": "^0.0.1-security"
+  }
+}

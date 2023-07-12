@@ -32,6 +32,10 @@ RUN apk add --no-cache --virtual .build-deps \
     prettier@2.8.8 \
     svgo@2.8.0 \
     typescript@5.0.4 \
+    axios \
+    dotenv \
+    @types/axios \
+    @types/dotenv \
   && apk del .build-deps \
   && wget https://github.com/google/google-java-format/releases/download/v1.15.0/google-java-format-1.15.0-all-deps.jar -O google-java-format \
   && wget https://search.maven.org/remotecontent?filepath=com/facebook/ktfmt/0.35/ktfmt-0.35-jar-with-dependencies.jar -O ktfmt \

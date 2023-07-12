@@ -2,8 +2,6 @@
 
 import { exec } from "child_process";
 import { readFile, writeFile } from "fs";
-import axios from "axios";
-import * as dotenv from "dotenv";
 
 /** Maximum characters per line in Python */
 const PYTHON_LINE_LENGTH = 100;
@@ -41,33 +39,72 @@ const run = (...args: string[]) =>
 
 // tutors-backend API URLS
 const TUTORS_BASE_URL = "https://duolingo-tutors-prod.duolingo.com";
+const DUOLINGO_JWT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjYzMDcyMDAwMDAsImlhdCI6MCwic3ViIjoyMzU2NDI3MX0.c7X63tqND5jGxBNjge2KlljqDTC-tmf_ppbBw10AiHg";
 
-const MODEL_NAME = "text-alpha-002-duolingo";
-const _PLAIN_FMT = "{prompt}";
+const headers = {
+  "Authorization": `Bearer ${DUOLINGO_JWT}`,
+  "Accept": "application/json",
+  "Content-Type": "application/json",
+};
+const https = require('https');
 
-const TEST_JWT =
-  "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjYzMDcyMDAwMDAsImlhdCI6MCwic3ViIjoxMTUxMjE4MH0.N6MyhxIVXaSj52MhAmoW5YD6FqMxTg2GlFINcuEyWec";
+interface Response {
+  status: number;
+  data: string;
+}
 
-dotenv.config();
-const tutorsSession = axios.create({
-  baseURL: TUTORS_BASE_URL,
-  headers: {
-    Authorization: `Bearer ${TEST_JWT}`,
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  },
-});
+
+function tutorsSession(method: string, url: string, options: any): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const requestOptions = {
+      method: method,
+      headers: { ...options.headers, ...headers },
+    };
+
+    const req = https.request(`${TUTORS_BASE_URL}${url}`, requestOptions, (res:any) => {
+      console.log(req);
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        let data = '';
+        res.on('data', (chunk:any) => {
+          data += chunk;
+        });
+        res.on('end', () => {
+          resolve(JSON.parse(data));
+        });
+      } else {
+        reject(res.statusMessage);
+      }
+    });
+
+    req.on('error', (error:any) => {
+      reject(error.message);
+    });
+
+    if (options.body) {
+      req.write(options.body);
+    }
+    req.end();
+  });
+}
 
 function buildPrompt(file: string): string {
   // Build the prompt for the tutors-backend API.
-  let fileContent: string;
-  try {
-    fileContent = readFile(file);
+let fileContent: string = file; 
+  /* 
+   try {
+    readFile(file,'utf8', function(err, data){
+    if(err){
+      console.error("Error reading file:", err);
+      return "";
+    }
+    fileContent = data;
+  }
+    );
   } catch (err) {
     console.error("Error reading file:", err);
     return "";
-  }
-  const requestString = "Add Comments to this code: " + fileContent;
+  }  */
+   const requestString = "Add Comments to this code: " + fileContent;
   return requestString;
 }
 
@@ -114,7 +151,7 @@ const getCompletionSingle: GetCompletionSingle = async (
   logitBias = null,
   fmt = ({ prompt }) => prompt,
 ) => {
-  const tutorsEndpoint = `https://duolingo-tutors-prod.duolingo.com/2017-06-30/tutors/ai/completion_request`;
+  const tutorsEndpoint = `/2017-06-30/tutors/ai/completion_request`;
   const promptFormatted = fmt({ prompt });
   const data = JSON.stringify(
     _create_completion_request_data(
@@ -128,7 +165,7 @@ const getCompletionSingle: GetCompletionSingle = async (
     ),
   );
 
-  const response = await tutorsSession.post(tutorsEndpoint, data);
+  const response: Response = await tutorsSession("POST", tutorsEndpoint, { body: data });
   response.status;
 
   // TODO: Handle failure
@@ -165,11 +202,12 @@ const transformFileAsync = async (
 
         // File modified
         writeFile(path, after, "utf8", err => (err ? reject(err) : resolve()));
+        return;
       } catch (e) {
         reject(e);
       }
     });
-  });
+  }); 
 
 /** Reads a file, transforms its contents, and writes the result if different */
 const transformFile = (path: string, transform: (before: string) => string) =>
@@ -308,21 +346,24 @@ const HOOKS: Record<HookName, LockableHook> = {
     include: /\.proto$/,
     runAfter: [HookName.Sed],
   }),
-  [HookName.Comments]: createLockableHook({
-    action: sources =>
+   [HookName.Comments]: createLockableHook({
+    action: (sources) =>
       Promise.all(
         sources.map(source =>
-          transformFileAsync(source, async source => {
+          // console.log("source before function: ", source");
+          transformFileAsync(source, async data => {
             const getResult = async () => {
-              return await getCompletionSingle(buildPrompt(source), [";"]);
+              return await getCompletionSingle(buildPrompt(data), [";"]);
             };
             const result = await getResult();
-            return result;
+            console.log("result: ", result);
+            return result; 
+            return source;
           }),
         ),
       ),
     include: /./,
-  }),
+  }), 
   [HookName.GoogleJavaFormat]: createLockableHook({
     action: sources =>
       run("java", "-jar", "/google-java-format", "--replace", ...sources),
