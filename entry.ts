@@ -20,7 +20,7 @@ const PRETTIER_OPTIONS = [
   "auto",
   "--ignore-path",
   EMPTY_FILE,
-  "--loglevel",
+  "--log-level",
   "warn",
   "--no-config",
   "--no-editorconfig",
@@ -212,7 +212,14 @@ const HOOKS: Record<HookName, LockableHook> = {
     runAfter: [HookName.Sed],
   }),
   [HookName.PrettierJs]: createLockableHook({
-    action: sources => run("prettier", ...PRETTIER_OPTIONS, ...sources),
+    action: sources =>
+      run(
+        "prettier",
+        ...PRETTIER_OPTIONS,
+        "--trailing-comma",
+        "es5",
+        ...sources,
+      ),
     exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
     include: /\.jsx?$/,
     runAfter: [HookName.Sed],
@@ -222,8 +229,9 @@ const HOOKS: Record<HookName, LockableHook> = {
       run(
         "prettier",
         ...PRETTIER_OPTIONS,
-        "--trailing-comma",
-        "all",
+        "--plugin",
+        // https://github.com/prettier/prettier/issues/15141#issuecomment-1685112479
+        "/usr/local/lib/node_modules/@prettier/plugin-xml/src/plugin.js",
         ...sources,
       ),
     include: /\.(css|html?|markdown|md|scss|tsx?|xml|ya?ml)$/,

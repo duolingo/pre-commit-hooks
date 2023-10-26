@@ -2,18 +2,18 @@
 
 This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
 
-- [Prettier](https://github.com/prettier/prettier) v2.8.8 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
-- [Black](https://github.com/psf/black) v22.3.0 for Python 3, v21.12b0 for Python 2
-- [autoflake](https://github.com/myint/autoflake) v1.4 for Python
-- [isort](https://github.com/PyCQA/isort) v5.10.1 for Python
-- [google-java-format](https://github.com/google/google-java-format) v1.15.0 for Java
-- [ktfmt](https://github.com/facebookincubator/ktfmt) v0.35 for Kotlin
-- [scalafmt](https://scalameta.org/scalafmt/) v3.5.1 for Scala
-- [shfmt](https://github.com/mvdan/sh) v3.4.3 for Shell
-- [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10135 for XML
-- [terraform fmt](https://github.com/hashicorp/terraform) v1.1.8 for Terraform
-- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v13.0.1 for Protobuf
-- [SVGO](https://github.com/svg/svgo) v2.8.0 for SVG
+- [Prettier](https://github.com/prettier/prettier) v3.1.0 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
+- [Black](https://github.com/psf/black) v23.10.1 for Python 3, v21.12b0 for Python 2
+- [autoflake](https://github.com/myint/autoflake) v2.2.1 for Python
+- [isort](https://github.com/PyCQA/isort) v5.12.0 for Python
+- [google-java-format](https://github.com/google/google-java-format) v1.18.1 for Java
+- [ktfmt](https://github.com/facebookincubator/ktfmt) v0.46 for Kotlin
+- [scalafmt](https://scalameta.org/scalafmt/) v3.7.16 for Scala
+- [shfmt](https://github.com/mvdan/sh) v3.7.0 for Shell
+- [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10138 for XML
+- [terraform fmt](https://github.com/hashicorp/terraform) v1.6.3 for Terraform
+- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v16.0.6 for Protobuf
+- [SVGO](https://github.com/svg/svgo) v3.0.3 for SVG
 - Custom regex transformations (basically [sed](https://en.wikipedia.org/wiki/Sed)), for example:
   - Trimming trailing whitespace and newlines
   - Removing unnecessary `coding` pragmas and `object` base classes in Python 3
