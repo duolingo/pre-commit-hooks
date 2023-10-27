@@ -3,9 +3,6 @@
 import { exec } from "child_process";
 import { readFile, writeFile } from "fs";
 
-/** Maximum characters per line in Python */
-const PYTHON_LINE_LENGTH = 100;
-
 /**
  * Path to an empty file that we can provide to linters/formatters as a config
  * file in order to force those tools' default behavior
@@ -74,6 +71,7 @@ const enum HookName {
   Ktfmt = "ktfmt",
   PrettierJs = "Prettier (JS)",
   PrettierNonJs = "Prettier (non-JS)",
+  Ruff = "Ruff",
   Scalafmt = "scalafmt",
   Sed = "sed",
   Shfmt = "shfmt",
@@ -99,7 +97,7 @@ interface Hook {
    * linter crashes are surfaced to the user and for simplicity in the case of
    * the many linters that exit with nonzero iff there are violations.
    */
-  action: (sources: string[], args: Args) => Promise<unknown>;
+  action: (sources: string[], args: Args) => any;
   /** Source files to exclude */
   exclude?: RegExp;
   /** Source files to include */
@@ -129,7 +127,8 @@ const createLockableHook = (hook: Hook): LockableHook => {
 /** Hooks expressed in a format similar to .pre-commit-config.yaml */
 const HOOKS: Record<HookName, LockableHook> = {
   [HookName.Autoflake]: createLockableHook({
-    action: sources =>
+    action: (sources, args) =>
+      args["python-version"]?.startsWith("2") &&
       run(
         "autoflake",
         "--ignore-init-module-imports",
@@ -144,18 +143,20 @@ const HOOKS: Record<HookName, LockableHook> = {
   }),
   [HookName.Black]: createLockableHook({
     action: async (sources, args) =>
+      args["python-version"]?.startsWith("2") &&
       run(
         // Black 21.x was the last major version with Python 2 support. It also
         // had a bug that requires pinning click==8.0.4. Both packages should
         // be removed once we drop Python 2 support.
         // https://github.com/psf/black/issues/2964
-        ...(args["python-version"]?.startsWith("2")
-          ? ["black21", "--fast", "--target-version", "py27"]
-          : ["black", "--target-version", "py310"]),
+        "black21",
+        "--fast",
+        "--target-version",
+        "py27",
         "--config",
         EMPTY_FILE,
         "--line-length",
-        `${PYTHON_LINE_LENGTH}`,
+        "100",
         "--quiet",
         ...sources,
       ),
@@ -183,7 +184,9 @@ const HOOKS: Record<HookName, LockableHook> = {
     // isort's automatic config file detection is broken
     // https://github.com/PyCQA/isort/issues/1907
     // https://github.com/samueljsb/qaz/pull/104
-    action: sources => run("isort", "--settings", "/.editorconfig", ...sources),
+    action: (sources, args) =>
+      args["python-version"]?.startsWith("2") &&
+      run("isort", "--settings", "/.editorconfig", ...sources),
     include: /\.py$/,
     runAfter: [HookName.Autoflake],
   }),
@@ -236,6 +239,16 @@ const HOOKS: Record<HookName, LockableHook> = {
       ),
     include: /\.(css|html?|markdown|md|scss|tsx?|xml|ya?ml)$/,
     runAfter: [HookName.Sed, HookName.Xsltproc],
+  }),
+  [HookName.Ruff]: createLockableHook({
+    action: (sources, args) =>
+      !args["python-version"]?.startsWith("2") &&
+      Promise.all([
+        run("ruff", "check", ...sources),
+        run("ruff", "format", ...sources),
+      ]),
+    include: /\.py$/,
+    runAfter: [HookName.Sed],
   }),
   [HookName.Scalafmt]: createLockableHook({
     action: async (sources, args) =>

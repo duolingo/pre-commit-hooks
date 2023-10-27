@@ -3,9 +3,10 @@
 This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
 
 - [Prettier](https://github.com/prettier/prettier) v3.1.0 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
-- [Black](https://github.com/psf/black) v23.10.1 for Python 3, v21.12b0 for Python 2
-- [autoflake](https://github.com/myint/autoflake) v2.2.1 for Python
-- [isort](https://github.com/PyCQA/isort) v5.12.0 for Python
+- [Ruff](https://docs.astral.sh/ruff/) v0.1.5 for Python 3
+- [Black](https://github.com/psf/black) v21.12b0 for Python 2
+- [autoflake](https://github.com/myint/autoflake) v2.2.1 for Python 2
+- [isort](https://github.com/PyCQA/isort) v5.12.0 for Python 2
 - [google-java-format](https://github.com/google/google-java-format) v1.18.1 for Java
 - [ktfmt](https://github.com/facebookincubator/ktfmt) v0.46 for Kotlin
 - [scalafmt](https://scalameta.org/scalafmt/) v3.7.16 for Scala
