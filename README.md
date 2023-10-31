@@ -5,7 +5,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [Prettier](https://github.com/prettier/prettier) v3.1.0 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
 - [Ruff](https://docs.astral.sh/ruff/) v0.1.5 for Python 3
 - [Black](https://github.com/psf/black) v21.12b0 for Python 2
-- [autoflake](https://github.com/myint/autoflake) v2.2.1 for Python 2
+- [autoflake](https://github.com/myint/autoflake) v1.7.8 for Python <!-- TODO: Upgrade to v2+, restrict to Python 2, and reenable Ruff rule F401 once our Python 3 repos that were converted from Python 2 no longer use type hint comments: https://github.com/PyCQA/autoflake/issues/222#issuecomment-1419089254 -->
 - [isort](https://github.com/PyCQA/isort) v5.12.0 for Python 2
 - [google-java-format](https://github.com/google/google-java-format) v1.18.1 for Java
 - [ktfmt](https://github.com/facebookincubator/ktfmt) v0.46 for Kotlin

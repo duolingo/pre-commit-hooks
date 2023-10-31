@@ -13,6 +13,11 @@ const EMPTY_FILE = "/emptyfile";
 const PRETTIER_OPTIONS = [
   "--arrow-parens",
   "avoid",
+  // We don't enable or benefit from caching, but we must still specify a
+  // location or else Prettier will fail with the error `EPERM: operation not
+  // permitted, mkdir '/src/node_modules/.cache/prettier'`
+  "--cache-location",
+  "/tmp/prettier-cache",
   "--end-of-line",
   "auto",
   "--ignore-path",
@@ -127,8 +132,7 @@ const createLockableHook = (hook: Hook): LockableHook => {
 /** Hooks expressed in a format similar to .pre-commit-config.yaml */
 const HOOKS: Record<HookName, LockableHook> = {
   [HookName.Autoflake]: createLockableHook({
-    action: (sources, args) =>
-      args["python-version"]?.startsWith("2") &&
+    action: sources =>
       run(
         "autoflake",
         "--ignore-init-module-imports",
@@ -244,11 +248,11 @@ const HOOKS: Record<HookName, LockableHook> = {
     action: (sources, args) =>
       !args["python-version"]?.startsWith("2") &&
       Promise.all([
-        run("ruff", "check", ...sources),
-        run("ruff", "format", ...sources),
+        run("ruff", "check", "--config", "/ruff.toml", ...sources),
+        run("ruff", "format", "--config", "/ruff.toml", ...sources),
       ]),
     include: /\.py$/,
-    runAfter: [HookName.Sed],
+    runAfter: [HookName.Autoflake],
   }),
   [HookName.Scalafmt]: createLockableHook({
     action: async (sources, args) =>

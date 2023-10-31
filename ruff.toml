@@ -10,6 +10,16 @@ convention = "pep257"
 combine-as-imports = true
 
 [lint]
+ignore = [
+  # We disable Ruff's `unused-import` for now in favor of autoflake <2 because
+  # the latter preserves imports that are unused in code but "used" in type
+  # hint comments. Ruff also seems to have an unfortunate bug: it can end up
+  # moving a `pylint: disable=unused-import` comment from one import to another
+  "F401",
+  # This rule inexplicably converts `elif a or isinstance(b, C) or isinstance
+  # (b, D)` to `elif isinstance(b, (C, D))`, buggily removing condition `a`
+  "PLR1701",
+]
 # https://docs.astral.sh/ruff/rules/
 select = [
   "B",
