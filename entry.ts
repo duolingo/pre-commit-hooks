@@ -1,41 +1,14 @@
 #!/usr/bin/env node
 
-import { exec } from "child_process";
 import { readFile, writeFile } from "fs";
-
-/** Maximum characters per line in Python */
-const PYTHON_LINE_LENGTH = 100;
+import { toJSON } from "@datails/hcledit";
 
 /**
  * Path to an empty file that we can provide to linters/formatters as a config
  * file in order to force those tools' default behavior
  */
-const EMPTY_FILE = "/emptyfile";
 
-/** CLI options to use in all Prettier invocations */
-const PRETTIER_OPTIONS = [
-  "--arrow-parens",
-  "avoid",
-  "--end-of-line",
-  "auto",
-  "--ignore-path",
-  EMPTY_FILE,
-  "--loglevel",
-  "warn",
-  "--no-config",
-  "--no-editorconfig",
-  "--write",
-];
-
-/** Runs a shell command, promising combined stdout and stderr */
-const run = (...args: string[]) =>
-  new Promise<string>((resolve, reject) => {
-    exec(
-      args.map(arg => `'${arg}'`).join(" "),
-      { maxBuffer: Infinity },
-      (ex, stdout, stderr) => (ex ? reject : resolve)(stdout + stderr),
-    );
-  });
+console.log("HI!")
 
 /** Reads a file, transforms its contents, and writes the result if different */
 const transformFile = (path: string, transform: (before: string) => string) =>
@@ -66,20 +39,21 @@ const transformFile = (path: string, transform: (before: string) => string) =>
   });
 
 const enum HookName {
-  Autoflake = "autoflake",
-  Black = "Black",
-  ClangFormat = "ClangFormat",
-  GoogleJavaFormat = "google-java-format",
-  Isort = "isort",
-  Ktfmt = "ktfmt",
-  PrettierJs = "Prettier (JS)",
-  PrettierNonJs = "Prettier (non-JS)",
-  Scalafmt = "scalafmt",
-  Sed = "sed",
-  Shfmt = "shfmt",
-  Svgo = "SVGO",
-  TerraformFmt = "terraform fmt",
-  Xsltproc = "xsltproc",
+  // Autoflake = "autoflake",
+  // Black = "Black",
+  // ClangFormat = "ClangFormat",
+  // GoogleJavaFormat = "google-java-format",
+  // Isort = "isort",
+  // Ktfmt = "ktfmt",
+  // PrettierJs = "Prettier (JS)",
+  // PrettierNonJs = "Prettier (non-JS)",
+  // Scalafmt = "scalafmt",
+  // Sed = "sed",
+  // Shfmt = "shfmt",
+  // Svgo = "SVGO",
+  // TerraformFmt = "terraform fmt",
+  TerraformVld = "terraform_validate",
+  // Xsltproc = "xsltproc",
 }
 
 /** Arguments passed into this hook via the `args` pre-commit config key */
@@ -128,250 +102,262 @@ const createLockableHook = (hook: Hook): LockableHook => {
 
 /** Hooks expressed in a format similar to .pre-commit-config.yaml */
 const HOOKS: Record<HookName, LockableHook> = {
-  [HookName.Autoflake]: createLockableHook({
-    action: sources =>
-      run(
-        "autoflake",
-        "--ignore-init-module-imports",
-        "--imports=attrs,boto,boto3,flask,pyramid,pytest,pytz,requests,simplejson,six",
-        "--in-place",
-        "--remove-duplicate-keys",
-        "--remove-unused-variables",
-        ...sources,
-      ),
-    include: /\.py$/,
-    runAfter: [HookName.Sed],
-  }),
-  [HookName.Black]: createLockableHook({
-    action: async (sources, args) =>
-      run(
-        // Black 21.x was the last major version with Python 2 support. It also
-        // had a bug that requires pinning click==8.0.4. Both packages should
-        // be removed once we drop Python 2 support.
-        // https://github.com/psf/black/issues/2964
-        ...(args["python-version"]?.startsWith("2")
-          ? ["black21", "--fast", "--target-version", "py27"]
-          : ["black", "--target-version", "py310"]),
-        "--config",
-        EMPTY_FILE,
-        "--line-length",
-        `${PYTHON_LINE_LENGTH}`,
-        "--quiet",
-        ...sources,
-      ),
-    include: /\.py$/,
-    runAfter: [HookName.Isort],
-  }),
-  [HookName.ClangFormat]: createLockableHook({
-    action: sources =>
-      run(
-        "clang-format",
-        "-i", // Edit files in-place
-        "--style=Google",
-        ...sources,
-      ),
-    include: /\.proto$/,
-    runAfter: [HookName.Sed],
-  }),
-  [HookName.GoogleJavaFormat]: createLockableHook({
-    action: sources =>
-      run("java", "-jar", "/google-java-format", "--replace", ...sources),
-    include: /\.java$/,
-    runAfter: [HookName.Sed],
-  }),
-  [HookName.Isort]: createLockableHook({
-    // isort's automatic config file detection is broken
-    // https://github.com/PyCQA/isort/issues/1907
-    // https://github.com/samueljsb/qaz/pull/104
-    action: sources => run("isort", "--settings", "/.editorconfig", ...sources),
-    include: /\.py$/,
-    runAfter: [HookName.Autoflake],
-  }),
-  [HookName.Ktfmt]: createLockableHook({
-    action: async sources => {
-      /** Try to avoid ktfmt OOMs presumably caused by too many input files */
-      const MAX_FILES_PER_PROCESS = 200;
-      for (let i = 0; i < sources.length; i += MAX_FILES_PER_PROCESS) {
-        await run(
-          "java",
-          // By default, ktfmt was OOMing our 36-core CI server with errors
-          // like "There is insufficient memory for the Java Runtime
-          // Environment to continue. Native memory allocation (mmap) failed to
-          // map 3697278976 bytes for committing reserved memory." Capping at
-          // 256m works and only increases my laptop's time to format a test
-          // repo from 64s to 72s
-          "-Xmx256m",
-          "-jar",
-          "/ktfmt",
-          "--google-style",
-          ...sources.slice(i, i + MAX_FILES_PER_PROCESS),
-        );
-      }
-    },
-    include: /\.kts?$/,
-    runAfter: [HookName.Sed],
-  }),
-  [HookName.PrettierJs]: createLockableHook({
-    action: sources => run("prettier", ...PRETTIER_OPTIONS, ...sources),
-    exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
-    include: /\.jsx?$/,
-    runAfter: [HookName.Sed],
-  }),
-  [HookName.PrettierNonJs]: createLockableHook({
-    action: sources =>
-      run(
-        "prettier",
-        ...PRETTIER_OPTIONS,
-        "--trailing-comma",
-        "all",
-        ...sources,
-      ),
-    include: /\.(css|html?|markdown|md|scss|tsx?|xml|ya?ml)$/,
-    runAfter: [HookName.Sed, HookName.Xsltproc],
-  }),
-  [HookName.Scalafmt]: createLockableHook({
-    action: async (sources, args) =>
-      run(
-        "/scalafmt",
-        "--config-str",
-        Object.entries({
-          "docstrings.oneline": "fold",
-          "docstrings.wrap": "no",
-          preset: "IntelliJ",
-          "runner.dialect": `scala${(args["scala-version"] ?? "2.12")
-            .split(".")
-            .slice(0, 2)
-            .join("")}`,
-          version: (await run("/scalafmt", "--version")).split(" ")[1],
-        })
-          .map(kv => kv.join("="))
-          .join(","),
-        "--non-interactive",
-        "--quiet",
-        ...sources,
-      ),
-    include: /\.(scala|sbt|sc)$/,
-    runAfter: [HookName.Sed],
-  }),
-  // Mimic sed by applying arbitrary regex transformations. Before proposing a
-  // new transformation, please make sure that it's both (1) safe and (2) likely
-  // to ever actually be needed. At Duolingo, we determine the latter criterion
-  // empirically by seeing how many existing violations our codebase contains
-  [HookName.Sed]: createLockableHook({
-    action: (sources, args) =>
-      Promise.all(
-        sources.map(source =>
-          transformFile(source, data => {
-            // Strip trailing whitespace, strip BOF newlines, require single EOF
-            // newline
-            const eol = /\r/.test(data) ? "\r\n" : "\n";
-            data =
-              data.replace(/[^\S\r\n]+$/gm, "").replace(/^[\r\n]+|\s+$/g, "") +
-              eol;
-
-            // Transform Kotlin
-            if (source.endsWith(".kt")) {
-              // Replace empty immutable collections with singletons to avoid
-              // unnecessary allocations. Fun fact: Python's empty tuple `()`
-              // is similarly implemented as a singleton
-              data = data
-                .replace(/\barrayOf\(\)/g, "emptyArray()")
-                .replace(/\blistOf\(\)/g, "emptyList()")
-                .replace(/\bmapOf\(\)/g, "emptyMap()")
-                .replace(/\bsequenceOf\(\)/g, "emptySequence()")
-                .replace(/\bsetOf\(\)/g, "emptySet()");
-
-              // Remove unnecessary constructor keyword
-              data = data.replace(/(?<=\bclass \S+) constructor(?=\()/g, "");
-            }
-
-            // Transform Python
-            if (source.endsWith(".py")) {
-              // Prefer empty collection literals for simplicity
-              data = data.replace(/(?<=^|[ ([{=])dict\(\)/gm, "{}");
-              data = data.replace(/(?<=^|[ ([{=])list\(\)/gm, "[]");
-              data = data.replace(/(?<=^|[ ([{=])tuple\(\)/gm, "()");
-
-              // Remove unnecessary [] from empty sets
-              data = data.replace(
-                /(?<=(?:^|[ ([{=])(?:frozen)?set\()\[\](?=\))/gm,
-                "",
-              );
-
-              // Transform Python 3
-              if (!args["python-version"]?.startsWith("2")) {
-                // Remove unnecessary encoding declarations
-                data = data.replace(/^# -\*- coding: utf-?8.*?\n/gim, "");
-
-                // Remove unnecessary base class declarations
-                data = data.replace(/(?<=^ *class \S+?)\(object\)(?=:)/gm, "");
-              }
-            }
-
-            return data;
-          }),
-        ),
-      ),
-    include: /./,
-  }),
-  [HookName.Shfmt]: createLockableHook({
-    action: async sources => {
-      // Find source files that are Shell files
-      const shellSources = (await run("/shfmt", "-f", ...sources)).trim();
-      if (!shellSources) {
-        return;
-      }
-
-      await run(
-        "/shfmt",
-        "-bn", // Binary operator at start of line
-        "-ci", // Indent switch cases
-        "-i=2", // Indent 2 spaces
-        // https://github.com/mvdan/sh/blob/fa1b438/syntax/simplify.go#L13-L18
-        "-s", // Simplify code
-        "-sr", // Add space after redirect operators
-        "-w", // Write
-        ...shellSources.split("\n"),
-      );
-    },
-    // pre-commit's `types: [text]` config option sometimes has false positives,
-    // and removing a binary .proto file's trailing newline may corrupt it
-    exclude: /\.proto$/,
-    include: /./,
-    runAfter: [HookName.Sed],
-  }),
-  [HookName.Svgo]: createLockableHook({
-    action: sources => run("svgo", "--config", "/svgo.config.js", ...sources),
-    include: /\.svg$/,
-    runAfter: [HookName.Sed],
-  }),
-  [HookName.TerraformFmt]: createLockableHook({
-    action: sources =>
-      Promise.all(
-        // Officially `terraform fmt` only accepts a directory to recurse
-        // through as its sole argument, but it secretly does still support the
-        // more convenient route of supplying a single .tf file as the argument.
-        // (Our problem with providing a directory as the argument is that it
-        // can lead to double-formatting in the case that two sibling source
-        // files get randomly assigned to different processes when pre-commit
-        // parallelizes multiple runs of this hook. This in turn can create a
-        // race condition that results in a source file getting unintentionally
-        // deleted!) https://github.com/hashicorp/terraform/pull/20040
-        sources.map(source => run("/terraform", "fmt", "-write=true", source)),
-      ),
+  // [HookName.Autoflake]: createLockableHook({
+  //   action: sources =>
+  //     run(
+  //       "autoflake",
+  //       "--ignore-init-module-imports",
+  //       "--imports=attrs,boto,boto3,flask,pyramid,pytest,pytz,requests,simplejson,six",
+  //       "--in-place",
+  //       "--remove-duplicate-keys",
+  //       "--remove-unused-variables",
+  //       ...sources,
+  //     ),
+  //   include: /\.py$/,
+  //   runAfter: [HookName.Sed],
+  // }),
+  // [HookName.Black]: createLockableHook({
+  //   action: async (sources, args) =>
+  //     run(
+  //       // Black 21.x was the last major version with Python 2 support. It also
+  //       // had a bug that requires pinning click==8.0.4. Both packages should
+  //       // be removed once we drop Python 2 support.
+  //       // https://github.com/psf/black/issues/2964
+  //       ...(args["python-version"]?.startsWith("2")
+  //         ? ["black21", "--fast", "--target-version", "py27"]
+  //         : ["black", "--target-version", "py310"]),
+  //       "--config",
+  //       EMPTY_FILE,
+  //       "--line-length",
+  //       `${PYTHON_LINE_LENGTH}`,
+  //       "--quiet",
+  //       ...sources,
+  //     ),
+  //   include: /\.py$/,
+  //   runAfter: [HookName.Isort],
+  // }),
+  // [HookName.ClangFormat]: createLockableHook({
+  //   action: sources =>
+  //     run(
+  //       "clang-format",
+  //       "-i", // Edit files in-place
+  //       "--style=Google",
+  //       ...sources,
+  //     ),
+  //   include: /\.proto$/,
+  //   runAfter: [HookName.Sed],
+  // }),
+  // [HookName.GoogleJavaFormat]: createLockableHook({
+  //   action: sources =>
+  //     run("java", "-jar", "/google-java-format", "--replace", ...sources),
+  //   include: /\.java$/,
+  //   runAfter: [HookName.Sed],
+  // }),
+  // [HookName.Isort]: createLockableHook({
+  //   // isort's automatic config file detection is broken
+  //   // https://github.com/PyCQA/isort/issues/1907
+  //   // https://github.com/samueljsb/qaz/pull/104
+  //   action: sources => run("isort", "--settings", "/.editorconfig", ...sources),
+  //   include: /\.py$/,
+  //   runAfter: [HookName.Autoflake],
+  // }),
+  // [HookName.Ktfmt]: createLockableHook({
+  //   action: async sources => {
+  //     /** Try to avoid ktfmt OOMs presumably caused by too many input files */
+  //     const MAX_FILES_PER_PROCESS = 200;
+  //     for (let i = 0; i < sources.length; i += MAX_FILES_PER_PROCESS) {
+  //       await run(
+  //         "java",
+  //         // By default, ktfmt was OOMing our 36-core CI server with errors
+  //         // like "There is insufficient memory for the Java Runtime
+  //         // Environment to continue. Native memory allocation (mmap) failed to
+  //         // map 3697278976 bytes for committing reserved memory." Capping at
+  //         // 256m works and only increases my laptop's time to format a test
+  //         // repo from 64s to 72s
+  //         "-Xmx256m",
+  //         "-jar",
+  //         "/ktfmt",
+  //         "--google-style",
+  //         ...sources.slice(i, i + MAX_FILES_PER_PROCESS),
+  //       );
+  //     }
+  //   },
+  //   include: /\.kts?$/,
+  //   runAfter: [HookName.Sed],
+  // }),
+  // [HookName.PrettierJs]: createLockableHook({
+  //   action: sources => run("prettier", ...PRETTIER_OPTIONS, ...sources),
+  //   exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
+  //   include: /\.jsx?$/,
+  //   runAfter: [HookName.Sed],
+  // }),
+  // [HookName.PrettierNonJs]: createLockableHook({
+  //   action: sources =>
+  //     run(
+  //       "prettier",
+  //       ...PRETTIER_OPTIONS,
+  //       "--trailing-comma",
+  //       "all",
+  //       ...sources,
+  //     ),
+  //   include: /\.(css|html?|markdown|md|scss|tsx?|xml|ya?ml)$/,
+  //   runAfter: [HookName.Sed, HookName.Xsltproc],
+  // }),
+  // [HookName.Scalafmt]: createLockableHook({
+  //   action: async (sources, args) =>
+  //     run(
+  //       "/scalafmt",
+  //       "--config-str",
+  //       Object.entries({
+  //         "docstrings.oneline": "fold",
+  //         "docstrings.wrap": "no",
+  //         preset: "IntelliJ",
+  //         "runner.dialect": `scala${(args["scala-version"] ?? "2.12")
+  //           .split(".")
+  //           .slice(0, 2)
+  //           .join("")}`,
+  //         version: (await run("/scalafmt", "--version")).split(" ")[1],
+  //       })
+  //         .map(kv => kv.join("="))
+  //         .join(","),
+  //       "--non-interactive",
+  //       "--quiet",
+  //       ...sources,
+  //     ),
+  //   include: /\.(scala|sbt|sc)$/,
+  //   runAfter: [HookName.Sed],
+  // }),
+  // // Mimic sed by applying arbitrary regex transformations. Before proposing a
+  // // new transformation, please make sure that it's both (1) safe and (2) likely
+  // // to ever actually be needed. At Duolingo, we determine the latter criterion
+  // // empirically by seeing how many existing violations our codebase contains
+  // [HookName.Sed]: createLockableHook({
+  //   action: (sources, args) =>
+  //     Promise.all(
+  //       sources.map(source =>
+  //         transformFile(source, data => {
+  //           // Strip trailing whitespace, strip BOF newlines, require single EOF
+  //           // newline
+  //           const eol = /\r/.test(data) ? "\r\n" : "\n";
+  //           data =
+  //             data.replace(/[^\S\r\n]+$/gm, "").replace(/^[\r\n]+|\s+$/g, "") +
+  //             eol;
+  //
+  //           // Transform Kotlin
+  //           if (source.endsWith(".kt")) {
+  //             // Replace empty immutable collections with singletons to avoid
+  //             // unnecessary allocations. Fun fact: Python's empty tuple `()`
+  //             // is similarly implemented as a singleton
+  //             data = data
+  //               .replace(/\barrayOf\(\)/g, "emptyArray()")
+  //               .replace(/\blistOf\(\)/g, "emptyList()")
+  //               .replace(/\bmapOf\(\)/g, "emptyMap()")
+  //               .replace(/\bsequenceOf\(\)/g, "emptySequence()")
+  //               .replace(/\bsetOf\(\)/g, "emptySet()");
+  //
+  //             // Remove unnecessary constructor keyword
+  //             data = data.replace(/(?<=\bclass \S+) constructor(?=\()/g, "");
+  //           }
+  //
+  //           // Transform Python
+  //           if (source.endsWith(".py")) {
+  //             // Prefer empty collection literals for simplicity
+  //             data = data.replace(/(?<=^|[ ([{=])dict\(\)/gm, "{}");
+  //             data = data.replace(/(?<=^|[ ([{=])list\(\)/gm, "[]");
+  //             data = data.replace(/(?<=^|[ ([{=])tuple\(\)/gm, "()");
+  //
+  //             // Remove unnecessary [] from empty sets
+  //             data = data.replace(
+  //               /(?<=(?:^|[ ([{=])(?:frozen)?set\()\[\](?=\))/gm,
+  //               "",
+  //             );
+  //
+  //             // Transform Python 3
+  //             if (!args["python-version"]?.startsWith("2")) {
+  //               // Remove unnecessary encoding declarations
+  //               data = data.replace(/^# -\*- coding: utf-?8.*?\n/gim, "");
+  //
+  //               // Remove unnecessary base class declarations
+  //               data = data.replace(/(?<=^ *class \S+?)\(object\)(?=:)/gm, "");
+  //             }
+  //           }
+  //
+  //           return data;
+  //         }),
+  //       ),
+  //     ),
+  //   include: /./,
+  // }),
+  // [HookName.Shfmt]: createLockableHook({
+  //   action: async sources => {
+  //     // Find source files that are Shell files
+  //     const shellSources = (await run("/shfmt", "-f", ...sources)).trim();
+  //     if (!shellSources) {
+  //       return;
+  //     }
+  //
+  //     await run(
+  //       "/shfmt",
+  //       "-bn", // Binary operator at start of line
+  //       "-ci", // Indent switch cases
+  //       "-i=2", // Indent 2 spaces
+  //       // https://github.com/mvdan/sh/blob/fa1b438/syntax/simplify.go#L13-L18
+  //       "-s", // Simplify code
+  //       "-sr", // Add space after redirect operators
+  //       "-w", // Write
+  //       ...shellSources.split("\n"),
+  //     );
+  //   },
+  //   // pre-commit's `types: [text]` config option sometimes has false positives,
+  //   // and removing a binary .proto file's trailing newline may corrupt it
+  //   exclude: /\.proto$/,
+  //   include: /./,
+  //   runAfter: [HookName.Sed],
+  // }),
+  // [HookName.Svgo]: createLockableHook({
+  //   action: sources => run("svgo", "--config", "/svgo.config.js", ...sources),
+  //   include: /\.svg$/,
+  //   runAfter: [HookName.Sed],
+  // }),
+  // [HookName.TerraformFmt]: createLockableHook({
+  //   action: sources =>
+  //     Promise.all(
+  //       // Officially `terraform fmt` only accepts a directory to recurse
+  //       // through as its sole argument, but it secretly does still support the
+  //       // more convenient route of supplying a single .tf file as the argument.
+  //       // (Our problem with providing a directory as the argument is that it
+  //       // can lead to double-formatting in the case that two sibling source
+  //       // files get randomly assigned to different processes when pre-commit
+  //       // parallelizes multiple runs of this hook. This in turn can create a
+  //       // race condition that results in a source file getting unintentionally
+  //       // deleted!) https://github.com/hashicorp/terraform/pull/20040
+  //       sources.map(source => run("/terraform", "fmt", "-write=true", source)),
+  //     ),
+  //   include: /\.tf$/,
+  //   runAfter: [HookName.Sed],
+  // }),
+  [HookName.TerraformVld]: createLockableHook({
+    action: sources => Promise.all(
+      sources.map(source => transformFile(source, data => {
+        if (source == "main.tf") {
+          let terraform = toJSON(data);
+          console.log(terraform);
+        }
+        return data;
+      }))
+    ),
     include: /\.tf$/,
-    runAfter: [HookName.Sed],
   }),
-  [HookName.Xsltproc]: createLockableHook({
-    action: sources =>
-      Promise.all(
-        sources.map(source =>
-          run("xsltproc", "--output", source, "/stylesheet.xml", source),
-        ),
-      ),
-    include: /\.xml$/,
-    runAfter: [HookName.Sed],
-  }),
+  // [HookName.Xsltproc]: createLockableHook({
+  //   action: sources =>
+  //     Promise.all(
+  //       sources.map(source =>
+  //         run("xsltproc", "--output", source, "/stylesheet.xml", source),
+  //       ),
+  //     ),
+  //   include: /\.xml$/,
+  //   runAfter: [HookName.Sed],
+  // }),
 };
 
 /** Files that match this pattern should never be processed */

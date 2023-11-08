@@ -1,4 +1,3 @@
-MAKEFLAGS += --silent
 SHELL = /usr/bin/env bash
 
 _IMAGE_NAME = duolingo/pre-commit-hooks
@@ -47,7 +46,7 @@ shell:
 # Runs tests
 .PHONY: test
 test:
-	docker run --rm -v "$${PWD}/test:/test" "$$(docker build --network=host -q .)" sh -c \
+	docker run --rm -v "$${PWD}/test:/test" "$$(docker build --network=host --progress=plain --no-cache .)" sh -c \
 		'cd /tmp \
 			&& cp -r /test/before actual \
 			&& cp -r /test/after expected \
