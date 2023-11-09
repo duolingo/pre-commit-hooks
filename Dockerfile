@@ -7,9 +7,9 @@ ENV PIP_NO_CACHE_DIR=1
 RUN apk add --no-cache --virtual .build-deps \
     gcc \
     musl-dev \
-    npm \
     python3-dev \
   && apk add --no-cache \
+    npm \
     clang-extra-tools \
     libxslt \
     nodejs \
