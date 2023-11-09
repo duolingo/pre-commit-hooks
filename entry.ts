@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import {exec} from "child_process";
-import {readFile, writeFile} from "fs";
+import { exec } from "child_process";
+import { readFile, writeFile } from "fs";
 import {basename} from "path"
 import {toJSON} from "@datails/hcledit";
 
@@ -34,7 +34,7 @@ const run = (...args: string[]) =>
   new Promise<string>((resolve, reject) => {
     exec(
       args.map(arg => `'${arg}'`).join(" "),
-      {maxBuffer: Infinity},
+      { maxBuffer: Infinity },
       (ex, stdout, stderr) => (ex ? reject : resolve)(stdout + stderr),
     );
   });
@@ -166,7 +166,7 @@ const createLockableHook = (hook: Hook): LockableHook => {
   const lock = new Promise<void>(resolve => {
     unlock = resolve;
   });
-  return {...hook, lock, unlock};
+  return { ...hook, lock, unlock };
 };
 
 /** Hooks expressed in a format similar to .pre-commit-config.yaml */
@@ -478,7 +478,7 @@ const prefixLines = (() => {
   let success = true;
   await Promise.all(
     Object.entries(HOOKS).map(
-      async ([name, {action, exclude, include, locksToWaitFor, unlock}]) => {
+      async ([name, { action, exclude, include, locksToWaitFor, unlock }]) => {
         // Wait until necessary hooks have completed
         await locksToWaitFor;
 
