@@ -17,6 +17,6 @@ module "test1" {
 
 module "infra-atlantis-api" {
   source     = "github.com/test2"
-  subservice = "subservice1"
+  subservice = "subservice2"
   cpu        = 1024 # 1024 equals one core
 }
