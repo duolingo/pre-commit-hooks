@@ -52,6 +52,8 @@ RUN apk add --no-cache --virtual .build-deps \
 # Local files
 COPY . .
 
+RUN npm install
+
 RUN tsc \
     --noUnusedLocals \
     --noUnusedParameters \

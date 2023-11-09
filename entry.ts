@@ -385,6 +385,7 @@ const prefixLines = (() => {
 })();
 
 (async () => {
+  console.log("HI!")
   // Determine hook arguments and list of source files to process
   const sources: string[] = process.argv.slice(2); // Strips ['/usr/bin/node', '/entry']
   const args: Args = {};
