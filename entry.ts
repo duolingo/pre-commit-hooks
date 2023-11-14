@@ -410,15 +410,25 @@ const GLOBAL_EXCLUDES = (() => {
 
 /** Prefixes a string to all nonempty lines of input */
 const prefixLines = (() => {
+  const LINES_TO_IGNORE = new RegExp(
+    [
+      // Empty lines
+      /^\s*$/,
+      // ktfmt spams this for every file that has no violations
+      /\bDone formatting .+\.kts?$/,
+      // Black 21.12b0 spams this when running on Python 2 source code
+      /\bDEPRECATION: Python 2 support\b/,
+    ]
+      .map(regex => regex.source)
+      .join("|"),
+  );
   const maxPrefixLength = Math.max(
     ...Object.keys(HOOKS).map(name => name.length),
   );
   return (prefix: string, lines: string) =>
     lines
       .split("\n")
-      .filter(line => line.trim().length)
-      // Black 21.12b0 spams this when running on Python 2 source code
-      .filter(line => !line.includes("DEPRECATION: Python 2 support"))
+      .filter(line => !LINES_TO_IGNORE.test(line))
       .map(line => `${prefix}:`.padEnd(maxPrefixLength + 2) + line)
       .join("\n");
 })();
