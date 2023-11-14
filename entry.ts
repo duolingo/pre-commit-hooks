@@ -245,12 +245,16 @@ const HOOKS: Record<HookName, LockableHook> = {
     runAfter: [HookName.Sed, HookName.Xsltproc],
   }),
   [HookName.Ruff]: createLockableHook({
-    action: (sources, args) =>
-      !args["python-version"]?.startsWith("2") &&
-      Promise.all([
-        run("ruff", "check", "--config", "/ruff.toml", ...sources),
-        run("ruff", "format", "--config", "/ruff.toml", ...sources),
-      ]),
+    action: async (sources, args) => {
+      if (args["python-version"]?.startsWith("2")) {
+        return;
+      }
+      // Sometimes Ruff requires multiple passes, which is ok since it's fast
+      for (let i = 0; i < 2; ++i) {
+        await run("ruff", "check", "--config", "/ruff.toml", ...sources);
+        await run("ruff", "format", "--config", "/ruff.toml", ...sources);
+      }
+    },
     include: /\.py$/,
     runAfter: [HookName.Autoflake],
   }),
