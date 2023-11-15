@@ -3,9 +3,6 @@
 import { exec } from "child_process";
 import { readFile, writeFile } from "fs";
 
-/** Maximum characters per line in Python */
-const PYTHON_LINE_LENGTH = 100;
-
 /**
  * Path to an empty file that we can provide to linters/formatters as a config
  * file in order to force those tools' default behavior
@@ -16,11 +13,16 @@ const EMPTY_FILE = "/emptyfile";
 const PRETTIER_OPTIONS = [
   "--arrow-parens",
   "avoid",
+  // We don't enable or benefit from caching, but we must still specify a
+  // location or else Prettier will fail with the error `EPERM: operation not
+  // permitted, mkdir '/src/node_modules/.cache/prettier'`
+  "--cache-location",
+  "/tmp/prettier-cache",
   "--end-of-line",
   "auto",
   "--ignore-path",
   EMPTY_FILE,
-  "--loglevel",
+  "--log-level",
   "warn",
   "--no-config",
   "--no-editorconfig",
@@ -74,6 +76,7 @@ const enum HookName {
   Ktfmt = "ktfmt",
   PrettierJs = "Prettier (JS)",
   PrettierNonJs = "Prettier (non-JS)",
+  Ruff = "Ruff",
   Scalafmt = "scalafmt",
   Sed = "sed",
   Shfmt = "shfmt",
@@ -99,7 +102,7 @@ interface Hook {
    * linter crashes are surfaced to the user and for simplicity in the case of
    * the many linters that exit with nonzero iff there are violations.
    */
-  action: (sources: string[], args: Args) => Promise<unknown>;
+  action: (sources: string[], args: Args) => any;
   /** Source files to exclude */
   exclude?: RegExp;
   /** Source files to include */
@@ -144,18 +147,20 @@ const HOOKS: Record<HookName, LockableHook> = {
   }),
   [HookName.Black]: createLockableHook({
     action: async (sources, args) =>
+      args["python-version"]?.startsWith("2") &&
       run(
         // Black 21.x was the last major version with Python 2 support. It also
         // had a bug that requires pinning click==8.0.4. Both packages should
         // be removed once we drop Python 2 support.
         // https://github.com/psf/black/issues/2964
-        ...(args["python-version"]?.startsWith("2")
-          ? ["black21", "--fast", "--target-version", "py27"]
-          : ["black", "--target-version", "py310"]),
+        "black21",
+        "--fast",
+        "--target-version",
+        "py27",
         "--config",
         EMPTY_FILE,
         "--line-length",
-        `${PYTHON_LINE_LENGTH}`,
+        "100",
         "--quiet",
         ...sources,
       ),
@@ -183,7 +188,9 @@ const HOOKS: Record<HookName, LockableHook> = {
     // isort's automatic config file detection is broken
     // https://github.com/PyCQA/isort/issues/1907
     // https://github.com/samueljsb/qaz/pull/104
-    action: sources => run("isort", "--settings", "/.editorconfig", ...sources),
+    action: (sources, args) =>
+      args["python-version"]?.startsWith("2") &&
+      run("isort", "--settings", "/.editorconfig", ...sources),
     include: /\.py$/,
     runAfter: [HookName.Autoflake],
   }),
@@ -212,7 +219,14 @@ const HOOKS: Record<HookName, LockableHook> = {
     runAfter: [HookName.Sed],
   }),
   [HookName.PrettierJs]: createLockableHook({
-    action: sources => run("prettier", ...PRETTIER_OPTIONS, ...sources),
+    action: sources =>
+      run(
+        "prettier",
+        ...PRETTIER_OPTIONS,
+        "--trailing-comma",
+        "es5",
+        ...sources,
+      ),
     exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
     include: /\.jsx?$/,
     runAfter: [HookName.Sed],
@@ -222,12 +236,27 @@ const HOOKS: Record<HookName, LockableHook> = {
       run(
         "prettier",
         ...PRETTIER_OPTIONS,
-        "--trailing-comma",
-        "all",
+        "--plugin",
+        // https://github.com/prettier/prettier/issues/15141#issuecomment-1685112479
+        "/usr/local/lib/node_modules/@prettier/plugin-xml/src/plugin.js",
         ...sources,
       ),
     include: /\.(css|html?|markdown|md|scss|tsx?|xml|ya?ml)$/,
     runAfter: [HookName.Sed, HookName.Xsltproc],
+  }),
+  [HookName.Ruff]: createLockableHook({
+    action: async (sources, args) => {
+      if (args["python-version"]?.startsWith("2")) {
+        return;
+      }
+      // Sometimes Ruff requires multiple passes, which is ok since it's fast
+      for (let i = 0; i < 2; ++i) {
+        await run("ruff", "check", "--config", "/ruff.toml", ...sources);
+        await run("ruff", "format", "--config", "/ruff.toml", ...sources);
+      }
+    },
+    include: /\.py$/,
+    runAfter: [HookName.Autoflake],
   }),
   [HookName.Scalafmt]: createLockableHook({
     action: async (sources, args) =>
@@ -385,15 +414,25 @@ const GLOBAL_EXCLUDES = (() => {
 
 /** Prefixes a string to all nonempty lines of input */
 const prefixLines = (() => {
+  const LINES_TO_IGNORE = new RegExp(
+    [
+      // Empty lines
+      /^\s*$/,
+      // ktfmt spams this for every file that has no violations
+      /\bDone formatting .+\.kts?$/,
+      // Black 21.12b0 spams this when running on Python 2 source code
+      /\bDEPRECATION: Python 2 support\b/,
+    ]
+      .map(regex => regex.source)
+      .join("|"),
+  );
   const maxPrefixLength = Math.max(
     ...Object.keys(HOOKS).map(name => name.length),
   );
   return (prefix: string, lines: string) =>
     lines
       .split("\n")
-      .filter(line => line.trim().length)
-      // Black 21.12b0 spams this when running on Python 2 source code
-      .filter(line => !line.includes("DEPRECATION: Python 2 support"))
+      .filter(line => !LINES_TO_IGNORE.test(line))
       .map(line => `${prefix}:`.padEnd(maxPrefixLength + 2) + line)
       .join("\n");
 })();

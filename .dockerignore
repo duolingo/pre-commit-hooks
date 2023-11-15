@@ -1,5 +1,6 @@
 *
 !.editorconfig
 !entry.ts
+!ruff.toml
 !stylesheet.xml
 !svgo.config.js
