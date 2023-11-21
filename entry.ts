@@ -33,8 +33,7 @@ const PRETTIER_OPTIONS = [
 const run = (...args: string[]) =>
   new Promise<string>((resolve, reject) => {
     exec(
-      // https://stackoverflow.com/a/7685469
-      args.map(arg => `"${arg.replace(/(["'$`\\])/g, "\\$1")}"`).join(" "),
+      args.map(arg => `'${arg.replace(/'/g, "'\"'\"'")}'`).join(" "),
       { maxBuffer: Infinity },
       (ex, stdout, stderr) => (ex ? reject : resolve)(stdout + stderr),
     );
