@@ -37,7 +37,7 @@ RUN apk add --no-cache --virtual .build-deps \
   && wget https://search.maven.org/remotecontent?filepath=com/facebook/ktfmt/0.46/ktfmt-0.46-jar-with-dependencies.jar -O ktfmt \
   && wget https://github.com/mvdan/sh/releases/download/v3.7.0/shfmt_v3.7.0_linux_amd64 -O shfmt \
   && chmod +x shfmt \
-  && wget https://releases.hashicorp.com/terraform/1.6.3/terraform_1.6.3_linux_amd64.zip -O tf.zip \
+  && wget https://releases.hashicorp.com/terraform/1.1.8/terraform_1.1.8_linux_amd64.zip -O tf.zip \
   && unzip tf.zip \
   && rm tf.zip \
   && wget https://github.com/coursier/coursier/releases/download/v2.1.7/coursier -O /bin/coursier \
