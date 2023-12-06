@@ -1,6 +1,6 @@
 repos:
   - repo: .
-    rev: 1.7.0
+    rev: 1.7.1
     hooks:
       - id: duolingo
         exclude: test/
