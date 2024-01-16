@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { exec } from "child_process";
-import { readFile, writeFile } from "fs";
+import { createReadStream, readFile, writeFile } from "fs";
+import { createInterface } from "readline";
 
 /**
  * Path to an empty file that we can provide to linters/formatters as a config
@@ -38,6 +39,9 @@ const run = (...args: string[]) =>
       (ex, stdout, stderr) => (ex ? reject : resolve)(stdout + stderr),
     );
   });
+
+/** Type guard that returns true iff the given value is truthy */
+export const isTruthy = <T>(value: T): value is NonNullable<T> => !!value;
 
 /** Reads a file, transforms its contents, and writes the result if different */
 const transformFile = (path: string, transform: (before: string) => string) =>
@@ -346,8 +350,32 @@ const HOOKS: Record<HookName, LockableHook> = {
   [HookName.Shfmt]: createLockableHook({
     action: async sources => {
       // Find source files that are Shell files
-      const shellSources = (await run("/shfmt", "-f", ...sources)).trim();
-      if (!shellSources) {
+      const shellSources = (
+        await Promise.all(
+          sources.map(async source => {
+            // Check file extension
+            if (/\.(bash|sh|zsh)$/.test(source)) {
+              return source;
+            }
+
+            // Check shebang
+            const firstLine = await new Promise<string>(resolve => {
+              // https://stackoverflow.com/a/45556848
+              const reader = createInterface({
+                input: createReadStream(source),
+              });
+              reader.on("line", line => {
+                reader.close();
+                resolve(line);
+              });
+            });
+            if (/^#!.*\b(bash|sh|zsh)\b/.test(firstLine)) {
+              return source;
+            }
+          }),
+        )
+      ).filter(isTruthy);
+      if (!shellSources.length) {
         return;
       }
 
@@ -360,7 +388,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         "-s", // Simplify code
         "-sr", // Add space after redirect operators
         "-w", // Write
-        ...shellSources.split("\n"),
+        ...shellSources,
       );
     },
     // pre-commit's `types: [text]` config option sometimes has false positives,
