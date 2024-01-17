@@ -349,13 +349,14 @@ const HOOKS: Record<HookName, LockableHook> = {
   }),
   [HookName.Shfmt]: createLockableHook({
     action: async sources => {
-      // Find source files that are Shell files
+      // Find source files that are Shell files. shfmt has a `-f` flag that
+      // does this, but it sometimes returns false positives
       const shellSources = (
         await Promise.all(
           sources.map(async source => {
             // Check file extension
-            if (/\.(bash|sh|zsh)$/.test(source)) {
-              return source;
+            if (source.split("/").slice(-1)[0].includes(".")) {
+              return /\.(bash|sh|zsh)$/.test(source) ? source : undefined;
             }
 
             // Check shebang
