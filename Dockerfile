@@ -10,7 +10,6 @@ RUN apk add --no-cache --virtual .build-deps \
     npm \
     python3-dev \
   && apk add --no-cache \
-    clang-extra-tools \
     libxslt \
     nodejs \
     openjdk17-jre-headless \
@@ -33,6 +32,9 @@ RUN apk add --no-cache --virtual .build-deps \
     svgo@3.0.3 \
     typescript@5.2.2 \
   && apk del .build-deps \
+  && wget https://github.com/bufbuild/buf/releases/download/v1.32.0/buf-Linux-aarch64 -O buf \
+  && chmod +x buf \
+  && mkdir /.cache && chmod -R 777 /.cache \
   && wget https://github.com/google/google-java-format/releases/download/v1.18.1/google-java-format-1.18.1-all-deps.jar -O google-java-format \
   && wget https://search.maven.org/remotecontent?filepath=com/facebook/ktfmt/0.46/ktfmt-0.46-jar-with-dependencies.jar -O ktfmt \
   && wget https://github.com/mvdan/sh/releases/download/v3.7.0/shfmt_v3.7.0_linux_amd64 -O shfmt \

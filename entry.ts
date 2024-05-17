@@ -74,7 +74,7 @@ const transformFile = (path: string, transform: (before: string) => string) =>
 const enum HookName {
   Autoflake = "autoflake",
   Black = "Black",
-  ClangFormat = "ClangFormat",
+  Buf = "Buf",
   GoogleJavaFormat = "google-java-format",
   Isort = "isort",
   Ktfmt = "ktfmt",
@@ -171,14 +171,9 @@ const HOOKS: Record<HookName, LockableHook> = {
     include: /\.py$/,
     runAfter: [HookName.Isort],
   }),
-  [HookName.ClangFormat]: createLockableHook({
+  [HookName.Buf]: createLockableHook({
     action: sources =>
-      run(
-        "clang-format",
-        "-i", // Edit files in-place
-        "--style=Google",
-        ...sources,
-      ),
+      run("/buf", "format", "-w", ...sources.flatMap(s => ["--path", s])),
     include: /\.proto$/,
     runAfter: [HookName.Sed],
   }),
