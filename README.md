@@ -14,7 +14,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [shfmt](https://github.com/mvdan/sh) v3.7.0 for Shell
 - [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10138 for XML
 - [terraform fmt](https://github.com/hashicorp/terraform) v1.6.3 for Terraform
-- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v16.0.6 for Protobuf
+- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v17.0.4 for Protobuf
 - [SVGO](https://github.com/svg/svgo) v3.0.3 for SVG
 - [Taplo](https://taplo.tamasfe.dev/) v0.8.1 for TOML
 - Custom regex transformations (basically [sed](https://en.wikipedia.org/wiki/Sed)), for example:

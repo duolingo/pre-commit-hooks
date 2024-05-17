@@ -176,7 +176,7 @@ const HOOKS: Record<HookName, LockableHook> = {
   [HookName.ClangFormat]: createLockableHook({
     action: sources =>
       run(
-        "clang-format",
+        "/clang-format",
         "-i", // Edit files in-place
         "--style=Google",
         ...sources,
