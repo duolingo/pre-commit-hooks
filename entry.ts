@@ -75,6 +75,7 @@ const enum HookName {
   Autoflake = "autoflake",
   Black = "Black",
   ClangFormat = "ClangFormat",
+  Gofmt = "gofmt",
   GoogleJavaFormat = "google-java-format",
   Isort = "isort",
   Ktfmt = "ktfmt",
@@ -180,6 +181,11 @@ const HOOKS: Record<HookName, LockableHook> = {
         ...sources,
       ),
     include: /\.proto$/,
+    runAfter: [HookName.Sed],
+  }),
+  [HookName.Gofmt]: createLockableHook({
+    action: sources => run("/gofmt", "-s", "-w", ...sources),
+    include: /\.go$/,
     runAfter: [HookName.Sed],
   }),
   [HookName.GoogleJavaFormat]: createLockableHook({

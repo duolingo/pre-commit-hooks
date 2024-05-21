@@ -48,6 +48,9 @@ RUN apk add --no-cache --virtual .build-deps \
     -o scalafmt \
   && rm /bin/coursier
 
+# https://stackoverflow.com/a/59485924
+COPY --from=golang:1.22.3-alpine3.18 /usr/local/go/bin/gofmt /gofmt
+
 # Local files
 COPY . .
 RUN tsc \

@@ -9,6 +9,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [isort](https://github.com/PyCQA/isort) v5.12.0 for Python 2
 - [google-java-format](https://github.com/google/google-java-format) v1.18.1 for Java
 - [ktfmt](https://github.com/facebookincubator/ktfmt) v0.46 for Kotlin
+- [gofmt](https://pkg.go.dev/cmd/gofmt) v1.22.3 for Go
 - [scalafmt](https://scalameta.org/scalafmt/) v3.7.16 for Scala
 - [shfmt](https://github.com/mvdan/sh) v3.7.0 for Shell
 - [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10138 for XML
