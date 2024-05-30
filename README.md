@@ -16,6 +16,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [terraform fmt](https://github.com/hashicorp/terraform) v1.6.3 for Terraform
 - [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v16.0.6 for Protobuf
 - [SVGO](https://github.com/svg/svgo) v3.0.3 for SVG
+- [Taplo](https://taplo.tamasfe.dev/) v0.8.1 for TOML
 - Custom regex transformations (basically [sed](https://en.wikipedia.org/wiki/Sed)), for example:
   - Trimming trailing whitespace and newlines
   - Removing unnecessary `coding` pragmas and `object` base classes in Python 3

@@ -86,6 +86,7 @@ const enum HookName {
   Sed = "sed",
   Shfmt = "shfmt",
   Svgo = "SVGO",
+  Taplo = "Taplo",
   TerraformFmt = "terraform fmt",
   Xsltproc = "xsltproc",
 }
@@ -407,6 +408,26 @@ const HOOKS: Record<HookName, LockableHook> = {
   [HookName.Svgo]: createLockableHook({
     action: sources => run("svgo", "--config", "/svgo.config.js", ...sources),
     include: /\.svg$/,
+    runAfter: [HookName.Sed],
+  }),
+  [HookName.Taplo]: createLockableHook({
+    action: sources =>
+      run(
+        "/taplo",
+        "format",
+        "--colors",
+        "never",
+        "--no-auto-config",
+        // https://taplo.tamasfe.dev/configuration/formatter-options.html
+        "--option",
+        "align_comments=false", // Avoid diff churn
+        "--option",
+        "allowed_blank_lines=1", // Match other languages (except Python)
+        "--option",
+        "reorder_keys=true", // Maximize consistency
+        ...sources,
+      ),
+    include: /\.toml$/,
     runAfter: [HookName.Sed],
   }),
   [HookName.TerraformFmt]: createLockableHook({
