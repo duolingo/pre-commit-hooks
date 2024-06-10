@@ -181,7 +181,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         "--style=Google",
         ...sources,
       ),
-    include: /\.proto$/,
+    include: /\.(cpp|proto$)/,
     runAfter: [HookName.Sed],
   }),
   [HookName.Gofmt]: createLockableHook({
