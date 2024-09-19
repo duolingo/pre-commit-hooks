@@ -27,7 +27,7 @@ RUN apk add --no-cache --virtual .build-deps \
     python3 \
   && pip3 install \
     autoflake==1.7.8 \
-    isort==5.12.0 \
+    isort==5.13.2 \
     ruff==0.1.5 \
   && python3 -m venv /black21-venv \
   && source /black21-venv/bin/activate \
