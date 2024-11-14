@@ -9,6 +9,19 @@ RUN tsc \
     entry.ts \
   && chmod +x entry.js
 
+# "Creating a JRE using jlink" at https://hub.docker.com/_/eclipse-temurin
+# List of required modules is determined by starting with `docker run --rm
+# eclipse-temurin:21-alpine java --list-modules`, then removing modules by trial
+# and error until `make test` throws ClassNotFoundException
+FROM eclipse-temurin:21-alpine as jre
+RUN jlink \
+  --add-modules java.se,jdk.compiler,jdk.unsupported \
+  --compress 2 \
+  --no-header-files \
+  --no-man-pages \
+  --output /jre \
+  --strip-debug
+
 FROM alpine:3.20.3
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 ENV PIP_NO_CACHE_DIR=1
@@ -18,12 +31,12 @@ RUN apk add --no-cache --virtual .build-deps \
     gcc \
     musl-dev \
     npm \
+    openjdk17-jre-headless \
     py3-pip \
     python3-dev \
   && apk add --no-cache \
     libxslt \
     nodejs \
-    openjdk17-jre-headless \
     python3 \
   && pip3 install --break-system-packages \
     autoflake==1.7.8 \
@@ -39,7 +52,6 @@ RUN apk add --no-cache --virtual .build-deps \
     @prettier/plugin-xml@3.4.1 \
     prettier@3.3.3 \
     svgo@3.3.2 \
-  && apk del .build-deps \
   && wget https://github.com/muttleyxd/clang-tools-static-binaries/releases/download/master-32d3ac78/clang-format-18_linux-amd64 -O clang-format \
   && chmod +x clang-format \
   && wget https://github.com/google/google-java-format/releases/download/v1.24.0/google-java-format-1.24.0-all-deps.jar -O google-java-format \
@@ -59,6 +71,7 @@ RUN apk add --no-cache --virtual .build-deps \
     --standalone \
     -o scalafmt \
   && touch /emptyfile \
+  && apk del .build-deps \
   && rm -rf \
     /bin/coursier \
     /black21-venv/lib/python3.11/site-packages/pip \
@@ -70,5 +83,7 @@ RUN apk add --no-cache --virtual .build-deps \
     /var/cache
 # https://stackoverflow.com/a/59485924
 COPY --from=golang:1.23.3-alpine3.20 /usr/local/go/bin/gofmt /gofmt
+ENV PATH="/jre/bin:${PATH}"
+COPY --from=jre /jre /jre
 COPY . .
 COPY --from=entry /entry.js /entry
