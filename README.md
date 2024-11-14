@@ -2,21 +2,21 @@
 
 This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
 
-- [Prettier](https://github.com/prettier/prettier) v3.1.0 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
-- [Ruff](https://docs.astral.sh/ruff/) v0.1.5 for Python 3
+- [Prettier](https://github.com/prettier/prettier) v3.3.3 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
+- [Ruff](https://docs.astral.sh/ruff/) v0.7.3 for Python 3
 - [Black](https://github.com/psf/black) v21.12b0 for Python 2
 - [autoflake](https://github.com/myint/autoflake) v1.7.8 for Python <!-- TODO: Upgrade to v2+, restrict to Python 2, and reenable Ruff rule F401 once our Python 3 repos that were converted from Python 2 no longer use type hint comments: https://github.com/PyCQA/autoflake/issues/222#issuecomment-1419089254 -->
-- [isort](https://github.com/PyCQA/isort) v5.12.0 for Python 2
-- [google-java-format](https://github.com/google/google-java-format) v1.18.1 for Java
-- [ktfmt](https://github.com/facebookincubator/ktfmt) v0.46 for Kotlin
-- [gofmt](https://pkg.go.dev/cmd/gofmt) v1.22.3 for Go
-- [scalafmt](https://scalameta.org/scalafmt/) v3.7.16 for Scala
-- [shfmt](https://github.com/mvdan/sh) v3.7.0 for Shell
+- [isort](https://github.com/PyCQA/isort) v5.13.2 for Python 2
+- [google-java-format](https://github.com/google/google-java-format) v1.24.0 for Java
+- [ktfmt](https://github.com/facebookincubator/ktfmt) v0.53 for Kotlin
+- [gofmt](https://pkg.go.dev/cmd/gofmt) v1.23.3 for Go
+- [scalafmt](https://scalameta.org/scalafmt/) v3.8.3 for Scala
+- [shfmt](https://github.com/mvdan/sh) v3.10.0 for Shell
 - [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10138 for XML
-- [terraform fmt](https://github.com/hashicorp/terraform) v1.6.3 for Terraform
+- [terraform fmt](https://github.com/hashicorp/terraform) v1.9.8 for Terraform
 - [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v17.0.4 for C++, Protobuf
-- [SVGO](https://github.com/svg/svgo) v3.0.3 for SVG
-- [Taplo](https://taplo.tamasfe.dev/) v0.8.1 for TOML
+- [SVGO](https://github.com/svg/svgo) v3.3.2 for SVG
+- [Taplo](https://taplo.tamasfe.dev/) v0.9.3 for TOML
 - Custom regex transformations (basically [sed](https://en.wikipedia.org/wiki/Sed)), for example:
   - Trimming trailing whitespace and newlines
   - Removing unnecessary `coding` pragmas and `object` base classes in Python 3
