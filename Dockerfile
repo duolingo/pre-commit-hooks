@@ -12,7 +12,8 @@ RUN tsc \
 # "Creating a JRE using jlink" at https://hub.docker.com/_/eclipse-temurin
 # List of required modules is determined by starting with `docker run --rm
 # eclipse-temurin:21-alpine java --list-modules`, then removing modules by trial
-# and error until `make test` throws ClassNotFoundException
+# and error until `make test` throws ClassNotFoundException. When first
+# implemented, this custom JRE reduced our image size from 574 MB to 469 MB
 FROM eclipse-temurin:21-alpine as jre
 RUN jlink \
   --add-modules java.se,jdk.compiler,jdk.unsupported \
