@@ -88,3 +88,6 @@ ENV PATH="/jre/bin:${PATH}"
 COPY --from=jre /jre /jre
 COPY . .
 COPY --from=entry /entry.js /entry
+# https://github.com/coursier/coursier/issues/1955#issuecomment-956697764
+ENV COURSIER_CACHE=/tmp/coursier-cache
+ENV COURSIER_JVM_CACHE=/tmp/coursier-jvm-cache
