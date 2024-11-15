@@ -19,6 +19,8 @@ ignore = [
   # This rule inexplicably converts `elif a or isinstance(b, C) or isinstance
   # (b, D)` to `elif isinstance(b, (C, D))`, buggily removing condition `a`
   "PLR1701",
+  # This rule correctly preserves logic but will delete comments :|
+  "SIM114",
 ]
 # https://docs.astral.sh/ruff/rules/
 select = [
