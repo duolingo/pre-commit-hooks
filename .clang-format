@@ -1,0 +1,4 @@
+BasedOnStyle: Google
+
+# Sorting includes is dangerous and can break compilation
+SortIncludes: Never

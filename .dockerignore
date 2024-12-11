@@ -1,4 +1,5 @@
 *
+!.clang-format
 !.editorconfig
 !entry.ts
 !ruff.toml
