@@ -178,7 +178,7 @@ const HOOKS: Record<HookName, LockableHook> = {
       run(
         "/clang-format",
         "-i", // Edit files in-place
-        "--style=Google",
+        "--style=file:/.clang-format",
         ...sources,
       ),
     include: /\.(cpp|proto$)/,
