@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM alpine:3.20.3 as entry
+FROM alpine:3.20.3 AS entry
 RUN apk add --no-cache npm && npm install -g typescript@5.6.3 @types/node@22.9.0
 COPY entry.ts .
 RUN tsc \
@@ -16,7 +16,7 @@ RUN tsc \
 # eclipse-temurin:21-alpine java --list-modules`, then removing modules by trial
 # and error until `make test` throws ClassNotFoundException. When first
 # implemented, this custom JRE reduced our image size from 574 MB to 469 MB
-FROM eclipse-temurin:21-alpine as jre
+FROM eclipse-temurin:21-alpine AS jre
 RUN jlink \
   --add-modules java.se,jdk.compiler,jdk.unsupported \
   --compress 2 \
