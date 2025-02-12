@@ -16,14 +16,7 @@ RUN tsc \
 # eclipse-temurin:21-alpine java --list-modules`, then removing modules by trial
 # and error until `make test` throws ClassNotFoundException. When first
 # implemented, this custom JRE reduced our image size from 574 MB to 469 MB
-FROM amazoncorretto:21.0.6-alpine3.21 as jre
-RUN apk add binutils && jlink \
-  --add-modules java.se,jdk.compiler,jdk.unsupported \
-  --compress zip-6 \
-  --no-header-files \
-  --no-man-pages \
-  --output /jre \
-  --strip-debug
+FROM amazoncorretto:21.0.6-alpine3.21 AS jre
 
 FROM alpine:3.20.3
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -102,7 +95,7 @@ EOF
 # https://stackoverflow.com/a/59485924
 COPY --from=golang:1.23.3-alpine3.20 /usr/local/go/bin/gofmt /gofmt
 ENV PATH="/jre/bin:${PATH}"
-COPY --from=jre /jre /jre
+COPY --from=jre /usr/lib/jvm/default-jvm /jre
 COPY . .
 COPY --from=entry /entry.js /entry
 # https://github.com/coursier/coursier/issues/1955#issuecomment-956697764
