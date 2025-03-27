@@ -8,7 +8,7 @@ convention = "pep257"
 
 [isort]
 combine-as-imports = true
-# We force Apairy generated clients to be sorted as external libraries to prevent
+# We force Apiary generated clients to be sorted as external libraries to prevent
 # thrashing between local and CI environments.
 known-third-party = ["*_backend_client"]
 
