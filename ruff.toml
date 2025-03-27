@@ -3,17 +3,12 @@ fix-only = true
 line-length = 100
 target-version = "py37"
 
-[pydocstyle]
-convention = "pep257"
-
-[isort]
-combine-as-imports = true
-# We force Apiary generated clients to be sorted as external libraries to prevent
-# thrashing between local and CI environments.
-known-third-party = ["*_backend_client"]
-
 [lint]
 ignore = [
+  # This rule causes Ruff to warn "The following rule may cause conflicts when
+  # used with the formatter". TODO: Remove after updating to Ruff v0.9?
+  # https://github.com/astral-sh/ruff/issues/8272#issuecomment-2580594913
+  "ISC001",
   # We disable Ruff's `unused-import` for now in favor of autoflake <2 because
   # the latter preserves imports that are unused in code but "used" in type
   # hint comments. Ruff also seems to have an unfortunate bug: it can end up
@@ -21,7 +16,7 @@ ignore = [
   "F401",
   # This rule inexplicably converts `elif a or isinstance(b, C) or isinstance
   # (b, D)` to `elif isinstance(b, (C, D))`, buggily removing condition `a`
-  "PLR1701",
+  "SIM101",
   # This rule correctly preserves logic but will delete comments :|
   "SIM114",
 ]
@@ -42,3 +37,12 @@ select = [
   "SIM",
   "UP",
 ]
+
+[lint.isort]
+combine-as-imports = true
+# We force Apiary generated clients to be sorted as external libraries to prevent
+# thrashing between local and CI environments.
+known-third-party = ["*_backend_client"]
+
+[lint.pydocstyle]
+convention = "pep257"
