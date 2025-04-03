@@ -59,8 +59,11 @@ chmod +x /usr/bin/black21
 # Install Node dependencies
 npm install -g \
   @prettier/plugin-xml@3.4.1 \
+  eslint@9.23.0 \
+  eslint-plugin-import@2.31.0 \
   prettier@3.3.3 \
-  svgo@3.3.2
+  svgo@3.3.2 \
+  typescript-eslint@8.29.0
 
 # Install Scala dependencies
 wget https://github.com/coursier/coursier/releases/download/v2.1.17/coursier -O /bin/coursier
@@ -108,3 +111,4 @@ COPY --from=entry /entry.js /entry
 # https://github.com/coursier/coursier/issues/1955#issuecomment-956697764
 ENV COURSIER_CACHE=/tmp/coursier-cache
 ENV COURSIER_JVM_CACHE=/tmp/coursier-jvm-cache
+ENV NODE_PATH=/usr/local/lib/node_modules

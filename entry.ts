@@ -10,6 +10,9 @@ import { createInterface } from "readline";
  */
 const EMPTY_FILE = "/emptyfile";
 
+/** Minified JS files to exclude from formatting */
+const MINIFIED_JS_REGEX = /\bmin\b|\.(custom|pack)\./;
+
 /** CLI options to use in all Prettier invocations */
 const PRETTIER_OPTIONS = [
   "--arrow-parens",
@@ -75,6 +78,7 @@ const enum HookName {
   Autoflake = "autoflake",
   Black = "Black",
   ClangFormat = "ClangFormat",
+  EsLint = "ESLint",
   Gofmt = "gofmt",
   GoogleJavaFormat = "google-java-format",
   Isort = "isort",
@@ -184,6 +188,25 @@ const HOOKS: Record<HookName, LockableHook> = {
     include: /\.(cpp|proto$)/,
     runAfter: [HookName.Sed],
   }),
+  [HookName.EsLint]: createLockableHook({
+    action: async sources => {
+      try {
+        await run(
+          "eslint",
+          "--fix",
+          "--config",
+          "/eslint.config.js",
+          ...sources,
+        );
+      } catch (ex) {
+        // We swallow nonzero exit codes because we care only about autofixable
+        // errors (which should now be fixed), not about non-autofixable errors
+      }
+    },
+    exclude: MINIFIED_JS_REGEX,
+    include: /\.[jt]sx?$/,
+    runAfter: [HookName.Sed],
+  }),
   [HookName.Gofmt]: createLockableHook({
     action: sources => run("/gofmt", "-s", "-w", ...sources),
     include: /\.go$/,
@@ -238,9 +261,9 @@ const HOOKS: Record<HookName, LockableHook> = {
         "es5",
         ...sources,
       ),
-    exclude: /\b(compressed|custom|min|minified|pack|prod|production)\b/,
+    exclude: MINIFIED_JS_REGEX,
     include: /\.jsx?$/,
-    runAfter: [HookName.Sed],
+    runAfter: [HookName.Sed, HookName.EsLint],
   }),
   [HookName.PrettierNonJs]: createLockableHook({
     action: sources =>
@@ -253,7 +276,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         ...sources,
       ),
     include: /\.(css|html?|markdown|md|scss|tsx?|xml|ya?ml)$/,
-    runAfter: [HookName.Sed, HookName.Xsltproc],
+    runAfter: [HookName.Sed, HookName.Xsltproc, HookName.EsLint],
   }),
   [HookName.Ruff]: createLockableHook({
     action: async (sources, args) => {
