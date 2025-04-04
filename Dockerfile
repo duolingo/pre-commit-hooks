@@ -60,7 +60,7 @@ chmod +x /usr/bin/black21
 npm install -g \
   @prettier/plugin-xml@3.4.1 \
   eslint@9.23.0 \
-  eslint-plugin-import@2.31.0 \
+  eslint-plugin-jsdoc@50.6.9 \
   prettier@3.3.3 \
   svgo@3.3.2 \
   typescript-eslint@8.29.0

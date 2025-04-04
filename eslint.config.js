@@ -1,17 +1,19 @@
 const { defineConfig } = require("eslint/config");
-const importPlugin = require("eslint-plugin-import");
+const jsdoc = require("eslint-plugin-jsdoc");
 const tseslint = require("typescript-eslint");
 
 module.exports = defineConfig([
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
     languageOptions: { parser: tseslint.parser },
-    plugins: { import: importPlugin, "@typescript-eslint": tseslint.plugin },
+    // TODO: Add more plugins: react, react-hooks. Ideally we could also add
+    // prefer-arrow, but it only autofixes single-line functions :/
+    plugins: { jsdoc, "@typescript-eslint": tseslint.plugin },
     // To simplify ESLint adoption, we should only ever enable rules that are
     // autofixable! We should also keep these rules compatible with Duolingo's
     // internal ESLint config
     rules: {
-      // ESLint rules. The list of autofixable rules can be determined by
+      // Native ESLint rules. The list of autofixable rules can be determined by
       // running the snippet below in the browser console at
       // https://eslint.org/docs/latest/rules/. Here we explicitly include
       // disabled rules (commented out) to indicate that we're disabling them
@@ -20,7 +22,6 @@ module.exports = defineConfig([
       // to also revisit any existing rules that were omitted from this file.
       //
       // copy([...$$("p.rule__categories__type:nth-child(3):not([aria-hidden=true])")].map(p=>p.closest("article.rule").querySelector("a.rule__name")?.textContent).filter(x=>x).sort().join("\n"))
-
       "arrow-body-style": ["error", "as-needed"],
       // "capitalized-comments": "error",
       curly: ["error", "all"],
@@ -53,7 +54,17 @@ module.exports = defineConfig([
       // "prefer-object-has-own": "error",
       // "prefer-object-spread": "error",
       "prefer-template": "error",
-      "sort-imports": "error",
+      // This only sorts members within an individual import statement, not
+      // import statements ("declarations") themselves. We disable that because
+      // this rule sorts in a weird way: by first member rather than by module
+      // name. The `import/order` rule provided by eslint-plugin-import does
+      // sort declarations by module name, but we forgo that too because it
+      // groups declarations based on environmental factors (e.g. node_modules,
+      // Node version) that we can't easily determine or reproduce here in a
+      // repo-agnostic way. One compromise might be to use `import/order` and
+      // simply disable its regrouping feature in favor of whatever groups are
+      // found in the source code to be formatted, but no such option exists :/
+      "sort-imports": ["error", { ignoreDeclarationSort: true }],
       "sort-vars": "error",
       // "strict": "error",
       // "unicode-bom": "error",
@@ -64,7 +75,6 @@ module.exports = defineConfig([
       // the snippet below at https://typescript-eslint.io/rules/?=xdeprecated-fixable-xtypeInformation
       //
       // copy([...$$("table td:first-child a code")].map(c=>c.textContent).sort().join("\n"))
-
       "@typescript-eslint/array-type": ["error", { default: "array" }],
       "@typescript-eslint/ban-tslint-comment": "error",
       // "@typescript-eslint/consistent-generic-constructors": "error",
@@ -103,21 +113,42 @@ module.exports = defineConfig([
       "@typescript-eslint/prefer-function-type": "error",
       "@typescript-eslint/prefer-namespace-keyword": "error",
 
-      // Plugin rules
-
-      "import/order": [
+      // JSDoc rules. As with the ESLint rules above, we explicitly include
+      // disabled rules (commented out) for ease of maintenance.
+      // https://github.com/gajus/eslint-plugin-jsdoc/tree/main?tab=readme-ov-file#user-content-eslint-plugin-jsdoc-rules
+      "jsdoc/check-alignment": "error",
+      // "jsdoc/check-line-alignment": "error",
+      "jsdoc/check-param-names": "error",
+      "jsdoc/check-property-names": "error",
+      "jsdoc/check-tag-names": "error",
+      // "jsdoc/check-types": "error",
+      "jsdoc/empty-tags": "error",
+      // "jsdoc/match-name": "error",
+      "jsdoc/multiline-blocks": [
         "error",
         {
-          alphabetize: { caseInsensitive: false, order: "asc" },
-          groups: [
-            "builtin",
-            "external",
-            ["internal", "parent"],
-            ["sibling", "index"],
-          ],
-          "newlines-between": "always",
+          // This should be long enough to account for all but the most deeply
+          // nested/indented JSDoc blocks while minimizing false negatives that
+          // could fit on a single line without exceeding the line length limit
+          minimumLengthForMultiline: 60,
+          noMultilineBlocks: true,
         },
       ],
+      // "jsdoc/no-bad-blocks": "error",
+      // "jsdoc/no-blank-block-descriptions": "error",
+      // "jsdoc/no-blank-blocks": "error",
+      // "jsdoc/no-defaults": "error",
+      "jsdoc/no-multi-asterisks": "error",
+      "jsdoc/no-types": "error",
+      "jsdoc/require-asterisk-prefix": "error",
+      // "jsdoc/require-description-complete-sentence": "error",
+      // "jsdoc/require-example": "error",
+      // "jsdoc/require-hyphen-before-param-description": "error",
+      // "jsdoc/require-jsdoc": "error",
+      // "jsdoc/require-param": "error",
+      // "jsdoc/require-property": "error",
+      // "jsdoc/tag-lines": "error",
+      // "jsdoc/text-escaping": "error",
     },
   },
 ]);
