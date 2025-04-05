@@ -30,6 +30,8 @@ const PRETTIER_OPTIONS = [
   "warn",
   "--no-config",
   "--no-editorconfig",
+  "--object-wrap",
+  "collapse",
   "--write",
 ];
 

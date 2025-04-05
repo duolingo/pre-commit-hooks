@@ -74,7 +74,7 @@ npm install -g \
   eslint@9.23.0 \
   eslint-plugin-jsdoc@50.6.9 \
   eslint-plugin-unicorn@56.0.1 \
-  prettier@3.3.3 \
+  prettier@3.5.3 \
   svgo@3.3.2 \
   typescript-eslint@8.29.0
 
