@@ -13,6 +13,13 @@ interface Hello {
  * tempor incididunt ut labore et dolore magna aliqua
  */
 const foo = 0b110;
-if (foo! < 8) {
-  console.log(`hi${foo}`);
+
+try {
+  for (const a of process.argv) {
+    /\d/.test(a);
+  }
+} catch (ex) {
+  if (foo! < 8) {
+    console.log(`hi${ex}`);
+  }
 }

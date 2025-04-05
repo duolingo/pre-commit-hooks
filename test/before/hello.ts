@@ -14,4 +14,11 @@ type Hello={world:string}
  * tempor incididunt ut labore et dolore magna aliqua
  */
 let foo = parseInt("110", 2);
-if (8 > foo!!) console.log("hi" + foo);
+
+try {
+  Array.from(process.argv).forEach(a => {
+    /[0-9]/.test(a);
+  });
+} catch (err) {
+  if (8.00 > foo!!) console.log("hi" + err);
+}
