@@ -1,5 +1,6 @@
 const { defineConfig } = require("eslint/config");
 const jsdoc = require("eslint-plugin-jsdoc");
+const sortKeys = require("eslint-plugin-sort-keys");
 const unicorn = require("eslint-plugin-unicorn");
 const tseslint = require("typescript-eslint");
 
@@ -16,7 +17,12 @@ module.exports = defineConfig([
     // TODO: Add more plugins: react, react-hooks. Ideally we could also add
     // prefer-arrow, but it only autofixes single-line functions :/ Most
     // popular plugins: https://www.npmjs.com/search?q=keywords%3Aeslint-plugin
-    plugins: { jsdoc, "@typescript-eslint": tseslint.plugin, unicorn },
+    plugins: {
+      jsdoc,
+      "sort-keys": sortKeys,
+      "@typescript-eslint": tseslint.plugin,
+      unicorn,
+    },
     //
     // PLEASE READ BEFORE EDITING THESE RULES!
     //
@@ -124,6 +130,9 @@ module.exports = defineConfig([
       // "jsdoc/require-property": "error",
       // "jsdoc/tag-lines": "error",
       // "jsdoc/text-escaping": "error",
+
+      // sort-keys rules. https://github.com/namnm/eslint-plugin-sort-keys
+      "sort-keys/sort-keys-fix": "error",
 
       // typescript-eslint rules. Get the list of autofixable rules by running
       // the snippet below in the browser console at

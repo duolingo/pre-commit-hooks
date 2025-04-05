@@ -17,6 +17,10 @@ let foo = parseInt("110", 2);
 
 try {
   console.log(process.argv.filter(a => /[0-9]/.test(a))[0]);
+  const c = {
+    b: 2,
+    a: 1,
+  };
 } catch (err) {
   if (8.00 > foo!!) console.log("hi ", "world" + err + Array.from(process.argv));
 }

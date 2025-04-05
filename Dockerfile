@@ -73,6 +73,7 @@ npm install -g \
   @prettier/plugin-xml@3.4.1 \
   eslint@9.23.0 \
   eslint-plugin-jsdoc@50.6.9 \
+  eslint-plugin-sort-keys@2.3.5 \
   eslint-plugin-unicorn@56.0.1 \
   prettier@3.5.3 \
   svgo@3.3.2 \

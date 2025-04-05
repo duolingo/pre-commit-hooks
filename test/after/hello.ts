@@ -16,6 +16,7 @@ const foo = 0b110;
 
 try {
   console.log(process.argv.find(a => /\d/.test(a)));
+  const c = { a: 1, b: 2 };
 } catch (ex) {
   if (foo! < 8) {
     console.log("hi", `world${ex}${[...process.argv]}`);
