@@ -200,7 +200,7 @@ const HOOKS: Record<HookName, LockableHook> = {
           "/eslint.config.js",
           ...sources,
         );
-      } catch (ex) {
+      } catch {
         // We swallow nonzero exit codes because we care only about autofixable
         // errors (which should now be fixed), not about non-autofixable errors
       }
