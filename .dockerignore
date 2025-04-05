@@ -2,6 +2,7 @@
 !.clang-format
 !.editorconfig
 !entry.ts
+!eslint.config.js
 !ruff.toml
 !stylesheet.xml
 !svgo.config.js
