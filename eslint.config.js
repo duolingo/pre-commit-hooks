@@ -152,10 +152,7 @@ module.exports = defineConfig([
         },
       ],
       "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
-      "@typescript-eslint/consistent-type-imports": [
-        "error",
-        { disallowTypeAnnotations: false, prefer: "type-imports" },
-      ],
+      // "@typescript-eslint/consistent-type-imports": ["error", { disallowTypeAnnotations: false, prefer: "type-imports" }], // TODO: Enable once all our code is on TS 3.8+
       "@typescript-eslint/explicit-member-accessibility": [
         "error",
         {
@@ -178,7 +175,7 @@ module.exports = defineConfig([
       "@typescript-eslint/prefer-namespace-keyword": "error",
 
       // eslint-plugin-unicorn rules. https://github.com/sindresorhus/eslint-plugin-unicorn?tab=readme-ov-file#rules
-      "unicorn/better-regex": ["error", { sortCharacterClasses: false }],
+      // "unicorn/better-regex": "error",
       "unicorn/catch-error-name": ["error", { name: "ex" }],
       "unicorn/consistent-destructuring": "error",
       "unicorn/consistent-empty-array-spread": "error",
