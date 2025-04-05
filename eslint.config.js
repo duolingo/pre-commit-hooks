@@ -11,17 +11,28 @@ module.exports = defineConfig([
     // prefer-arrow, but it only autofixes single-line functions :/ Most
     // popular plugins: https://www.npmjs.com/search?q=keywords%3Aeslint-plugin
     plugins: { jsdoc, "@typescript-eslint": tseslint.plugin, unicorn },
-    // To simplify ESLint adoption, we should only ever enable rules that are
-    // autofixable! We should also keep these rules compatible with Duolingo's
-    // internal ESLint config
+    //
+    // PLEASE READ BEFORE EDITING THESE RULES!
+    //
+    // We must keep these rules compatible with Duolingo's internal ESLint
+    // config (it could be nice to someday update our internal config to
+    // inherit from this one). Every rule that we enable here must be
+    // autofixable and worth its performance cost, e.g. we should disable
+    // complex rules that protect against rare problems in our codebase.
+    //
+    // Unless stated otherwise, we include disabled rules (commented out) in
+    // this file to record that we're willfully disabling them, a practice that
+    // simplifies future ESLint upgrades: we can more easily identify and
+    // evaluate only newly available rules instead of needing to also revisit
+    // existing rules that were omitted from this file.
+    //
+    // The rule declarations below are organized into sections based on the
+    // plugins that provide them. These sections are sorted alphabetically by
+    // plugin name.
     rules: {
-      // Native ESLint rules. The list of autofixable rules can be determined by
-      // running the snippet below in the browser console at
-      // https://eslint.org/docs/latest/rules/. Here we explicitly include
-      // disabled rules (commented out) to indicate that we're disabling them
-      // on purpose. This simplifies ESLint upgrades: we can more easily
-      // identify and evaluate only newly available rules instead of needing
-      // to also revisit any existing rules that were omitted from this file.
+      // Native ESLint rules. Get the list of autofixable rules by running the
+      // snippet below in the browser console at
+      // https://eslint.org/docs/latest/rules/
       //
       // copy([...$$("p.rule__categories__type:nth-child(3):not([aria-hidden=true])")].map(p=>p.closest("article.rule").querySelector("a.rule__name")?.textContent).filter(x=>x).sort().join("\n"))
       "arrow-body-style": ["error", "as-needed"],
@@ -71,6 +82,85 @@ module.exports = defineConfig([
       // "strict": "error",
       // "unicode-bom": "error",
       yoda: ["error", "never"],
+
+      // JSDoc rules. All autofixable rules:
+      // https://github.com/gajus/eslint-plugin-jsdoc/tree/main?tab=readme-ov-file#user-content-eslint-plugin-jsdoc-rules
+      "jsdoc/check-alignment": "error",
+      // "jsdoc/check-line-alignment": "error",
+      "jsdoc/check-param-names": "error",
+      "jsdoc/check-property-names": "error",
+      "jsdoc/check-tag-names": "error",
+      // "jsdoc/check-types": "error",
+      "jsdoc/empty-tags": "error",
+      // "jsdoc/match-name": "error",
+      "jsdoc/multiline-blocks": [
+        "error",
+        {
+          // This should be long enough to account for all but the most deeply
+          // nested/indented JSDoc blocks while minimizing false negatives that
+          // could fit on a single line without exceeding the line length limit
+          minimumLengthForMultiline: 60,
+          noMultilineBlocks: true,
+        },
+      ],
+      // "jsdoc/no-bad-blocks": "error",
+      // "jsdoc/no-blank-block-descriptions": "error",
+      // "jsdoc/no-blank-blocks": "error",
+      // "jsdoc/no-defaults": "error",
+      "jsdoc/no-multi-asterisks": "error",
+      "jsdoc/no-types": "error",
+      "jsdoc/require-asterisk-prefix": "error",
+      // "jsdoc/require-description-complete-sentence": "error",
+      // "jsdoc/require-example": "error",
+      // "jsdoc/require-hyphen-before-param-description": "error",
+      // "jsdoc/require-jsdoc": "error",
+      // "jsdoc/require-param": "error",
+      // "jsdoc/require-property": "error",
+      // "jsdoc/tag-lines": "error",
+      // "jsdoc/text-escaping": "error",
+
+      // typescript-eslint rules. Get the list of autofixable rules by running
+      // the snippet below in the browser console at
+      // https://typescript-eslint.io/rules/?=xdeprecated-fixable-xtypeInformation
+      //
+      // copy([...$$("table td:first-child a code")].map(c=>c.textContent).sort().join("\n"))
+      "@typescript-eslint/array-type": ["error", { default: "array" }],
+      "@typescript-eslint/ban-tslint-comment": "error",
+      // "@typescript-eslint/consistent-generic-constructors": "error",
+      "@typescript-eslint/consistent-indexed-object-style": ["error", "record"],
+      "@typescript-eslint/consistent-type-assertions": [
+        "error",
+        {
+          arrayLiteralTypeAssertions: "allow-as-parameter",
+          assertionStyle: "as",
+          objectLiteralTypeAssertions: "allow-as-parameter",
+        },
+      ],
+      "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        { disallowTypeAnnotations: false, prefer: "type-imports" },
+      ],
+      "@typescript-eslint/explicit-member-accessibility": [
+        "error",
+        {
+          accessibility: "explicit",
+          overrides: { accessors: "explicit", constructors: "explicit" },
+        },
+      ],
+      // "@typescript-eslint/method-signature-style": "error",
+      "@typescript-eslint/no-array-constructor": "error",
+      // "@typescript-eslint/no-dynamic-delete": "error",
+      // "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-extra-non-null-assertion": "error",
+      // "@typescript-eslint/no-import-type-side-effects": "error",
+      "@typescript-eslint/no-inferrable-types": "error",
+      // "@typescript-eslint/no-restricted-types": "error",
+      "@typescript-eslint/no-useless-empty-export": "error",
+      // "@typescript-eslint/no-wrapper-object-types": "error",
+      "@typescript-eslint/prefer-as-const": "error",
+      "@typescript-eslint/prefer-function-type": "error",
+      "@typescript-eslint/prefer-namespace-keyword": "error",
 
       // eslint-plugin-unicorn rules. https://github.com/sindresorhus/eslint-plugin-unicorn?tab=readme-ov-file#rules
       "unicorn/better-regex": "error",
@@ -163,86 +253,6 @@ module.exports = defineConfig([
       // "unicorn/template-indent": "error",
       "unicorn/text-encoding-identifier-case": "error",
       // "unicorn/throw-new-error": "error",
-
-      // typescript-eslint rules. As with the ESLint rules above, we explicitly
-      // include disabled rules (commented out) for ease of maintenance. Run
-      // the snippet below at https://typescript-eslint.io/rules/?=xdeprecated-fixable-xtypeInformation
-      //
-      // copy([...$$("table td:first-child a code")].map(c=>c.textContent).sort().join("\n"))
-      "@typescript-eslint/array-type": ["error", { default: "array" }],
-      "@typescript-eslint/ban-tslint-comment": "error",
-      // "@typescript-eslint/consistent-generic-constructors": "error",
-      "@typescript-eslint/consistent-indexed-object-style": ["error", "record"],
-      "@typescript-eslint/consistent-type-assertions": [
-        "error",
-        {
-          arrayLiteralTypeAssertions: "allow-as-parameter",
-          assertionStyle: "as",
-          objectLiteralTypeAssertions: "allow-as-parameter",
-        },
-      ],
-      "@typescript-eslint/consistent-type-definitions": ["error", "interface"],
-      "@typescript-eslint/consistent-type-imports": [
-        "error",
-        { disallowTypeAnnotations: false, prefer: "type-imports" },
-      ],
-      "@typescript-eslint/explicit-member-accessibility": [
-        "error",
-        {
-          accessibility: "explicit",
-          overrides: { accessors: "explicit", constructors: "explicit" },
-        },
-      ],
-      // "@typescript-eslint/method-signature-style": "error",
-      "@typescript-eslint/no-array-constructor": "error",
-      // "@typescript-eslint/no-dynamic-delete": "error",
-      // "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/no-extra-non-null-assertion": "error",
-      // "@typescript-eslint/no-import-type-side-effects": "error",
-      "@typescript-eslint/no-inferrable-types": "error",
-      // "@typescript-eslint/no-restricted-types": "error",
-      "@typescript-eslint/no-useless-empty-export": "error",
-      // "@typescript-eslint/no-wrapper-object-types": "error",
-      "@typescript-eslint/prefer-as-const": "error",
-      "@typescript-eslint/prefer-function-type": "error",
-      "@typescript-eslint/prefer-namespace-keyword": "error",
-
-      // JSDoc rules. As with the ESLint rules above, we explicitly include
-      // disabled rules (commented out) for ease of maintenance.
-      // https://github.com/gajus/eslint-plugin-jsdoc/tree/main?tab=readme-ov-file#user-content-eslint-plugin-jsdoc-rules
-      "jsdoc/check-alignment": "error",
-      // "jsdoc/check-line-alignment": "error",
-      "jsdoc/check-param-names": "error",
-      "jsdoc/check-property-names": "error",
-      "jsdoc/check-tag-names": "error",
-      // "jsdoc/check-types": "error",
-      "jsdoc/empty-tags": "error",
-      // "jsdoc/match-name": "error",
-      "jsdoc/multiline-blocks": [
-        "error",
-        {
-          // This should be long enough to account for all but the most deeply
-          // nested/indented JSDoc blocks while minimizing false negatives that
-          // could fit on a single line without exceeding the line length limit
-          minimumLengthForMultiline: 60,
-          noMultilineBlocks: true,
-        },
-      ],
-      // "jsdoc/no-bad-blocks": "error",
-      // "jsdoc/no-blank-block-descriptions": "error",
-      // "jsdoc/no-blank-blocks": "error",
-      // "jsdoc/no-defaults": "error",
-      "jsdoc/no-multi-asterisks": "error",
-      "jsdoc/no-types": "error",
-      "jsdoc/require-asterisk-prefix": "error",
-      // "jsdoc/require-description-complete-sentence": "error",
-      // "jsdoc/require-example": "error",
-      // "jsdoc/require-hyphen-before-param-description": "error",
-      // "jsdoc/require-jsdoc": "error",
-      // "jsdoc/require-param": "error",
-      // "jsdoc/require-property": "error",
-      // "jsdoc/tag-lines": "error",
-      // "jsdoc/text-escaping": "error",
     },
   },
 ]);

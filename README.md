@@ -1,6 +1,6 @@
 # pre-commit hooks
 
-This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
+This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel:
 
 - [Prettier](https://github.com/prettier/prettier) v3.3.3 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
 - [ESLint](https://eslint.org/) v9.23.0 for JS, TypeScript
@@ -23,6 +23,8 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
   - Removing unnecessary `coding` pragmas and `object` base classes in Python 3
   - Replacing empty Python collections like `list()` with literal equivalents
   - Replacing empty Kotlin collections like `arrayOf()` with `empty` equivalents
+
+To minimize developer friction, we enable only rules whose violations can be fixed automatically and disable all rules whose violations require manual correction.
 
 We run this hook on developer workstations and enforce it in CI for all production repos at Duolingo.
 
