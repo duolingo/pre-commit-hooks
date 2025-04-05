@@ -15,11 +15,9 @@ interface Hello {
 const foo = 0b110;
 
 try {
-  for (const a of process.argv) {
-    /\d/.test(a);
-  }
+  console.log(process.argv.find(a => /\d/.test(a)));
 } catch (ex) {
   if (foo! < 8) {
-    console.log(`hi${ex}${[...process.argv]}`);
+    console.log("hi", `world${ex}${[...process.argv]}`);
   }
 }

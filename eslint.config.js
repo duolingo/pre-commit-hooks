@@ -7,6 +7,12 @@ module.exports = defineConfig([
   {
     files: ["**/*.{js,jsx,ts,tsx}"],
     languageOptions: { parser: tseslint.parser },
+    linterOptions: {
+      // Individual repos may have their own additional ESLint setups that
+      // enable more rules than we do here, which means that we can't reliably
+      // determine which directives are actually unused
+      reportUnusedDisableDirectives: "off",
+    },
     // TODO: Add more plugins: react, react-hooks. Ideally we could also add
     // prefer-arrow, but it only autofixes single-line functions :/ Most
     // popular plugins: https://www.npmjs.com/search?q=keywords%3Aeslint-plugin
@@ -42,7 +48,7 @@ module.exports = defineConfig([
       eqeqeq: ["error", "always"],
       // "logical-assignment-operators": "error",
       // "no-div-regex": "error",
-      "no-else-return": ["error", { allowElseIf: false }],
+      "no-else-return": "error",
       // "no-extra-bind": "error",
       "no-extra-boolean-cast": ["error", { enforceForInnerExpressions: true }],
       "no-extra-label": "error",
@@ -107,7 +113,7 @@ module.exports = defineConfig([
       // "jsdoc/no-blank-block-descriptions": "error",
       // "jsdoc/no-blank-blocks": "error",
       // "jsdoc/no-defaults": "error",
-      "jsdoc/no-multi-asterisks": "error",
+      // "jsdoc/no-multi-asterisks": "error", // Bug: fixer deletes Markdown bullets
       "jsdoc/no-types": "error",
       "jsdoc/require-asterisk-prefix": "error",
       // "jsdoc/require-description-complete-sentence": "error",
@@ -163,7 +169,7 @@ module.exports = defineConfig([
       "@typescript-eslint/prefer-namespace-keyword": "error",
 
       // eslint-plugin-unicorn rules. https://github.com/sindresorhus/eslint-plugin-unicorn?tab=readme-ov-file#rules
-      "unicorn/better-regex": "error",
+      "unicorn/better-regex": ["error", { sortCharacterClasses: false }],
       "unicorn/catch-error-name": ["error", { name: "ex" }],
       "unicorn/consistent-destructuring": "error",
       "unicorn/consistent-empty-array-spread": "error",
@@ -173,14 +179,14 @@ module.exports = defineConfig([
       "unicorn/escape-case": "error",
       // "unicorn/explicit-length-check": "error",
       // "unicorn/new-for-builtins": "error",
-      "unicorn/no-array-for-each": "error",
+      // "unicorn/no-array-for-each": "error", // Bug: fixer deletes comments
       // "unicorn/no-array-method-this-argument": "error",
-      "unicorn/no-array-push-push": "error",
+      // "unicorn/no-array-push-push": "error", // Bug: fixer deletes comments
       // "unicorn/no-await-expression-member": "error",
       "unicorn/no-console-spaces": "error",
       "unicorn/no-for-loop": "error",
       // "unicorn/no-hex-escape": "error",
-      "unicorn/no-lonely-if": "error",
+      // "unicorn/no-lonely-if": "error", // Bug: Moves comments around
       "unicorn/no-negated-condition": "error",
       // "unicorn/no-nested-ternary": "error",
       // "unicorn/no-new-array": "error",
@@ -249,7 +255,7 @@ module.exports = defineConfig([
       // "unicorn/require-array-join-separator": "error",
       // "unicorn/require-number-to-fixed-digits-argument": "error",
       // "unicorn/string-content": "error",
-      "unicorn/switch-case-braces": "error",
+      // "unicorn/switch-case-braces": "error",
       // "unicorn/template-indent": "error",
       "unicorn/text-encoding-identifier-case": "error",
       // "unicorn/throw-new-error": "error",
