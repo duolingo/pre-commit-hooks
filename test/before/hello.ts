@@ -16,9 +16,9 @@ type Hello={world:string}
 let foo = parseInt("110", 2);
 
 try {
-  Array.from(process.argv).forEach(a => {
+  process.argv.forEach(a => {
     /[0-9]/.test(a);
   });
 } catch (err) {
-  if (8.00 > foo!!) console.log("hi" + err);
+  if (8.00 > foo!!) console.log("hi" + err + Array.from(process.argv));
 }

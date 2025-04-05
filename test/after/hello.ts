@@ -20,6 +20,6 @@ try {
   }
 } catch (ex) {
   if (foo! < 8) {
-    console.log(`hi${ex}`);
+    console.log(`hi${ex}${[...process.argv]}`);
   }
 }
