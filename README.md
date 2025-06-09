@@ -1,8 +1,9 @@
 # pre-commit hooks
 
-This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel.
+This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel:
 
-- [Prettier](https://github.com/prettier/prettier) v3.3.3 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
+- [Prettier](https://github.com/prettier/prettier) v3.5.3 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
+- [ESLint](https://eslint.org/) v9.23.0 for JS, TypeScript
 - [Ruff](https://docs.astral.sh/ruff/) v0.7.3 for Python 3
 - [Black](https://github.com/psf/black) v21.12b0 for Python 2
 - [autoflake](https://github.com/myint/autoflake) v1.7.8 for Python <!-- TODO: Upgrade to v2+, restrict to Python 2, and reenable Ruff rule F401 once our Python 3 repos that were converted from Python 2 no longer use type hint comments: https://github.com/PyCQA/autoflake/issues/222#issuecomment-1419089254 -->
@@ -22,6 +23,8 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
   - Removing unnecessary `coding` pragmas and `object` base classes in Python 3
   - Replacing empty Python collections like `list()` with literal equivalents
   - Replacing empty Kotlin collections like `arrayOf()` with `empty` equivalents
+
+To minimize developer friction, we enable only rules whose violations can be fixed automatically and disable all rules whose violations require manual correction.
 
 We run this hook on developer workstations and enforce it in CI for all production repos at Duolingo.
 

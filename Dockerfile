@@ -16,7 +16,7 @@ RUN tsc \
 # eclipse-temurin:21-alpine java --list-modules`, then removing modules by trial
 # and error until `make test` throws ClassNotFoundException. When first
 # implemented, this custom JRE reduced our image size from 574 MB to 469 MB
-FROM amazoncorretto:21.0.6-alpine3.21 as jre
+FROM amazoncorretto:21.0.6-alpine3.21 AS jre
 RUN apk add binutils && jlink \
   --add-modules java.se,jdk.compiler,jdk.unsupported \
   --compress zip-6 \
@@ -57,10 +57,27 @@ echo 'source /black21-venv/bin/activate && black "$@"' > /usr/bin/black21
 chmod +x /usr/bin/black21
 
 # Install Node dependencies
+#
+# We stay on eslint-plugin-unicorn 56.0.1 because 57+ removed support for
+# importing this plugin into the ESLint config as CommonJS. (We use CommonJS
+# instead of ESM in the ESLint config mainly because the latter requires a new
+# local package.json file that declares `"type": "module"`, which interferes
+# with other tools like SVGO). I couldn't get the `deasync` hack to work - it
+# just hung forever. TODO: Try updating this plugin after updating Node.js to
+# v22+, which has experimental support for synchronously require()-ing ESM?
+# https://github.com/sindresorhus/eslint-plugin-unicorn/releases/tag/v57.0.0
+# https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
+# https://nodejs.org/en/blog/announcements/v22-release-announce#support-requireing-synchronous-esm-graphs
+# https://github.com/eslint/eslint/issues/13684#issuecomment-722949152
 npm install -g \
   @prettier/plugin-xml@3.4.1 \
-  prettier@3.3.3 \
-  svgo@3.3.2
+  eslint@9.23.0 \
+  eslint-plugin-jsdoc@50.6.9 \
+  eslint-plugin-sort-keys@2.3.5 \
+  eslint-plugin-unicorn@56.0.1 \
+  prettier@3.5.3 \
+  svgo@3.3.2 \
+  typescript-eslint@8.29.0
 
 # Install Scala dependencies
 wget https://github.com/coursier/coursier/releases/download/v2.1.17/coursier -O /bin/coursier
@@ -108,3 +125,4 @@ COPY --from=entry /entry.js /entry
 # https://github.com/coursier/coursier/issues/1955#issuecomment-956697764
 ENV COURSIER_CACHE=/tmp/coursier-cache
 ENV COURSIER_JVM_CACHE=/tmp/coursier-jvm-cache
+ENV NODE_PATH=/usr/local/lib/node_modules
