@@ -10,6 +10,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [isort](https://github.com/PyCQA/isort) v5.13.2 for Python 2
 - [google-java-format](https://github.com/google/google-java-format) v1.24.0 for Java
 - [ktfmt](https://github.com/facebookincubator/ktfmt) v0.53 for Kotlin
+- [gradle-dependencies-sorter](https://github.com/square/gradle-dependencies-sorter) v0.14 for Gradle
 - [gofmt](https://pkg.go.dev/cmd/gofmt) v1.23.3 for Go
 - [scalafmt](https://scalameta.org/scalafmt/) v3.8.3 for Scala
 - [shfmt](https://github.com/mvdan/sh) v3.10.0 for Shell

@@ -83,6 +83,7 @@ const enum HookName {
   EsLint = "ESLint",
   Gofmt = "gofmt",
   GoogleJavaFormat = "google-java-format",
+  GradleDependenciesSorter = "gradle-dependencies-sorter",
   Isort = "isort",
   Ktfmt = "ktfmt",
   PrettierJs = "Prettier (JS)",
@@ -218,6 +219,12 @@ const HOOKS: Record<HookName, LockableHook> = {
     action: sources =>
       run("java", "-jar", "/google-java-format", "--replace", ...sources),
     include: /\.java$/,
+    runAfter: [HookName.Sed],
+  }),
+  [HookName.GradleDependenciesSorter]: createLockableHook({
+    action: sources =>
+      run("java", "-jar", "/gradle-dependencies-sorter", ...sources),
+    include: /build\.gradle(\.kts)?$/,
     runAfter: [HookName.Sed],
   }),
   [HookName.Isort]: createLockableHook({
