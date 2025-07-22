@@ -2,6 +2,7 @@ MAKEFLAGS += --silent
 SHELL = /usr/bin/env bash
 
 _IMAGE_NAME = duolingo/pre-commit-hooks
+_LATEST_TAG = $(shell git tag | sort -V | tail -1)
 
 # Bumps this project's version number. Example: make release V=1.0.3
 .PHONY: release
@@ -14,7 +15,7 @@ release: test
 	# Update source files and commit
 	echo 'Creating release commit...'
 	git grep --cached -z -l '' | xargs -0 sed -E -i '' -e \
-		"s@( rev: | entry: $(_IMAGE_NAME):)$$(git tag | sort -V | tail -1)@\1${V}@g"
+		"s@( rev: | entry: $(_IMAGE_NAME):)$(_LATEST_TAG)@\1${V}@g"
 	git add -A
 	git commit -m "Release ${V}" -n
 
@@ -35,7 +36,7 @@ push: test
 	# https://stackoverflow.com/a/69987949
 	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 	docker buildx build --push --platform linux/amd64,linux/arm64 \
-		-t "$(_IMAGE_NAME):$$(git tag | tail -1)" \
+		-t "$(_IMAGE_NAME):$(_LATEST_TAG)" \
 		-t "$(_IMAGE_NAME):latest" \
 		.
 
