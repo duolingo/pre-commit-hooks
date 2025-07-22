@@ -92,6 +92,7 @@ wget https://github.com/muttleyxd/clang-tools-static-binaries/releases/download/
 chmod +x clang-format
 wget https://github.com/google/google-java-format/releases/download/v1.24.0/google-java-format-1.24.0-all-deps.jar -O google-java-format
 wget https://search.maven.org/remotecontent?filepath=com/facebook/ktfmt/0.53/ktfmt-0.53-jar-with-dependencies.jar -O ktfmt
+wget https://repo1.maven.org/maven2/com/squareup/sort-gradle-dependencies-app/0.14/sort-gradle-dependencies-app-0.14-all.jar -O gradle-dependencies-sorter
 wget https://github.com/mvdan/sh/releases/download/v3.10.0/shfmt_v3.10.0_linux_amd64 -O shfmt
 chmod +x shfmt
 wget https://github.com/tamasfe/taplo/releases/download/0.9.3/taplo-linux-x86_64.gz -O taplo.gz
