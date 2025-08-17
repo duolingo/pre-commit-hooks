@@ -6,17 +6,13 @@ trim_trailing_whitespace=true
 [makefile]
 indent_style=tab
 
-[*.{gradle,java,kt,kts,sh,xml,yaml,yml}]
+[*.{cs,gradle,java,kt,kts,sh,xml,yaml,yml}]
 indent_size=2
 max_line_length=100
 
 [*.{js,jsx,ts,tsx}]
 indent_size=2
 max_line_length=80
-
-[*.cs]
-indent_size=2
-max_line_length=100
 
 [*.py]
 combine_as_imports=true

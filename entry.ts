@@ -197,10 +197,14 @@ const HOOKS: Record<HookName, LockableHook> = {
       run(
         "dotnet",
         "format",
-        "--include",
-        sources.join(","),
+        // TODO: Also format `style`, which fails with "Could not find a MSBuild
+        // project file or solution file". Generate a temporary project file?
+        "whitespace",
         "--verbosity",
         "quiet",
+        "--folder",
+        "--include",
+        ...sources,
       ),
     include: /\.cs$/,
     runAfter: [HookName.Sed],
