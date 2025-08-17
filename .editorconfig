@@ -14,6 +14,10 @@ max_line_length=100
 indent_size=2
 max_line_length=80
 
+[*.cs]
+indent_size=2
+max_line_length=100
+
 [*.py]
 combine_as_imports=true
 force_grid_wrap=0

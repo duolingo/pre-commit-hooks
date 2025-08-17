@@ -80,6 +80,7 @@ const enum HookName {
   Autoflake = "autoflake",
   Black = "Black",
   ClangFormat = "ClangFormat",
+  DotnetFormat = "dotnet format",
   EsLint = "ESLint",
   Gofmt = "gofmt",
   GoogleJavaFormat = "google-java-format",
@@ -189,6 +190,19 @@ const HOOKS: Record<HookName, LockableHook> = {
         ...sources,
       ),
     include: /\.(cpp|proto$)/,
+    runAfter: [HookName.Sed],
+  }),
+  [HookName.DotnetFormat]: createLockableHook({
+    action: sources =>
+      run(
+        "dotnet",
+        "format",
+        "--include",
+        sources.join(","),
+        "--verbosity",
+        "quiet",
+      ),
+    include: /\.cs$/,
     runAfter: [HookName.Sed],
   }),
   [HookName.EsLint]: createLockableHook({

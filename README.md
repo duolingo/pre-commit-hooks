@@ -17,6 +17,7 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 - [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10139 for XML
 - [terraform fmt](https://github.com/hashicorp/terraform) v1.9.8 for Terraform
 - [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v18.1.8 for C++, Protobuf
+- [dotnet format](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-format) for C#
 - [SVGO](https://github.com/svg/svgo) v3.3.2 for SVG
 - [Taplo](https://taplo.tamasfe.dev/) v0.9.3 for TOML
 - Custom regex transformations (basically [sed](https://en.wikipedia.org/wiki/Sed)), for example:
