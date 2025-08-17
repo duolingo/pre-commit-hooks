@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { exec } from "child_process";
-import { createReadStream, readFile, writeFile } from "fs";
+import { createReadStream } from "fs";
+import { readFile, unlink, writeFile } from "fs/promises";
 import { createInterface } from "readline";
 
 /**
@@ -49,32 +50,26 @@ const run = (...args: string[]) =>
 export const isTruthy = <T>(value: T): value is NonNullable<T> => !!value;
 
 /** Reads a file, transforms its contents, and writes the result if different */
-const transformFile = (path: string, transform: (before: string) => string) =>
-  new Promise<void>((resolve, reject) => {
-    readFile(path, "utf8", (err, data) => {
-      // File unreadable
-      if (err) {
-        reject(err);
-        return;
-      }
+const transformFile = async (
+  path: string,
+  transform: (before: string) => string,
+) => {
+  const data = await readFile(path, "utf8");
 
-      // File empty
-      if (data === "") {
-        resolve();
-        return;
-      }
+  // File empty
+  if (data === "") {
+    return;
+  }
 
-      // File unmodified
-      const after = transform(data);
-      if (data === after) {
-        resolve();
-        return;
-      }
+  // File unmodified
+  const after = transform(data);
+  if (data === after) {
+    return;
+  }
 
-      // File modified
-      writeFile(path, after, "utf8", err => (err ? reject(err) : resolve()));
-    });
-  });
+  // File modified
+  await writeFile(path, after, "utf8");
+};
 
 const enum HookName {
   Autoflake = "autoflake",
@@ -193,19 +188,43 @@ const HOOKS: Record<HookName, LockableHook> = {
     runAfter: [HookName.Sed],
   }),
   [HookName.DotnetFormat]: createLockableHook({
-    action: sources =>
-      run(
-        "dotnet",
-        "format",
-        // TODO: Also format `style`, which fails with "Could not find a MSBuild
-        // project file or solution file". Generate a temporary project file?
-        "whitespace",
-        "--verbosity",
-        "quiet",
-        "--folder",
-        "--include",
-        ...sources,
-      ),
+    action: async sources => {
+      // Create project file
+      const projectFile = `dotnet-format-${Math.random()}.csproj`;
+      await writeFile(
+        projectFile,
+        `<Project Sdk="Microsoft.NET.Sdk">
+          <PropertyGroup>
+            <TargetFramework>net8.0</TargetFramework>
+          </PropertyGroup>
+          <ItemGroup>
+            ${sources.map(s => `<Compile Include="${s}" />`).join("")}
+          </ItemGroup>
+        </Project>`,
+      );
+      try {
+        await run(
+          "dotnet",
+          "format",
+          "style",
+          "--verbosity",
+          "quiet",
+          projectFile,
+        );
+        await run(
+          "dotnet",
+          "format",
+          "whitespace",
+          "--verbosity",
+          "quiet",
+          "--folder",
+          "--include",
+          ...sources,
+        );
+      } finally {
+        await unlink(projectFile);
+      }
+    },
     include: /\.cs$/,
     runAfter: [HookName.Sed],
   }),
