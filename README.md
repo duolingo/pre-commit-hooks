@@ -1,6 +1,24 @@
 # pre-commit hooks
 
-This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel:
+This repo contains [pre-commit](https://pre-commit.com/) hooks used widely at Duolingo. Add to `.pre-commit-config.yaml`:
+
+```yaml
+- repo: https://github.com/duolingo/pre-commit-hooks.git
+  rev: 1.10.0
+  hooks:
+    - id: duolingo
+    - id: sync-ai-rules
+    # - id: ...
+```
+
+## Available hooks
+
+- [`duolingo`](#duolingo): Formats code
+- [`sync-ai-rules`](#sync-ai-rules): Syncs AI coding rules across Cursor, Claude, etc
+
+### `duolingo`
+
+This a single hook that internally runs several code formatters in parallel:
 
 - [Prettier](https://github.com/prettier/prettier) v3.5.3 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
 - [ESLint](https://eslint.org/) v9.23.0 for JS, TypeScript
@@ -27,24 +45,22 @@ This repo currently contains a single [pre-commit](https://pre-commit.com/) hook
 
 To minimize developer friction, we enable only rules whose violations can be fixed automatically and disable all rules whose violations require manual correction.
 
-We run this hook on developer workstations and enforce it in CI for all production repos at Duolingo.
-
-## Usage
-
-Repo maintainers can declare this hook in `.pre-commit-config.yaml`:
+We run this hook on developer workstations and enforce it in CI for all production repos at Duolingo. Repos can individually opt into older language versions via `args` config:
 
 ```yaml
-- repo: https://github.com/duolingo/pre-commit-hooks.git
-  rev: 1.10.0
-  hooks:
-    - id: duolingo
-      args: # Optional
-        - --python-version=2 # Defaults to Python 3
-        - --scala-version=3 # Defaults to Scala 2.12
+args: # Optional
+  - --python-version=2 # Defaults to Python 3
+  - --scala-version=3 # Defaults to Scala 2.12
 ```
 
 Directories named `build` and `node_modules` are excluded by default - no need to declare them in the hook's `exclude` key.
 
 Contributors can copy or symlink this repo's `.editorconfig` file to their home directory in order to have their [text editors and IDEs](https://editorconfig.org/) automatically pick up the same linter/formatter settings that this hook uses.
+
+### `sync-ai-rules`
+
+TODO
+
+---
 
 _Duolingo is hiring! Apply at https://www.duolingo.com/careers_
