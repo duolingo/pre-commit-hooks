@@ -1,1 +1,1 @@
-"""Core plugin system for infra-sync-rules."""
+"""Core plugin system for sync-ai-rules."""

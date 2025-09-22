@@ -1,4 +1,4 @@
-# Plugin configuration for infra-sync-rules
+# Plugin configuration for sync_ai_rules
 # This file explicitly lists which parsers and generators to load,
 # making the plugin system more traceable and explicit.
 

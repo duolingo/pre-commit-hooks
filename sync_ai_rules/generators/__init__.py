@@ -1,1 +1,1 @@
-"""Generator plugins for infra-sync-rules."""
+"""Generator plugins for sync_ai_rules."""

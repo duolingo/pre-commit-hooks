@@ -16,7 +16,7 @@
   types: [text]
 
 - id: sync-ai-rules
-  name: Sync Cursor AI Rules to Documentation
+  name: Sync AI Rules
   entry: python3 -m sync_ai_rules
   language: docker
   files: ^\.cursor/rules/.*\.mdc$

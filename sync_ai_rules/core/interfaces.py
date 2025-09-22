@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Core interfaces for infra-sync-rules plugin system.
+Core interfaces for sync_ai_rules plugin system.
 Defines abstract base classes for parsers and generators.
 """
 
