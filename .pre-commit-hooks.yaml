@@ -15,9 +15,9 @@
   language: docker
   types: [text]
 
-- id: infra-sync-rules
-  name: Sync Cursor Rules to Documentation
-  entry: python3 -m infra_sync_rules
+- id: sync-ai-rules
+  name: Sync Cursor AI Rules to Documentation
+  entry: python3 -m sync_ai_rules
   language: docker
   files: ^\.cursor/rules/.*\.mdc$
   pass_filenames: false

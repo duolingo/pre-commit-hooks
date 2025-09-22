@@ -8,9 +8,9 @@ import sys
 from pathlib import Path
 from typing import Dict, List
 
-from infra_sync_rules.core.interfaces import RuleMetadata
-from infra_sync_rules.core.plugin_manager import PluginManager
-from infra_sync_rules.file_updater import update_documentation_file
+from sync_ai_rules.core.interfaces import RuleMetadata
+from sync_ai_rules.core.plugin_manager import PluginManager
+from sync_ai_rules.file_updater import update_documentation_file
 
 
 def find_project_root() -> str:

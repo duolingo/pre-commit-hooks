@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
-from infra_sync_rules.core.interfaces import InputParser, RuleMetadata
+from sync_ai_rules.core.interfaces import InputParser, RuleMetadata
 
 
 class MDCParser(InputParser):

@@ -5,7 +5,7 @@ Markdown Generator plugin - generates markdown documentation with XML tags.
 
 from typing import Any, Dict, List
 
-from infra_sync_rules.core.interfaces import OutputGenerator, RuleMetadata
+from sync_ai_rules.core.interfaces import OutputGenerator, RuleMetadata
 
 
 class MarkdownGenerator(OutputGenerator):
