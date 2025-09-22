@@ -1,0 +1,15 @@
+# Plugin configuration for infra-sync-rules
+# This file explicitly lists which parsers and generators to load,
+# making the plugin system more traceable and explicit.
+
+parsers:
+  - name: mdc
+    module: mdc_parser
+    class: MDCParser
+    description: Parse MDC files with YAML frontmatter
+
+generators:
+  - name: markdown
+    module: markdown_generator
+    class: MarkdownGenerator
+    description: Generate markdown documentation with XML tags

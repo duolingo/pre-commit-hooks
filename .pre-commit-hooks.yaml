@@ -14,3 +14,10 @@
   entry: /entry
   language: docker
   types: [text]
+
+- id: infra-sync-rules
+  name: Sync Cursor Rules to Documentation
+  entry: python3 -m infra_sync_rules
+  language: docker
+  files: ^\.cursor/rules/.*\.mdc$
+  pass_filenames: false

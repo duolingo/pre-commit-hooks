@@ -1,6 +1,10 @@
 # pre-commit hooks
 
-This repo currently contains a single [pre-commit](https://pre-commit.com/) hook that internally runs several code formatters in parallel:
+This repo contains [pre-commit](https://pre-commit.com/) hooks for Duolingo development:
+
+## Code Formatting Hook (`duolingo`)
+
+The main hook that runs several code formatters in parallel:
 
 - [Prettier](https://github.com/prettier/prettier) v3.5.3 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
 - [ESLint](https://eslint.org/) v9.23.0 for JS, TypeScript
@@ -29,18 +33,26 @@ To minimize developer friction, we enable only rules whose violations can be fix
 
 We run this hook on developer workstations and enforce it in CI for all production repos at Duolingo.
 
+## Infrastructure Sync Rules Hook (`infra-sync-rules`)
+
+This hook automatically synchronizes Cursor AI rules from `.cursor/rules/*.mdc` files into documentation files. It processes rule files with YAML frontmatter and generates standardized documentation.
+
 ## Usage
 
-Repo maintainers can declare this hook in `.pre-commit-config.yaml`:
+Repo maintainers can declare these hooks in `.pre-commit-config.yaml`:
 
 ```yaml
 - repo: https://github.com/duolingo/pre-commit-hooks.git
   rev: 1.10.0
   hooks:
+    # Code formatting hook
     - id: duolingo
       args: # Optional
         - --python-version=2 # Defaults to Python 3
         - --scala-version=3 # Defaults to Scala 2.12
+
+    # Infrastructure sync rules hook (for repos with Cursor AI rules)
+    - id: infra-sync-rules
 ```
 
 Directories named `build` and `node_modules` are excluded by default - no need to declare them in the hook's `exclude` key.

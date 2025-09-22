@@ -46,7 +46,8 @@ apk add --no-cache \
 pip3 install --break-system-packages \
   autoflake==1.7.8 \
   isort==5.13.2 \
-  ruff==0.7.3
+  ruff==0.7.3 \
+  PyYAML>=6.0
 
 # Install Python dependencies
 python3 -m venv /black21-venv
