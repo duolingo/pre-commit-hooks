@@ -35,7 +35,7 @@ We run this hook on developer workstations and enforce it in CI for all producti
 
 ## Sync AI Rules Hook (`sync-ai-rules`)
 
-This hook automatically synchronizes Cursor AI rules from `.cursor/rules/*.mdc` files into documentation files. It processes rule files with YAML frontmatter and generates standardized documentation.
+This hook synchronizes AI coding rules from .cursor/rules/\*.mdc files to other AI assistant configuration files (CLAUDE.md, AGENTS.md, etc.). This ensures all AI coding assistants in your project stay aware of the same rules and conventions, eliminating the need to manually copy rules between different AI config files.
 
 ## Usage
 
@@ -50,7 +50,6 @@ Repo maintainers can declare these hooks in `.pre-commit-config.yaml`:
       args: # Optional
         - --python-version=2 # Defaults to Python 3
         - --scala-version=3 # Defaults to Scala 2.12
-
     # Sync AI rules hook (for repos with Cursor AI rules)
     - id: sync-ai-rules
 ```
