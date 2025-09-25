@@ -3,6 +3,7 @@
   entry: duolingo/pre-commit-hooks:1.10.0 /entry
   language: docker_image
   types: [text]
+  exclude: &sync_ai_rules_output (AGENTS|CLAUDE|copilot-instructions)\.md$
 
 # Nobody should ever use this hook in production. It's just for testing PRs in
 # the duolingo/pre-commit-hooks repo more easily without having to tag and push
@@ -14,6 +15,7 @@
   entry: /entry
   language: docker
   types: [text]
+  exclude: *sync_ai_rules_output
 
 - id: sync-ai-rules
   name: Sync AI Rules
