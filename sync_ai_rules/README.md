@@ -7,10 +7,10 @@
 
 ### Adding New Input Parsers
 
-Create a parser class implementing `InputParser` in `infra_sync_rules/parsers/`:
+Create a parser class implementing `InputParser` in `sync_ai_rules/parsers/`:
 
 ```python
-from infra_sync_rules.core.interfaces import InputParser, RuleMetadata
+from sync_ai_rules.core.interfaces import InputParser, RuleMetadata
 
 class YourParser(InputParser):
     @property
@@ -22,10 +22,10 @@ class YourParser(InputParser):
 
 ### Adding New Output Generators
 
-Create a generator class implementing `OutputGenerator` in `infra_sync_rules/generators/`:
+Create a generator class implementing `OutputGenerator` in `sync_ai_rules/generators/`:
 
 ```python
-from infra_sync_rules.core.interfaces import OutputGenerator
+from sync_ai_rules.core.interfaces import OutputGenerator
 
 class YourGenerator(OutputGenerator):
     @property
@@ -37,7 +37,7 @@ class YourGenerator(OutputGenerator):
 
 ### Register Your Extensions
 
-Add them to `infra_sync_rules/plugins.yaml`:
+Add them to `sync_ai_rules/plugins.yaml`:
 
 ```yaml
 parsers:

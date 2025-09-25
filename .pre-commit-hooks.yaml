@@ -7,7 +7,7 @@
 
 - id: sync-ai-rules
   name: Sync AI Rules
-  entry: python3 -m sync_ai_rules
+  entry: &sync_ai_rules_entry sh -c "PYTHONPATH=/ python3 -m sync_ai_rules"
   language: docker
   files: ^\.cursor/rules/.*\.mdc$
   pass_filenames: false
@@ -26,7 +26,7 @@
 
 - id: sync-ai-rules-dev
   name: Sync AI Rules (dev)
-  entry: python3 -m sync_ai_rules
+  entry: *sync_ai_rules_entry
   language: docker
   files: ^\.cursor/rules/.*\.mdc$
   pass_filenames: false
