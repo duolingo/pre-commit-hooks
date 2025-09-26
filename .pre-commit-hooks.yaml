@@ -3,7 +3,6 @@
   entry: duolingo/pre-commit-hooks:1.11.0 /entry
   language: docker_image
   types: [text]
-  exclude: &sync_ai_rules_output (AGENTS|CLAUDE|copilot-instructions)\.md$
 
 - id: sync-ai-rules
   name: Sync AI Rules
@@ -22,7 +21,6 @@
   entry: /entry
   language: docker
   types: [text]
-  exclude: *sync_ai_rules_output
 
 - id: sync-ai-rules-dev
   name: Sync AI Rules (dev)
