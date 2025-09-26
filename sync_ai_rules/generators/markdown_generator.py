@@ -30,10 +30,13 @@ class MarkdownGenerator(OutputGenerator):
             "<!-- DO NOT EDIT THIS SECTION - Auto-generated from .cursor/rules/ -->",
             "",
             "## Development Rules",
+            "",
             "Each rule below has the following properties:",
+            "",
             "- Description: Tells you exactly when to read and apply this rule to your current task",
             "- File scope: Defines which files/directories this rule applies to",
             "- Always apply: false = apply only when relevant; true = always apply this rule",
+            "",
             "Read the properties of each rule and apply those that match your current task.",
             "When you decide to apply a rule, you MUST read the entire contents of the actual rule file using the file path shown"
             "",
