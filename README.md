@@ -43,7 +43,7 @@ Repo maintainers can declare these hooks in `.pre-commit-config.yaml`:
 
 ```yaml
 - repo: https://github.com/duolingo/pre-commit-hooks.git
-  rev: 1.10.0
+  rev: 1.11.0
   hooks:
     # Code formatting hook
     - id: duolingo

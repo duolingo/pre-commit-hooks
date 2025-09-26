@@ -1,13 +1,13 @@
 - id: duolingo
   name: Duolingo
-  entry: duolingo/pre-commit-hooks:1.10.0 /entry
+  entry: duolingo/pre-commit-hooks:1.11.0 /entry
   language: docker_image
   types: [text]
   exclude: &sync_ai_rules_output (AGENTS|CLAUDE|copilot-instructions)\.md$
 
 - id: sync-ai-rules
   name: Sync AI Rules
-  entry: duolingo/pre-commit-hooks:1.10.0 sh -c "PYTHONPATH=/ python3 -m sync_ai_rules"
+  entry: duolingo/pre-commit-hooks:1.11.0 sh -c "PYTHONPATH=/ python3 -m sync_ai_rules"
   language: docker_image
   files: &sync_ai_rules_files ^\.cursor/rules/.*\.mdc$
   pass_filenames: false
