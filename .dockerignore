@@ -6,3 +6,4 @@
 !ruff.toml
 !stylesheet.xml
 !svgo.config.js
+!sync_ai_rules

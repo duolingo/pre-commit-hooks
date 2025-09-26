@@ -3,14 +3,30 @@
   entry: duolingo/pre-commit-hooks:1.10.0 /entry
   language: docker_image
   types: [text]
+  exclude: &sync_ai_rules_output (AGENTS|CLAUDE|copilot-instructions)\.md$
 
-# Nobody should ever use this hook in production. It's just for testing PRs in
+- id: sync-ai-rules
+  name: Sync AI Rules
+  entry: &sync_ai_rules_entry sh -c "PYTHONPATH=/ python3 -m sync_ai_rules"
+  language: docker
+  files: ^\.cursor/rules/.*\.mdc$
+  pass_filenames: false
+
+# Nobody should ever use these hooks in production. They're just for testing PRs in
 # the duolingo/pre-commit-hooks repo more easily without having to tag and push
-# temporary images to Docker Hub. Usage: edit a consumer repo's `id: duolingo`
-# hook config to instead declare `id: duolingo-dev` and `rev: <PR branch SHA>`,
-# then run `pre-commit run duolingo-dev --all-files`
+# temporary images to Docker Hub. Usage: edit a consumer repo's hook config to
+# instead declare `id: duolingo-dev` or `id: sync-ai-rules-dev` and `rev: <PR branch SHA>`,
+# then run `pre-commit run <hook-id> --all-files`
 - id: duolingo-dev
   name: Duolingo (dev)
   entry: /entry
   language: docker
   types: [text]
+  exclude: *sync_ai_rules_output
+
+- id: sync-ai-rules-dev
+  name: Sync AI Rules (dev)
+  entry: *sync_ai_rules_entry
+  language: docker
+  files: ^\.cursor/rules/.*\.mdc$
+  pass_filenames: false
