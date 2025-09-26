@@ -40,6 +40,7 @@ apk add --no-cache --virtual .build-deps \
   py3-pip \
   python3-dev
 apk add --no-cache \
+  dotnet8-sdk \
   libxslt \
   nodejs \
   python3
