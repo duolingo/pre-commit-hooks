@@ -195,6 +195,7 @@ const HOOKS: Record<HookName, LockableHook> = {
         projectFile,
         `<Project Sdk="Microsoft.NET.Sdk">
           <PropertyGroup>
+            <EnableDefaultItems>false</EnableDefaultItems>
             <TargetFramework>net8.0</TargetFramework>
           </PropertyGroup>
           <ItemGroup>
@@ -207,19 +208,17 @@ const HOOKS: Record<HookName, LockableHook> = {
           "dotnet",
           "format",
           "style",
+          projectFile,
           "--verbosity",
           "quiet",
-          projectFile,
         );
         await run(
           "dotnet",
           "format",
           "whitespace",
+          projectFile,
           "--verbosity",
           "quiet",
-          "--folder",
-          "--include",
-          ...sources,
         );
       } finally {
         await unlink(projectFile);
