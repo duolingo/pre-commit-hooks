@@ -86,6 +86,7 @@ const enum HookName {
   GradleDependenciesSorter = "gradle-dependencies-sorter",
   Isort = "isort",
   Ktfmt = "ktfmt",
+  PackerFmt = "packer fmt",
   PrettierJs = "Prettier (JS)",
   PrettierNonJs = "Prettier (non-JS)",
   Ruff = "Ruff",
@@ -259,6 +260,11 @@ const HOOKS: Record<HookName, LockableHook> = {
       }
     },
     include: /\.kts?$/,
+    runAfter: [HookName.Sed],
+  }),
+  [HookName.PackerFmt]: createLockableHook({
+    action: sources => run("/packer", "fmt", ...sources),
+    include: /\.pkr\.hcl$/,
     runAfter: [HookName.Sed],
   }),
   [HookName.PrettierJs]: createLockableHook({
