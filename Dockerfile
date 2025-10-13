@@ -103,7 +103,6 @@ wget https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.
 unzip tf.zip
 rm tf.zip
 rm LICENSE.txt
-
 wget https://releases.hashicorp.com/packer/1.14.2/packer_1.14.2_linux_amd64.zip -O packer.zip
 unzip packer.zip
 rm packer.zip
