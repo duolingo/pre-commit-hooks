@@ -125,27 +125,9 @@ interface Hook {
   runAfter?: HookName[];
 }
 
-interface LockableHook extends Hook {
-  /** Upon resolution, indicates that this hook has completed */
-  lock: Promise<unknown>;
-  /** Promise that must resolve before this hook begins execution */
-  locksToWaitFor?: Promise<unknown>;
-  /** Marks this hook as complete */
-  unlock: () => void;
-}
-
-/** Wraps a non-lockable hook to add properties used for locking */
-const createLockableHook = (hook: Hook): LockableHook => {
-  let unlock = () => undefined as void;
-  const lock = new Promise<void>(resolve => {
-    unlock = resolve;
-  });
-  return { ...hook, lock, unlock };
-};
-
 /** Hooks expressed in a format similar to .pre-commit-config.yaml */
-const HOOKS: Record<HookName, LockableHook> = {
-  [HookName.Autoflake]: createLockableHook({
+const HOOKS: Record<HookName, Hook> = {
+  [HookName.Autoflake]: {
     action: sources =>
       run(
         "autoflake",
@@ -158,8 +140,8 @@ const HOOKS: Record<HookName, LockableHook> = {
       ),
     include: /\.py$/,
     runAfter: [HookName.Sed],
-  }),
-  [HookName.Black]: createLockableHook({
+  },
+  [HookName.Black]: {
     action: async (sources, args) =>
       args["python-version"]?.startsWith("2") &&
       run(
@@ -180,8 +162,8 @@ const HOOKS: Record<HookName, LockableHook> = {
       ),
     include: /\.py$/,
     runAfter: [HookName.Isort],
-  }),
-  [HookName.ClangFormat]: createLockableHook({
+  },
+  [HookName.ClangFormat]: {
     action: sources =>
       run(
         "/clang-format",
@@ -191,8 +173,8 @@ const HOOKS: Record<HookName, LockableHook> = {
       ),
     include: /\.(cpp|proto$)/,
     runAfter: [HookName.Sed],
-  }),
-  [HookName.EsLint]: createLockableHook({
+  },
+  [HookName.EsLint]: {
     action: async sources => {
       try {
         await run(
@@ -210,25 +192,25 @@ const HOOKS: Record<HookName, LockableHook> = {
     exclude: MINIFIED_JS_REGEX,
     include: /\.[jt]sx?$/,
     runAfter: [HookName.Sed],
-  }),
-  [HookName.Gofmt]: createLockableHook({
+  },
+  [HookName.Gofmt]: {
     action: sources => run("/gofmt", "-s", "-w", ...sources),
     include: /\.go$/,
     runAfter: [HookName.Sed],
-  }),
-  [HookName.GoogleJavaFormat]: createLockableHook({
+  },
+  [HookName.GoogleJavaFormat]: {
     action: sources =>
       run("java", "-jar", "/google-java-format", "--replace", ...sources),
     include: /\.java$/,
     runAfter: [HookName.Sed],
-  }),
-  [HookName.GradleDependenciesSorter]: createLockableHook({
+  },
+  [HookName.GradleDependenciesSorter]: {
     action: sources =>
       run("java", "-jar", "/gradle-dependencies-sorter", ...sources),
     include: /build\.gradle(\.kts)?$/,
     runAfter: [HookName.Sed],
-  }),
-  [HookName.Isort]: createLockableHook({
+  },
+  [HookName.Isort]: {
     // isort's automatic config file detection is broken
     // https://github.com/PyCQA/isort/issues/1907
     // https://github.com/samueljsb/qaz/pull/104
@@ -237,8 +219,8 @@ const HOOKS: Record<HookName, LockableHook> = {
       run("isort", "--settings", "/.editorconfig", ...sources),
     include: /\.py$/,
     runAfter: [HookName.Autoflake],
-  }),
-  [HookName.Ktfmt]: createLockableHook({
+  },
+  [HookName.Ktfmt]: {
     action: async sources => {
       /** Try to avoid ktfmt OOMs presumably caused by too many input files */
       const MAX_FILES_PER_PROCESS = 200;
@@ -261,13 +243,13 @@ const HOOKS: Record<HookName, LockableHook> = {
     },
     include: /\.kts?$/,
     runAfter: [HookName.Sed],
-  }),
-  [HookName.PackerFmt]: createLockableHook({
+  },
+  [HookName.PackerFmt]: {
     action: sources => run("/packer", "fmt", ...sources),
     include: /\.pkr\.hcl$/,
     runAfter: [HookName.Sed],
-  }),
-  [HookName.PrettierJs]: createLockableHook({
+  },
+  [HookName.PrettierJs]: {
     action: sources =>
       run(
         "prettier",
@@ -279,8 +261,8 @@ const HOOKS: Record<HookName, LockableHook> = {
     exclude: MINIFIED_JS_REGEX,
     include: /\.jsx?$/,
     runAfter: [HookName.Sed, HookName.EsLint],
-  }),
-  [HookName.PrettierNonJs]: createLockableHook({
+  },
+  [HookName.PrettierNonJs]: {
     action: sources =>
       run(
         "prettier",
@@ -292,8 +274,8 @@ const HOOKS: Record<HookName, LockableHook> = {
       ),
     include: /\.(css|html?|markdown|md|scss|tsx?|xml|ya?ml)$/,
     runAfter: [HookName.Sed, HookName.Xsltproc, HookName.EsLint],
-  }),
-  [HookName.Ruff]: createLockableHook({
+  },
+  [HookName.Ruff]: {
     action: async (sources, args) => {
       if (args["python-version"]?.startsWith("2")) {
         return;
@@ -306,8 +288,8 @@ const HOOKS: Record<HookName, LockableHook> = {
     },
     include: /\.py$/,
     runAfter: [HookName.Autoflake],
-  }),
-  [HookName.Scalafmt]: createLockableHook({
+  },
+  [HookName.Scalafmt]: {
     action: async (sources, args) =>
       run(
         "/scalafmt",
@@ -330,12 +312,12 @@ const HOOKS: Record<HookName, LockableHook> = {
       ),
     include: /\.(scala|sbt|sc)$/,
     runAfter: [HookName.Sed],
-  }),
+  },
   // Mimic sed by applying arbitrary regex transformations. Before proposing a
   // new transformation, please make sure that it's both (1) safe and (2) likely
   // to ever actually be needed. At Duolingo, we determine the latter criterion
   // empirically by seeing how many existing violations our codebase contains
-  [HookName.Sed]: createLockableHook({
+  [HookName.Sed]: {
     action: (sources, args) =>
       Promise.all(
         sources.map(source =>
@@ -391,8 +373,8 @@ const HOOKS: Record<HookName, LockableHook> = {
         ),
       ),
     include: /./,
-  }),
-  [HookName.Shfmt]: createLockableHook({
+  },
+  [HookName.Shfmt]: {
     action: async sources => {
       // Find source files that are Shell files. shfmt has a `-f` flag that
       // does this, but it sometimes returns false positives
@@ -442,13 +424,13 @@ const HOOKS: Record<HookName, LockableHook> = {
     exclude: /\.proto$/,
     include: /./,
     runAfter: [HookName.Sed],
-  }),
-  [HookName.Svgo]: createLockableHook({
+  },
+  [HookName.Svgo]: {
     action: sources => run("svgo", "--config", "/svgo.config.js", ...sources),
     include: /\.svg$/,
     runAfter: [HookName.Sed],
-  }),
-  [HookName.Taplo]: createLockableHook({
+  },
+  [HookName.Taplo]: {
     action: sources =>
       run(
         "/taplo",
@@ -467,8 +449,8 @@ const HOOKS: Record<HookName, LockableHook> = {
       ),
     include: /\.toml$/,
     runAfter: [HookName.Sed],
-  }),
-  [HookName.TerraformFmt]: createLockableHook({
+  },
+  [HookName.TerraformFmt]: {
     action: sources =>
       Promise.all(
         // Officially `terraform fmt` only accepts a directory to recurse
@@ -484,8 +466,8 @@ const HOOKS: Record<HookName, LockableHook> = {
       ),
     include: /\.tf$/,
     runAfter: [HookName.Sed],
-  }),
-  [HookName.Xsltproc]: createLockableHook({
+  },
+  [HookName.Xsltproc]: {
     action: sources =>
       Promise.all(
         sources.map(source =>
@@ -494,7 +476,7 @@ const HOOKS: Record<HookName, LockableHook> = {
       ),
     include: /\.xml$/,
     runAfter: [HookName.Sed],
-  }),
+  },
 };
 
 /** Files that match this pattern should never be processed */
@@ -550,11 +532,28 @@ const prefixLines = (() => {
     }
   }
 
-  // Set up hook locks
-  Object.values(HOOKS).forEach(hook => {
+  // Augment hook definitions to make them lockable
+  interface LockableHook extends Hook {
+    /** Upon resolution, indicates that this hook has completed */
+    lock: Promise<unknown>;
+    /** Promise that must resolve before this hook begins execution */
+    locksToWaitFor?: Promise<unknown>;
+    /** Marks this hook as complete */
+    unlock: () => void;
+  }
+  const lockableHooks = Object.fromEntries(
+    Object.entries(HOOKS).map(([name, hook]) => {
+      let unlock = () => undefined as void;
+      const lock = new Promise<void>(resolve => {
+        unlock = resolve;
+      });
+      return [name, { ...hook, lock, unlock }];
+    }),
+  ) as Record<HookName, LockableHook>;
+  Object.values(lockableHooks).forEach(hook => {
     if (hook.runAfter) {
       hook.locksToWaitFor = Promise.all(
-        hook.runAfter.map(hookName => HOOKS[hookName].lock),
+        hook.runAfter.map(hookName => lockableHooks[hookName].lock),
       );
     }
   });
@@ -562,7 +561,7 @@ const prefixLines = (() => {
   // Run all hooks in parallel
   let success = true;
   await Promise.all(
-    Object.entries(HOOKS).map(
+    Object.entries(lockableHooks).map(
       async ([name, { action, exclude, include, locksToWaitFor, unlock }]) => {
         // Wait until necessary hooks have completed
         await locksToWaitFor;
