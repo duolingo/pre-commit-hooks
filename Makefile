@@ -8,7 +8,7 @@ _LATEST_TAG = $(shell git tag | sort -V | tail -1)
 .PHONY: release
 release: test
 	# Validate
-	[[ "$$(whoami)" = art ]] # Currently only @artnc can push to Docker Hub etc.
+	[[ "$$(whoami)" = art || "$$(whoami)" = codespace ]] # Currently only @artnc can push to Docker Hub etc.
 	[[ -n "${V}" ]] # New version number was provided
 	[[ -z "$$(git status --porcelain)" ]] # Master is clean
 
