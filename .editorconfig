@@ -6,9 +6,15 @@ trim_trailing_whitespace=true
 [makefile]
 indent_style=tab
 
-[*.{gradle,java,kt,kts,sh,xml,yaml,yml}]
+[*.{cs,gradle,java,kt,kts,sh,xml,yaml,yml}]
 indent_size=2
 max_line_length=100
+
+; https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/style-rules/
+; https://google.github.io/styleguide/csharp-style.html#whitespace-rules
+[*.cs]
+csharp_new_line_before_open_brace = none
+dotnet_diagnostic.IDE0011.severity = error
 
 [*.{js,jsx,ts,tsx}]
 indent_size=2

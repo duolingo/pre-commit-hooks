@@ -48,7 +48,7 @@ shell:
 # Runs tests
 .PHONY: test
 test:
-	docker run --rm -v "$${PWD}/test:/test" "$$(docker build --network=host -q .)" sh -c \
+	docker run --rm --init -v "$${PWD}/test:/test" "$$(docker build --network=host -q .)" sh -c \
 		'cd /tmp \
 			&& cp -r /test/before actual \
 			&& cp -r /test/after expected \
