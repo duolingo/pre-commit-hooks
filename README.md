@@ -34,6 +34,12 @@ To minimize developer friction, we enable only rules whose violations can be fix
 
 We run this hook on developer workstations and enforce it in CI for all production repos at Duolingo.
 
+## Precache Docker Images Hook (`precache-docker`)
+
+Pre-commit parallelizes runs across CPUs by default (similar to `make -j`), but its `language: docker_image` [doesn't deduplicate image pulls](https://github.com/pre-commit/pre-commit/pull/3573). This hook speeds up pre-commit and minimizes data usage by precaching each Docker image once instead of pulling it $CPU_COUNT times on a cold cache.
+
+All `docker_image` entries found in `.pre-commit-config.yaml` will be included, as well as any additional images provided to this hook as `args`. You should declare this hook as early as possible in config, before any other hooks that are meant to benefit from this one.
+
 ## Sync AI Rules Hook (`sync-ai-rules`)
 
 This hook synchronizes AI coding rules from .cursor/rules/\*.mdc files to other AI assistant configuration files (CLAUDE.md, AGENTS.md, etc.). This ensures all AI coding assistants in your project stay aware of the same rules and conventions, eliminating the need to manually copy rules between different AI config files.
@@ -46,6 +52,10 @@ Repo maintainers can declare these hooks in `.pre-commit-config.yaml`:
 - repo: https://github.com/duolingo/pre-commit-hooks.git
   rev: 1.12.0
   hooks:
+    # Optimization hook for `language: docker_image`
+    - id: precache-docker
+      args: # Optional list of additional images to precache
+        - ubuntu:22.04
     # Code formatting hook
     - id: duolingo
       args: # Optional
