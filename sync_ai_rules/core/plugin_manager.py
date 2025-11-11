@@ -18,6 +18,7 @@ class PluginManager:
     def __init__(self):
         self.parsers: Dict[str, InputParser] = {}
         self.generators: Dict[str, OutputGenerator] = {}
+        self.parser_to_generator: Dict[str, str] = {}  # Maps parser name to generator name
 
     def load_plugins(self, base_path: str):
         """Load all plugins from plugins.yaml configuration file."""
@@ -34,6 +35,9 @@ class PluginManager:
             # Load parsers
             for parser_config in config.get("parsers", []):
                 self._load_parser(base_path, parser_config)
+                # Store parser -> generator mapping
+                if "generator" in parser_config:
+                    self.parser_to_generator[parser_config["name"]] = parser_config["generator"]
 
             # Load generators
             for generator_config in config.get("generators", []):

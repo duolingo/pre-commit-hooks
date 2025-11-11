@@ -41,6 +41,15 @@ class InputParser(ABC):
     def supported_extensions(self) -> List[str]:
         """File extensions this parser can handle."""
 
+    @property
+    def source_directories(self) -> List[str]:
+        """
+        Relative paths to directories this parser should scan.
+        Override in subclass if parser is specific to certain directories.
+        Returns empty list by default (scans all compatible files).
+        """
+        return []
+
     @abstractmethod
     def can_parse(self, file_path: str) -> bool:
         """Check if this parser can handle the given file."""

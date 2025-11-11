@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-This script uses a plugin architecture to parse rules and generate documentation.
+Sync AI Rules - Plugin-based rule parser and documentation generator.
+Scans source directories, parses rules, and generates documentation sections.
 """
 
 import os
@@ -14,72 +15,55 @@ from sync_ai_rules.file_updater import update_documentation_file
 
 
 def find_project_root() -> str:
-    """Find the project root by looking for key indicators."""
+    """Find project root by looking for .cursor/rules or .code_review directories."""
     current = Path.cwd()
 
-    # Look for .cursor/rules directory
     for path in [current] + list(current.parents):
-        if (path / ".cursor" / "rules").exists():
+        if (path / ".cursor" / "rules").exists() or (path / ".code_review").exists():
             return str(path)
 
-    # Fallback to current directory
     return str(current)
 
 
-def get_category(file_path: str, rules_dir: str) -> str:
-    """Get category name from file path."""
-    rel_path = os.path.relpath(file_path, rules_dir)
+def get_category(file_path: str, source_dir: str) -> str:
+    """Extract category from file path relative to source directory."""
+    rel_path = os.path.relpath(file_path, source_dir)
     folder = os.path.dirname(rel_path)
-
-    if not folder or folder == ".":
-        return "root"
-
-    return folder
+    return folder if folder and folder != "." else "root"
 
 
-def group_rules_by_category(rules: List[RuleMetadata]) -> Dict[str, List[RuleMetadata]]:
-    """Group rules by their category."""
-    groups = {}
-
+def group_by_category(rules: List[RuleMetadata]) -> Dict[str, List[RuleMetadata]]:
+    """Group rules by category."""
+    groups: Dict[str, List[RuleMetadata]] = {}
     for rule in rules:
-        category = rule.category
-        if category not in groups:
-            groups[category] = []
-        groups[category].append(rule)
-
+        groups.setdefault(rule.category, []).append(rule)
     return groups
 
 
-def scan_rules_directory(
-    rules_dir: str, project_root: str, plugin_manager: PluginManager
-) -> List[RuleMetadata]:
-    """Scan a directory for rules and parse them."""
+def scan_and_parse(parser, source_dir: str, project_root: str) -> List[RuleMetadata]:
+    """Scan directory and parse files with given parser."""
     rules = []
 
-    if not os.path.exists(rules_dir):
+    if not os.path.exists(source_dir):
         return rules
 
-    for root, dirs, files in os.walk(rules_dir):
-        # Skip generated and personal directories
+    for root, _, files in os.walk(source_dir):
+        # Skip generated/personal directories
         if "generated" in Path(root).parts or "personal" in Path(root).parts:
             continue
 
         for file in files:
             file_path = os.path.join(root, file)
 
-            # Find appropriate parser
-            parser = plugin_manager.get_parser_for_file(file_path)
-            if not parser:
+            if not parser.can_parse(file_path):
                 continue
 
-            # Create parsing context
             context = {
                 "project_root": project_root,
                 "relative_path": os.path.relpath(file_path, project_root),
-                "category": get_category(file_path, rules_dir),
+                "category": get_category(file_path, source_dir),
             }
 
-            # Parse the rule
             rule = parser.parse(file_path, context)
             if rule:
                 rules.append(rule)
@@ -88,76 +72,74 @@ def scan_rules_directory(
 
 
 def main():
-    """Main entry point."""
-    # Find project root
+    """Main orchestration: load plugins → parse → generate → update files."""
+    # Setup
     project_root = find_project_root()
-    cursor_rules_dir = os.path.join(project_root, ".cursor", "rules")
-    code_review_dir = os.path.join(project_root, ".code_review")
-
-    if not os.path.exists(cursor_rules_dir) and not os.path.exists(code_review_dir):
-        print("Error: Neither .cursor/rules nor .code_review directory found")
-        sys.exit(1)
-
-    # Initialize plugin manager
     script_dir = os.path.dirname(os.path.abspath(__file__))
+
     plugin_manager = PluginManager()
     plugin_manager.load_plugins(script_dir)
 
-    # Scan development rules (.cursor/rules/)
-    print(f"Scanning development rules from: {cursor_rules_dir}")
-    dev_rules = scan_rules_directory(cursor_rules_dir, project_root, plugin_manager)
-    grouped_dev_rules = group_rules_by_category(dev_rules)
+    # Process each parser → generator pair
+    results = {}
 
-    # Scan code review guidelines (.code_review/)
-    print(f"Scanning code review guidelines from: {code_review_dir}")
-    review_rules = scan_rules_directory(code_review_dir, project_root, plugin_manager)
-    grouped_review_rules = group_rules_by_category(review_rules)
+    for parser in plugin_manager.parsers.values():
+        # Get source directories from parser
+        source_dirs = parser.source_directories
+        if not source_dirs:
+            continue
 
-    # Print summary
-    total_dev_rules = sum(len(rules) for rules in grouped_dev_rules.values())
-    total_review_rules = sum(len(rules) for rules in grouped_review_rules.values())
-    print(f"\nFound {total_dev_rules} development rules in {len(grouped_dev_rules)} categories")
-    print(
-        f"Found {total_review_rules} code review guidelines in {len(grouped_review_rules)} categories"
-    )
+        all_rules = []
+        for rel_dir in source_dirs:
+            source_dir = os.path.join(project_root, rel_dir)
+            print(f"Scanning {rel_dir}...")
+            rules = scan_and_parse(parser, source_dir, project_root)
+            all_rules.extend(rules)
 
-    # Get generators
-    dev_generator = plugin_manager.get_generator("development-rules")
-    review_generator = plugin_manager.get_generator("code-review-guidelines")
+        if not all_rules:
+            continue
 
-    if not dev_generator or not review_generator:
-        print("Error: Required generators not found")
+        # Group rules by category
+        grouped_rules = group_by_category(all_rules)
+
+        print(f"  Found {len(all_rules)} rules in {len(grouped_rules)} categories")
+
+        # Store for generator
+        results[parser.name] = grouped_rules
+
+    if not results:
+        print("Error: No rules found in any source directory")
         sys.exit(1)
 
-    # Generate content for both sections
-    dev_content = dev_generator.generate(grouped_dev_rules, {}) if dev_rules else None
-    review_content = review_generator.generate(grouped_review_rules, {}) if review_rules else None
+    # Generate and update documentation
+    print("\nGenerating documentation...")
 
-    # Update output files (both generators use same target files)
+    # Get target files (all generators use same files)
+    first_generator = next(iter(plugin_manager.generators.values()))
     output_files = [
-        os.path.join(project_root, filename) for filename in dev_generator.default_filenames
+        os.path.join(project_root, filename) for filename in first_generator.default_filenames
     ]
 
-    for file_path in output_files:
-        # Update development rules section
-        if dev_content:
-            success, message = update_documentation_file(
-                file_path, dev_content, dev_generator.get_section_markers()
-            )
-            if success:
-                print(f"✓ Development rules: {message}")
-            else:
-                print(f"✗ Development rules: {message}")
+    # Generate content from each generator
+    for parser_name, grouped_rules in results.items():
+        # Get the generator for this parser
+        generator_name = plugin_manager.parser_to_generator.get(parser_name)
+        if not generator_name:
+            continue
 
-        # Update code review guidelines section
-        if review_content:
+        generator = plugin_manager.generators.get(generator_name)
+        if not generator:
+            continue
+
+        content = generator.generate(grouped_rules, {})
+
+        # Update all target files
+        for file_path in output_files:
             success, message = update_documentation_file(
-                file_path, review_content, review_generator.get_section_markers()
+                file_path, content, generator.get_section_markers()
             )
-            if success:
-                print(f"✓ Code review guidelines: {message}")
-            else:
-                print(f"✗ Code review guidelines: {message}")
+            status = "✓" if success else "✗"
+            print(f"{status} {generator.name}: {message}")
 
     print("\n✓ Rules synchronization completed!")
 

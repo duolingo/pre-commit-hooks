@@ -5,23 +5,16 @@ Code Review Guidelines Generator plugin - generates review guidelines for Codex.
 
 from typing import Any, Dict, List
 
-from sync_ai_rules.core.interfaces import OutputGenerator, RuleMetadata
+from sync_ai_rules.core.interfaces import RuleMetadata
+from sync_ai_rules.generators.base_generator import BaseGenerator
 
 
-class CodeReviewGuidelinesGenerator(OutputGenerator):
+class CodeReviewGuidelinesGenerator(BaseGenerator):
     """Generate code review guidelines documentation from .code_review/ rules."""
 
     @property
     def name(self) -> str:
         return "code-review-guidelines"
-
-    @property
-    def default_filenames(self) -> List[str]:
-        return [
-            "CLAUDE.md",
-            "AGENTS.md",
-            ".github/copilot-instructions.md",
-        ]
 
     def generate(self, rules: Dict[str, List[RuleMetadata]], config: Dict[str, Any]) -> str:
         """Generate review guidelines content with XML tags."""
@@ -34,7 +27,7 @@ class CodeReviewGuidelinesGenerator(OutputGenerator):
         ]
 
         # Sort categories (root comes last)
-        sorted_categories = sorted(rules.keys(), key=lambda x: (x == "root", x))
+        sorted_categories = self._sort_categories(list(rules.keys()))
 
         for category in sorted_categories:
             category_rules = rules[category]
@@ -48,7 +41,7 @@ class CodeReviewGuidelinesGenerator(OutputGenerator):
                 lines.append("")
 
             # Add each rule
-            for rule in sorted(category_rules, key=lambda r: r.title):
+            for rule in self._sort_rules_by_title(category_rules):
                 lines.extend(self._format_rule(rule))
                 lines.append("")
 
@@ -58,11 +51,6 @@ class CodeReviewGuidelinesGenerator(OutputGenerator):
     def get_section_markers(self) -> tuple[str, str]:
         """Return XML tags for the auto-generated section."""
         return ("<code-review-guidelines>", "</code-review-guidelines>")
-
-    def _format_heading(self, category: str) -> str:
-        """Format category as heading."""
-        # Convert folder name to title case
-        return category.replace("-", " ").title()
 
     def _format_rule(self, rule: RuleMetadata) -> List[str]:
         """Format individual rule as markdown."""
