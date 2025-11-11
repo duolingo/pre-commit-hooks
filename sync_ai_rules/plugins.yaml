@@ -8,8 +8,18 @@ parsers:
     class: MDCParser
     description: Parse MDC files with YAML frontmatter
 
+  - name: code-review
+    module: code_review_parser
+    class: CodeReviewParser
+    description: Parse code review markdown files from .code_review/
+
 generators:
-  - name: markdown
-    module: markdown_generator
-    class: MarkdownGenerator
-    description: Generate markdown documentation with XML tags
+  - name: development-rules
+    module: development_rules_generator
+    class: DevelopmentRulesGenerator
+    description: Generate development rules documentation from .cursor/rules/
+
+  - name: code-review-guidelines
+    module: code_review_guidelines_generator
+    class: CodeReviewGuidelinesGenerator
+    description: Generate code review guidelines documentation from .code_review/
