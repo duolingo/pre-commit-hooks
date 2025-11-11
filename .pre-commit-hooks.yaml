@@ -4,6 +4,12 @@
   language: docker_image
   types: [text]
 
+- id: precache-docker
+  name: Precache Docker images
+  entry: ./precache-docker.sh
+  language: script
+  pass_filenames: false
+
 - id: sync-ai-rules
   name: Sync AI Rules
   entry: duolingo/pre-commit-hooks:1.12.0 sh -c "PYTHONPATH=/ python3 -m sync_ai_rules"
