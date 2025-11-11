@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Sync AI Rules - Plugin-based rule parser and documentation generator.
-Scans source directories, parses rules, and generates documentation sections.
+This script uses a plugin architecture to parse rules and generate documentation.
 """
 
 import os
@@ -9,8 +8,8 @@ import sys
 from pathlib import Path
 from typing import Dict, List
 
-from sync_ai_rules.core.interfaces import RuleMetadata
 from sync_ai_rules.core.plugin_manager import PluginManager
+from sync_ai_rules.core.rule_metadata import RuleMetadata
 from sync_ai_rules.file_updater import update_documentation_file
 
 

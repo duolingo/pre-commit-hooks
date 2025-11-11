@@ -6,7 +6,8 @@ Base Generator - provides shared functionality for all generators.
 from abc import abstractmethod
 from typing import List
 
-from sync_ai_rules.core.interfaces import OutputGenerator, RuleMetadata
+from sync_ai_rules.core.generator_interface import OutputGenerator
+from sync_ai_rules.core.rule_metadata import RuleMetadata
 
 
 class BaseGenerator(OutputGenerator):

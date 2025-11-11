@@ -5,7 +5,7 @@ Development Rules Generator plugin - generates development rules documentation w
 
 from typing import Any, Dict, List
 
-from sync_ai_rules.core.interfaces import RuleMetadata
+from sync_ai_rules.core.rule_metadata import RuleMetadata
 from sync_ai_rules.generators.base_generator import BaseGenerator
 
 

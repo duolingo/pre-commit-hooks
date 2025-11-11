@@ -71,8 +71,8 @@ def update_documentation_file(
             else:
                 # No existing section, append to end
                 if content and not content.endswith("\n"):
-                    content += "\n"
-                if content:
+                    content += "\n\n"
+                elif content:
                     content += "\n"
                 updated_content = content + new_section
                 operation = "added"
@@ -90,5 +90,5 @@ def update_documentation_file(
 
         return True, f"Successfully {operation} rules section in {file_path}"
 
-    except Exception as e:
+    except (FileNotFoundError, PermissionError, UnicodeDecodeError, OSError) as e:
         return False, f"Failed to update {file_path}: {e}"

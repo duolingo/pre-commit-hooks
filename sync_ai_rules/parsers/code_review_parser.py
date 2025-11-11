@@ -7,7 +7,8 @@ import re
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from sync_ai_rules.core.interfaces import InputParser, RuleMetadata
+from sync_ai_rules.core.parser_interface import InputParser
+from sync_ai_rules.core.rule_metadata import RuleMetadata
 
 
 class CodeReviewParser(InputParser):
@@ -61,7 +62,7 @@ class CodeReviewParser(InputParser):
                 metadata=metadata,
             )
 
-        except Exception as e:
+        except (FileNotFoundError, PermissionError, UnicodeDecodeError) as e:
             print(f"Error parsing {file_path}: {e}")
             return None
 

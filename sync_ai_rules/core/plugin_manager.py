@@ -9,7 +9,9 @@ from typing import List
 
 import yaml
 
-from .interfaces import InputParser, OutputGenerator, Pipeline
+from sync_ai_rules.core.generator_interface import OutputGenerator
+from sync_ai_rules.core.parser_interface import InputParser
+from sync_ai_rules.core.pipeline import Pipeline
 
 
 class PluginManager:
@@ -22,46 +24,33 @@ class PluginManager:
         """Load all pipelines from plugins.yaml configuration file."""
         config_path = Path(base_path) / "plugins.yaml"
 
-        if not config_path.exists():
-            print(f"✗ Plugin configuration not found: {config_path}")
-            return
+        with open(config_path) as f:
+            config = yaml.safe_load(f)
 
-        try:
-            with open(config_path) as f:
-                config = yaml.safe_load(f)
-
-            # Load pipelines
-            for pipeline_config in config.get("pipelines", []):
-                pipeline = self._load_pipeline(base_path, pipeline_config)
-                if pipeline:
-                    self.pipelines.append(pipeline)
-                    print(f"✓ Loaded pipeline: {pipeline.name} - {pipeline.description}")
-
-        except Exception as e:
-            print(f"✗ Failed to load plugin configuration: {e}")
+        # Load pipelines
+        for pipeline_config in config.get("pipelines", []):
+            pipeline = self._load_pipeline(base_path, pipeline_config)
+            if pipeline:
+                self.pipelines.append(pipeline)
+                print(f"✓ Loaded pipeline: {pipeline.name} - {pipeline.description}")
 
     def _load_pipeline(self, base_path: str, config: dict) -> Pipeline:
         """Load a single parser-generator pipeline."""
-        try:
-            # Load parser
-            parser_config = config["parser"]
-            parser = self._load_parser(base_path, parser_config)
+        # Load parser
+        parser_config = config["parser"]
+        parser = self._load_parser(base_path, parser_config)
 
-            # Load generator
-            generator_config = config["generator"]
-            generator = self._load_generator(base_path, generator_config)
+        # Load generator
+        generator_config = config["generator"]
+        generator = self._load_generator(base_path, generator_config)
 
-            # Create pipeline
-            return Pipeline(
-                name=config["name"],
-                description=config["description"],
-                parser=parser,
-                generator=generator,
-            )
-
-        except Exception as e:
-            print(f"✗ Failed to load pipeline {config.get('name', 'unknown')}: {e}")
-            return None
+        # Create pipeline
+        return Pipeline(
+            name=config["name"],
+            description=config["description"],
+            parser=parser,
+            generator=generator,
+        )
 
     def _load_parser(self, base_path: str, config: dict) -> InputParser:
         """Load a parser from configuration."""
