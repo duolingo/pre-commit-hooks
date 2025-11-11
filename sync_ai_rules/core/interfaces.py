@@ -6,7 +6,10 @@ Defines abstract base classes for parsers and generators.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+if TYPE_CHECKING:
+    from .interfaces import InputParser, OutputGenerator
 
 
 @dataclass
@@ -26,6 +29,16 @@ class RuleMetadata:
     def __post_init__(self):
         if self.metadata is None:
             self.metadata = {}
+
+
+@dataclass
+class Pipeline:
+    """Represents a parser-generator pipeline."""
+
+    name: str
+    description: str
+    parser: "InputParser"
+    generator: "OutputGenerator"
 
 
 class InputParser(ABC):

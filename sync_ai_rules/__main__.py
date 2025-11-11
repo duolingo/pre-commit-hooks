@@ -72,7 +72,7 @@ def scan_and_parse(parser, source_dir: str, project_root: str) -> List[RuleMetad
 
 
 def main():
-    """Main orchestration: load plugins → parse → generate → update files."""
+    """Main orchestration: load pipelines → parse → generate → update files."""
     # Setup
     project_root = find_project_root()
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -80,66 +80,47 @@ def main():
     plugin_manager = PluginManager()
     plugin_manager.load_plugins(script_dir)
 
-    # Process each parser → generator pair
-    results = {}
-
-    for parser in plugin_manager.parsers.values():
-        # Get source directories from parser
-        source_dirs = parser.source_directories
-        if not source_dirs:
-            continue
-
-        all_rules = []
-        for rel_dir in source_dirs:
-            source_dir = os.path.join(project_root, rel_dir)
-            print(f"Scanning {rel_dir}...")
-            rules = scan_and_parse(parser, source_dir, project_root)
-            all_rules.extend(rules)
-
-        if not all_rules:
-            continue
-
-        # Group rules by category
-        grouped_rules = group_by_category(all_rules)
-
-        print(f"  Found {len(all_rules)} rules in {len(grouped_rules)} categories")
-
-        # Store for generator
-        results[parser.name] = grouped_rules
-
-    if not results:
-        print("Error: No rules found in any source directory")
+    if not plugin_manager.pipelines:
+        print("Error: No pipelines configured")
         sys.exit(1)
 
-    # Generate and update documentation
-    print("\nGenerating documentation...")
-
     # Get target files (all generators use same files)
-    first_generator = next(iter(plugin_manager.generators.values()))
+    first_generator = plugin_manager.pipelines[0].generator
     output_files = [
         os.path.join(project_root, filename) for filename in first_generator.default_filenames
     ]
 
-    # Generate content from each generator
-    for parser_name, grouped_rules in results.items():
-        # Get the generator for this parser
-        generator_name = plugin_manager.parser_to_generator.get(parser_name)
-        if not generator_name:
+    # Process each pipeline
+    print()
+    for pipeline in plugin_manager.pipelines:
+        print(f"Processing pipeline: {pipeline.name}")
+
+        # Scan and parse using pipeline's parser
+        all_rules = []
+        for rel_dir in pipeline.parser.source_directories:
+            source_dir = os.path.join(project_root, rel_dir)
+            print(f"  Scanning {rel_dir}...")
+            rules = scan_and_parse(pipeline.parser, source_dir, project_root)
+            all_rules.extend(rules)
+
+        if not all_rules:
+            print("  No rules found, skipping")
             continue
 
-        generator = plugin_manager.generators.get(generator_name)
-        if not generator:
-            continue
+        # Group rules by category
+        grouped_rules = group_by_category(all_rules)
+        print(f"  Found {len(all_rules)} rules in {len(grouped_rules)} categories")
 
-        content = generator.generate(grouped_rules, {})
+        # Generate content using pipeline's generator
+        content = pipeline.generator.generate(grouped_rules, {})
 
         # Update all target files
         for file_path in output_files:
             success, message = update_documentation_file(
-                file_path, content, generator.get_section_markers()
+                file_path, content, pipeline.generator.get_section_markers()
             )
             status = "✓" if success else "✗"
-            print(f"{status} {generator.name}: {message}")
+            print(f"  {status} {message}")
 
     print("\n✓ Rules synchronization completed!")
 
