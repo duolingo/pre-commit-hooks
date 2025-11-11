@@ -62,7 +62,7 @@ class CodeReviewParser(InputParser):
                 metadata=metadata,
             )
 
-        except (FileNotFoundError, PermissionError, UnicodeDecodeError) as e:
+        except Exception as e:
             print(f"Error parsing {file_path}: {e}")
             return None
 
