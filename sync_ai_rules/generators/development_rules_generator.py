@@ -40,8 +40,6 @@ class DevelopmentRulesGenerator(BaseGenerator):
 
         for category in sorted_categories:
             category_rules = rules[category]
-            if not category_rules:
-                continue
 
             # Add category heading
             heading = self._format_heading(category)

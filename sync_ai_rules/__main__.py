@@ -4,7 +4,6 @@ This script uses a plugin architecture to parse rules and generate documentation
 """
 
 import os
-import sys
 from pathlib import Path
 from typing import Dict, List
 
@@ -72,10 +71,6 @@ def main():
 
     plugin_manager = PluginManager()
     plugin_manager.load_plugins(script_dir)
-
-    if not plugin_manager.pipelines:
-        print("Error: No pipelines configured")
-        sys.exit(1)
 
     # Get target files (all generators use same files)
     first_generator = plugin_manager.pipelines[0].generator
