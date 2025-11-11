@@ -15,14 +15,8 @@ from sync_ai_rules.file_updater import update_documentation_file
 
 
 def find_project_root() -> str:
-    """Find project root by looking for .cursor/rules or .code_review directories."""
-    current = Path.cwd()
-
-    for path in [current] + list(current.parents):
-        if (path / ".cursor" / "rules").exists() or (path / ".code_review").exists():
-            return str(path)
-
-    return str(current)
+    """Return current working directory as project root."""
+    return str(Path.cwd())
 
 
 def get_category(file_path: str, source_dir: str) -> str:

@@ -26,16 +26,16 @@ class CodeReviewGuidelinesGenerator(BaseGenerator):
             "",
         ]
 
-        # Sort categories (root comes last)
-        sorted_categories = self._sort_categories(list(rules.keys()))
+        # Sort categories alphabetically
+        sorted_categories = sorted(rules.keys())
 
         for category in sorted_categories:
             category_rules = rules[category]
             if not category_rules:
                 continue
 
-            # Add category heading (skip for root or if only one category)
-            if category != "root" and len(sorted_categories) > 1:
+            # Add category heading if there are multiple categories
+            if len(sorted_categories) > 1:
                 heading = self._format_heading(category)
                 lines.append(f"### {heading}")
                 lines.append("")
