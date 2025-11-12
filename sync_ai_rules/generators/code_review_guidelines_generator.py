@@ -36,11 +36,10 @@ class CodeReviewGuidelinesGenerator(BaseGenerator):
         for category in sorted_categories:
             category_rules = rules[category]
 
-            # Add category heading if there are multiple categories
-            if len(sorted_categories) > 1:
-                heading = self._format_heading(category)
-                lines.append(f"### {heading}")
-                lines.append("")
+            # Add category heading
+            heading = self._format_heading(category)
+            lines.append(f"### {heading}")
+            lines.append("")
 
             # Add each rule
             for rule in self._sort_rules_by_title(category_rules):
