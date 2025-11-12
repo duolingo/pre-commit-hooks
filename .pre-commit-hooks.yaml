@@ -14,7 +14,7 @@
   name: Sync AI Rules
   entry: duolingo/pre-commit-hooks:1.13.0 sh -c "PYTHONPATH=/ python3 -m sync_ai_rules"
   language: docker_image
-  files: &sync_ai_rules_files ^\.cursor/rules/.*\.mdc$
+  files: &sync_ai_rules_files (^\.cursor/rules/.*\.mdc$|^\.code_review/.*\.md$)
   pass_filenames: false
 
 # Nobody should ever use these hooks in production. They're just for testing PRs in

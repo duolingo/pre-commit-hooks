@@ -32,35 +32,29 @@ class CodeReviewParser(InputParser):
         try:
             with open(file_path, encoding="utf-8") as f:
                 content = f.read()
-
-            # Extract HTML comment frontmatter
-            metadata = self._parse_frontmatter(content)
-            if not metadata:
-                return None
-
-            # Extract category from directory structure
-            path = Path(file_path)
-            category = self._extract_category(path, context.get("project_root"))
-
-            # Get relative path from project root
-            project_root = Path(context.get("project_root", "."))
-            relative_path = path.relative_to(project_root)
-
-            return RuleMetadata(
-                file_path=file_path,
-                relative_path=str(relative_path),
-                title=metadata.get("name", path.stem.replace("-", " ").title()),
-                description=metadata.get("description", ""),
-                scope_patterns=[],  # Code review rules don't have file scope
-                always_apply=False,  # Code review rules are always contextual
-                category=category,
-                raw_content=content,
-                metadata=metadata,
-            )
-
-        except Exception as e:
-            print(f"Error parsing {file_path}: {e}")
+        except (FileNotFoundError, PermissionError, UnicodeDecodeError) as e:
+            print(f"Error reading {file_path}: {e}")
             return None
+
+        # Extract HTML comment frontmatter
+        metadata = self._parse_frontmatter(content)
+        if not metadata:
+            return None
+
+        # Generate title from filename
+        title = metadata.get("name", Path(file_path).stem.replace("-", " ").title())
+
+        return RuleMetadata(
+            file_path=file_path,
+            relative_path=context.get("relative_path", file_path),
+            title=title,
+            description=metadata.get("description", ""),
+            scope_patterns=[],
+            always_apply=False,
+            category=context.get("category", "root"),
+            raw_content=content,
+            metadata=metadata,
+        )
 
     def _parse_frontmatter(self, content: str) -> Dict[str, str]:
         """Parse HTML comment frontmatter from markdown content."""
@@ -83,16 +77,3 @@ class CodeReviewParser(InputParser):
                 metadata[key.strip()] = value.strip()
 
         return metadata
-
-    def _extract_category(self, file_path: Path, project_root: Optional[str]) -> str:
-        """Extract category from directory structure."""
-        parts = file_path.parts
-        try:
-            code_review_idx = parts.index(".code_review")
-            # Category is the directory immediately after .code_review
-            if code_review_idx + 1 < len(parts) - 1:  # -1 because last part is filename
-                return parts[code_review_idx + 1]
-        except (ValueError, IndexError):
-            pass
-
-        return "root"
