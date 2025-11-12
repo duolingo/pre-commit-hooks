@@ -90,5 +90,5 @@ def update_documentation_file(
 
         return True, f"Successfully {operation} rules section in {file_path}"
 
-    except (FileNotFoundError, PermissionError, UnicodeDecodeError, OSError) as e:
+    except Exception as e:
         return False, f"Failed to update {file_path}: {e}"

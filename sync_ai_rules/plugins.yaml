@@ -1,6 +1,4 @@
 # Plugin configuration for sync_ai_rules
-# Define rule processing pipelines: each pipeline has a parser and generator.
-# Parsers and generators can be reused across multiple pipelines.
 
 pipelines:
   - name: development-rules

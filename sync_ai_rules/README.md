@@ -1,11 +1,11 @@
 # sync-ai-rules
 
-Synchronizes AI coding rules to configuration files for Claude, GitHub Copilot, and other AI assistants. Parses rules from source directories and generates documentation sections automatically.
+Synchronizes AI rules to configuration files for Claude, GitHub Copilot, and other AI assistants. Parses rules from source directories and generates documentation sections automatically.
 
 ## Supported Formats
 
 - **Development Rules** - `.cursor/rules/*.mdc` files (YAML frontmatter) → Development Rules section
-- **Review Guidelines** - `.code_review/*.md` files (HTML comment frontmatter) → Review Guidelines section
+- **Code Review Guidelines** - `.code_review/*.md` files (HTML comment frontmatter) → Code Review Guidelines section
 
 Target files: `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`
 
@@ -16,9 +16,6 @@ Target files: `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`
 1. **Create a parser** in `sync_ai_rules/parsers/`:
 
 ```python
-from sync_ai_rules.core.parser_interface import InputParser
-from sync_ai_rules.core.rule_metadata import RuleMetadata
-
 class YourParser(InputParser):
     @property
     def name(self) -> str:
@@ -34,8 +31,6 @@ class YourParser(InputParser):
 2. **Create a generator** in `sync_ai_rules/generators/`:
 
 ```python
-from sync_ai_rules.generators.base_generator import BaseGenerator
-
 class YourGenerator(BaseGenerator):
     @property
     def name(self) -> str:

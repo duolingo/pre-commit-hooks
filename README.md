@@ -45,9 +45,9 @@ All `docker_image` entries found in `.pre-commit-config.yaml` will be included, 
 This hook synchronizes AI coding rules from `.cursor/rules/` and `.code_review/` directories to AI assistant configuration files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md). It generates two sections:
 
 - **Development Rules** - from `.cursor/rules/*.mdc` files with YAML frontmatter
-- **Review Guidelines** - from `.code_review/*.md` files with HTML comment frontmatter
+- **Code Review Guidelines** - from `.code_review/*.md` files with HTML comment frontmatter
 
-This ensures all AI coding assistants stay aware of the same rules and conventions.
+This ensures all AI coding assistants stay aware of the same rules and coding conventions.
 
 ## Usage
 
