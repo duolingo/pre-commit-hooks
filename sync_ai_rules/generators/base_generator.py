@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-Base Generator - provides shared functionality for all generators.
-"""
 
 from abc import abstractmethod
 from typing import List

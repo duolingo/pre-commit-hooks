@@ -86,7 +86,6 @@ class CodeReviewParser(InputParser):
 
     def _extract_category(self, file_path: Path, project_root: Optional[str]) -> str:
         """Extract category from directory structure."""
-        # Find .code_review in the path
         parts = file_path.parts
         try:
             code_review_idx = parts.index(".code_review")

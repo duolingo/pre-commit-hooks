@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-Pipeline data model for parser-generator pairs.
-"""
 
 from dataclasses import dataclass
 

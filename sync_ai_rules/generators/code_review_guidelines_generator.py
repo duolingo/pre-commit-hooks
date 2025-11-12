@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-Code Review Guidelines Generator plugin - generates review guidelines for Codex.
-"""
 
 from typing import Any, Dict, List
 
@@ -15,6 +12,13 @@ class CodeReviewGuidelinesGenerator(BaseGenerator):
     @property
     def name(self) -> str:
         return "code-review-guidelines"
+
+    @property
+    def default_filenames(self) -> List[str]:
+        """Default target files for all generators."""
+        return [
+            "AGENTS.md",
+        ]
 
     def generate(self, rules: Dict[str, List[RuleMetadata]], config: Dict[str, Any]) -> str:
         """Generate review guidelines content with XML tags."""

@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-Rule metadata data model.
-"""
 
 from dataclasses import dataclass
 from typing import Any, Dict, List

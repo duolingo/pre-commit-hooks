@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-Development Rules Generator plugin - generates development rules documentation with XML tags.
-"""
 
 from typing import Any, Dict, List
 

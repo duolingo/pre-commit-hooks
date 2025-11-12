@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-Plugin manager for loading parser-generator pipelines from configuration.
-"""
 
 import importlib.util
 from pathlib import Path

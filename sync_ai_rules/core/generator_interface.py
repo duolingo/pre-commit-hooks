@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-Output generator interface.
-"""
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List

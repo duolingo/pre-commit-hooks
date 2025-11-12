@@ -12,11 +12,6 @@ from sync_ai_rules.core.rule_metadata import RuleMetadata
 from sync_ai_rules.file_updater import update_documentation_file
 
 
-def find_project_root() -> str:
-    """Return current working directory as project root."""
-    return str(Path.cwd())
-
-
 def get_category(file_path: str, source_dir: str) -> str:
     """Extract category from file path relative to source directory."""
     rel_path = os.path.relpath(file_path, source_dir)
@@ -66,7 +61,7 @@ def scan_and_parse(parser, source_dir: str, project_root: str) -> List[RuleMetad
 def main():
     """Main orchestration: load pipelines → parse → generate → update files."""
     # Setup
-    project_root = find_project_root()
+    project_root = str(Path.cwd())
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
     plugin_manager = PluginManager()
