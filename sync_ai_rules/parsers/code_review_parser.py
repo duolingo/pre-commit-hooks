@@ -19,17 +19,13 @@ class CodeReviewParser(InputParser):
         return "code-review"
 
     @property
-    def supported_extensions(self) -> list[str]:
-        return [".md"]
-
-    @property
     def source_directories(self) -> list[str]:
         """Code review parser scans .code_review/ directory."""
         return [".code_review"]
 
     def can_parse(self, file_path: str) -> bool:
         """Check if this parser can handle the given file."""
-        return ".code_review" in file_path and file_path.endswith(".md")
+        return file_path.endswith(".md")
 
     def parse(self, file_path: str, context: Dict[str, Any]) -> Optional[RuleMetadata]:
         """Parse a code review markdown file and extract metadata."""

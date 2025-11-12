@@ -18,11 +18,6 @@ class InputParser(ABC):
         """Unique name for this parser."""
 
     @property
-    @abstractmethod
-    def supported_extensions(self) -> List[str]:
-        """File extensions this parser can handle."""
-
-    @property
     def source_directories(self) -> List[str]:
         """
         Relative paths to directories this parser should scan.

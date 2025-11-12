@@ -21,10 +21,6 @@ class MDCParser(InputParser):
         return "mdc"
 
     @property
-    def supported_extensions(self) -> List[str]:
-        return [".mdc"]
-
-    @property
     def source_directories(self) -> List[str]:
         """MDC parser scans .cursor/rules/ directory."""
         return [".cursor/rules"]
