@@ -67,12 +67,6 @@ def main():
     plugin_manager = PluginManager()
     plugin_manager.load_plugins(script_dir)
 
-    # Get target files (all generators use same files)
-    first_generator = plugin_manager.pipelines[0].generator
-    output_files = [
-        os.path.join(project_root, filename) for filename in first_generator.default_filenames
-    ]
-
     # Process each pipeline
     print()
     for pipeline in plugin_manager.pipelines:
@@ -97,7 +91,12 @@ def main():
         # Generate content using pipeline's generator
         content = pipeline.generator.generate(grouped_rules, {})
 
-        # Update all target files
+        # Update target files for this generator
+        output_files = [
+            os.path.join(project_root, filename)
+            for filename in pipeline.generator.default_filenames
+        ]
+
         for file_path in output_files:
             success, message = update_documentation_file(
                 file_path, content, pipeline.generator.get_section_markers()
