@@ -60,7 +60,7 @@ class MarkdownGenerator(OutputGenerator):
                 lines.extend(self._format_rule(rule))
                 lines.append("")
 
-        lines.append("</auto-generated-rules>")
+        lines += ["</auto-generated-rules>", ""]
         return "\n".join(lines)
 
     def get_section_markers(self) -> tuple[str, str]:
