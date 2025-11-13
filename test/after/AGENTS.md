@@ -11,12 +11,26 @@ Each rule below has the following properties:
 
 Read the properties of each rule and apply those that match your current task.
 When you decide to apply a rule, you MUST read the entire contents of the actual rule file using the file path shown
-### Root Rules
 
-**Foo** → `@.cursor/rules/foo.mdc`
+### Root
 
-- **Description**: No description provided
+**Rule** → `@.cursor/rules/rule.mdc`
+
+- **Description**: Rule description
 - **File scope**: All files
 - **Always apply**: false
 
 </auto-generated-rules>
+
+<code-review-guidelines>
+<!-- DO NOT EDIT THIS SECTION - Auto-generated from .code_review/ -->
+
+## Review guidelines
+
+### Root
+
+**Code Review Rule** → `@.code_review/review.md`
+
+- **Description**: Code Review Rule Description
+
+</code-review-guidelines>
