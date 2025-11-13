@@ -52,6 +52,11 @@ test:
 		'cd /tmp \
 			&& cp -r /test/before actual \
 			&& cp -r /test/after expected \
-			&& /entry actual/* \
+			&& cd actual \
+			&& echo "Running sync-ai-rules hook..." \
+			&& PYTHONPATH=/ python3 -m sync_ai_rules \
+			&& echo "Running duolingo hook..." \
+			&& /entry $$(find . -type f | tr "\n" " ") \
+			&& cd .. \
 			&& diff -r expected actual \
 			&& echo "All tests passed!"'
