@@ -46,7 +46,7 @@ class CodeReviewGuidelinesGenerator(BaseGenerator):
                 lines.extend(self._format_rule(rule))
                 lines.append("")
 
-        lines.append("</code-review-guidelines>")
+        lines += ["</code-review-guidelines>", ""]
         return "\n".join(lines)
 
     def get_section_markers(self) -> tuple[str, str]:
