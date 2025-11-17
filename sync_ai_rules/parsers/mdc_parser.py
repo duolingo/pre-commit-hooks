@@ -9,7 +9,8 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
-from sync_ai_rules.core.interfaces import InputParser, RuleMetadata
+from sync_ai_rules.core.parser_interface import InputParser
+from sync_ai_rules.core.rule_metadata import RuleMetadata
 
 
 class MDCParser(InputParser):
@@ -20,8 +21,9 @@ class MDCParser(InputParser):
         return "mdc"
 
     @property
-    def supported_extensions(self) -> List[str]:
-        return [".mdc"]
+    def source_directories(self) -> List[str]:
+        """MDC parser scans .cursor/rules/ directory."""
+        return [".cursor/rules"]
 
     def can_parse(self, file_path: str) -> bool:
         return file_path.endswith(".mdc")

@@ -1,52 +1,59 @@
 # sync-ai-rules
 
-- Synchronize AI coding rules from .cursor/rules/\*.mdc files to other AI assistant configuration files (CLAUDE.md, AGENTS.md, etc.)
-- Built with a plugin architecture that can easily support new input/output formats as the ecosystem evolves
+Synchronizes AI rules to configuration files for Claude, GitHub Copilot, and other AI assistants. Parses rules from source directories and generates documentation sections automatically.
 
-## Extending to new formats
+## Supported Formats
 
-### Adding New Input Parsers
+- **Development Rules** - `.cursor/rules/*.mdc` files (YAML frontmatter) → Development Rules section
+- **Code Review Guidelines** - `.code_review/*.md` files (HTML comment frontmatter) → Code Review Guidelines section
 
-Create a parser class implementing `InputParser` in `sync_ai_rules/parsers/`:
+Target files: `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`
+
+## Extending the System
+
+### Create a New Pipeline
+
+1. **Create a parser** in `sync_ai_rules/parsers/`:
 
 ```python
-from sync_ai_rules.core.interfaces import InputParser, RuleMetadata
-
 class YourParser(InputParser):
     @property
     def name(self) -> str:
         return "your-format"
 
-    # Implement required methods...
+    @property
+    def source_directories(self) -> list[str]:
+        return [".your-rules"]  # Where to scan
+
+    # Implement can_parse() and parse()...
 ```
 
-### Adding New Output Generators
-
-Create a generator class implementing `OutputGenerator` in `sync_ai_rules/generators/`:
+2. **Create a generator** in `sync_ai_rules/generators/`:
 
 ```python
-from sync_ai_rules.core.interfaces import OutputGenerator
-
-class YourGenerator(OutputGenerator):
+class YourGenerator(BaseGenerator):
     @property
     def name(self) -> str:
         return "your-output"
 
-    # Implement required methods...
+    def get_section_markers(self) -> tuple[str, str]:
+        return ("<your-section>", "</your-section>")
+
+    # Implement generate() and _format_rule()...
 ```
 
-### Register Your Extensions
-
-Add them to `sync_ai_rules/plugins.yaml`:
+3. **Register the pipeline** in `sync_ai_rules/plugins.yaml`:
 
 ```yaml
-parsers:
-  - name: your-format
-    module: your_parser
-    class: YourParser
-
-generators:
-  - name: your-output
-    module: your_generator
-    class: YourGenerator
+pipelines:
+  - name: your-pipeline
+    description: Your pipeline description
+    parser:
+      module: your_parser
+      class: YourParser
+    generator:
+      module: your_generator
+      class: YourGenerator
 ```
+
+Parsers and generators can be reused across multiple pipelines.

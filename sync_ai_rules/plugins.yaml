@@ -1,15 +1,20 @@
 # Plugin configuration for sync_ai_rules
-# This file explicitly lists which parsers and generators to load,
-# making the plugin system more traceable and explicit.
 
-parsers:
-  - name: mdc
-    module: mdc_parser
-    class: MDCParser
-    description: Parse MDC files with YAML frontmatter
+pipelines:
+  - name: development-rules
+    description: Generate development rules documentation from .cursor/rules/
+    parser:
+      module: mdc_parser
+      class: MDCParser
+    generator:
+      module: development_rules_generator
+      class: DevelopmentRulesGenerator
 
-generators:
-  - name: markdown
-    module: markdown_generator
-    class: MarkdownGenerator
-    description: Generate markdown documentation with XML tags
+  - name: code-review-guidelines
+    description: Generate code review guidelines documentation from .code_review/
+    parser:
+      module: code_review_parser
+      class: CodeReviewParser
+    generator:
+      module: code_review_guidelines_generator
+      class: CodeReviewGuidelinesGenerator
