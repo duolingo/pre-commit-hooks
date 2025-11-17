@@ -64,8 +64,15 @@ def update_documentation_file(
 
             if start_pos is not None and end_pos is not None:
                 # Replace existing section
-                before = content[:start_pos]
-                after = content[end_pos:]
+                before = content[:start_pos].rstrip("\n")
+                after = content[end_pos:].lstrip("\n")
+
+                # Add proper spacing: before section (2 newlines), after section (2 newlines)
+                if before:
+                    before += "\n\n"
+                if after:
+                    after = "\n\n" + after
+
                 updated_content = before + new_section + after
                 operation = "updated"
             else:
