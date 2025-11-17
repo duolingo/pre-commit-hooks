@@ -70,10 +70,9 @@ def update_documentation_file(
                 operation = "updated"
             else:
                 # No existing section, append to end
-                if content and not content.endswith("\n"):
-                    content += "\n\n"
-                elif content:
-                    content += "\n"
+                if content:
+                    # Ensure exactly 2 newlines before new section
+                    content = content.rstrip("\n") + "\n\n"
                 updated_content = content + new_section
                 operation = "added"
         else:

@@ -48,8 +48,8 @@ class DevelopmentRulesGenerator(BaseGenerator):
                 lines.extend(self._format_rule(rule))
                 lines.append("")
 
-        lines += ["</auto-generated-rules>", ""]
-        return "\n".join(lines)
+        lines.append("</auto-generated-rules>")
+        return "\n".join(lines) + "\n"
 
     def get_section_markers(self) -> tuple[str, str]:
         """Return XML tags for the auto-generated section."""
