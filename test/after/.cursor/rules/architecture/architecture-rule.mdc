@@ -1,0 +1,8 @@
+---
+description: Architecture rule description
+globs:
+  - "**/*.swift"
+alwaysApply: false
+---
+
+Architecture rule content.

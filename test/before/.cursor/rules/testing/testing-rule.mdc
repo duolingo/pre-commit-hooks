@@ -1,0 +1,8 @@
+---
+description: Testing rule description
+globs:
+  - "**/*Test.swift"
+alwaysApply: true
+---
+
+Testing rule content.
