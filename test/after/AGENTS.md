@@ -12,6 +12,14 @@ Each rule below has the following properties:
 Read the properties of each rule and apply those that match your current task.
 When you decide to apply a rule, you MUST read the entire contents of the actual rule file using the file path shown
 
+### Architecture
+
+**Architecture Rule** → `@.cursor/rules/architecture/architecture-rule.mdc`
+
+- **Description**: Architecture rule description
+- **File scope**: **/*.swift
+- **Always apply**: false
+
 ### Root
 
 **Rule** → `@.cursor/rules/rule.mdc`
@@ -20,12 +28,32 @@ When you decide to apply a rule, you MUST read the entire contents of the actual
 - **File scope**: All files
 - **Always apply**: false
 
+### Testing
+
+**Testing Rule** → `@.cursor/rules/testing/testing-rule.mdc`
+
+- **Description**: Testing rule description
+- **File scope**: **/*Test.swift
+- **Always apply**: true
+
 </auto-generated-rules>
 
 <code-review-guidelines>
 <!-- DO NOT EDIT THIS SECTION - Auto-generated from .code_review/ -->
 
 ## Review guidelines
+
+### Architecture
+
+**Architecture Review** → `@.code_review/architecture/arch-review.md`
+
+- **Description**: Read this when reviewing architectural changes
+
+### Development
+
+**Development Review** → `@.code_review/development/dev-review.md`
+
+- **Description**: Read this when reviewing development code
 
 ### Root
 

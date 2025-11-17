@@ -46,8 +46,8 @@ class CodeReviewGuidelinesGenerator(BaseGenerator):
                 lines.extend(self._format_rule(rule))
                 lines.append("")
 
-        lines += ["</code-review-guidelines>", ""]
-        return "\n".join(lines)
+        lines.append("</code-review-guidelines>")
+        return "\n".join(lines) + "\n"
 
     def get_section_markers(self) -> tuple[str, str]:
         """Return XML tags for the auto-generated section."""
