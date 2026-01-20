@@ -5,10 +5,6 @@ target-version = "py37"
 
 [lint]
 ignore = [
-  # This rule causes Ruff to warn "The following rule may cause conflicts when
-  # used with the formatter". TODO: Remove after updating to Ruff v0.9?
-  # https://github.com/astral-sh/ruff/issues/8272#issuecomment-2580594913
-  "ISC001",
   # We disable Ruff's `unused-import` for now in favor of autoflake <2 because
   # the latter preserves imports that are unused in code but "used" in type
   # hint comments. Ruff also seems to have an unfortunate bug: it can end up
@@ -19,6 +15,8 @@ ignore = [
   "SIM101",
   # This rule correctly preserves logic but will delete comments :|
   "SIM114",
+  # This rule adds visual noise and hurts readability/greppability
+  "SIM905",
 ]
 # https://docs.astral.sh/ruff/rules/
 select = [
