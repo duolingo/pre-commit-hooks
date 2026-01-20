@@ -6,24 +6,24 @@ This repo contains [pre-commit](https://pre-commit.com/) hooks for Duolingo deve
 
 The main hook that runs several code formatters in parallel:
 
-- [Prettier](https://github.com/prettier/prettier) v3.5.3 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
-- [ESLint](https://eslint.org/) v9.23.0 for JS, TypeScript
-- [Ruff](https://docs.astral.sh/ruff/) v0.7.3 for Python 3
+- [Prettier](https://github.com/prettier/prettier) v3.8.0 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
+- [ESLint](https://eslint.org/) v9.39.2 for JS, TypeScript
+- [Ruff](https://docs.astral.sh/ruff/) v0.14.13 for Python 3
 - [Black](https://github.com/psf/black) v21.12b0 for Python 2
 - [autoflake](https://github.com/myint/autoflake) v1.7.8 for Python <!-- TODO: Upgrade to v2+, restrict to Python 2, and reenable Ruff rule F401 once our Python 3 repos that were converted from Python 2 no longer use type hint comments: https://github.com/PyCQA/autoflake/issues/222#issuecomment-1419089254 -->
 - [isort](https://github.com/PyCQA/isort) v5.13.2 for Python 2
-- [google-java-format](https://github.com/google/google-java-format) v1.24.0 for Java
-- [ktfmt](https://github.com/facebookincubator/ktfmt) v0.53 for Kotlin
-- [gradle-dependencies-sorter](https://github.com/square/gradle-dependencies-sorter) v0.14 for Gradle Kotlin
-- [gofmt](https://pkg.go.dev/cmd/gofmt) v1.23.3 for Go
-- [scalafmt](https://scalameta.org/scalafmt/) v3.8.3 for Scala
-- [shfmt](https://github.com/mvdan/sh) v3.10.0 for Shell
-- [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10139 for XML
-- [terraform fmt](https://github.com/hashicorp/terraform) v1.9.8 for Terraform
-- [packer fmt](https://github.com/hashicorp/packer) v1.14.2 for Packer
-- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v18.1.8 for C++, Protobuf
-- [SVGO](https://github.com/svg/svgo) v3.3.2 for SVG
-- [Taplo](https://taplo.tamasfe.dev/) v0.9.3 for TOML
+- [google-java-format](https://github.com/google/google-java-format) v1.33.0 for Java
+- [ktfmt](https://github.com/facebookincubator/ktfmt) v0.61 for Kotlin
+- [gradle-dependencies-sorter](https://github.com/square/gradle-dependencies-sorter) v0.16 for Gradle Kotlin
+- [gofmt](https://pkg.go.dev/cmd/gofmt) v1.25.6 for Go
+- [scalafmt](https://scalameta.org/scalafmt/) v3.10.4 for Scala
+- [shfmt](https://github.com/mvdan/sh) v3.12.0 for Shell
+- [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10143 for XML
+- [terraform fmt](https://github.com/hashicorp/terraform) v1.14.3 for Terraform
+- [packer fmt](https://github.com/hashicorp/packer) v1.14.3 for Packer
+- [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v20.1.0 for C++, Protobuf
+- [SVGO](https://github.com/svg/svgo) v4.0.0 for SVG
+- [Taplo](https://taplo.tamasfe.dev/) v0.10.0 for TOML
 - Custom regex transformations (basically [sed](https://en.wikipedia.org/wiki/Sed)), for example:
   - Trimming trailing whitespace and newlines
   - Removing unnecessary `coding` pragmas and `object` base classes in Python 3

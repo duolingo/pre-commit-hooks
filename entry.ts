@@ -24,6 +24,7 @@ const PRETTIER_OPTIONS = [
   "/tmp/prettier-cache",
   "--end-of-line",
   "auto",
+  "--experimental-cli",
   "--ignore-path",
   EMPTY_FILE,
   "--log-level",
@@ -87,8 +88,9 @@ const enum HookName {
   Isort = "isort",
   Ktfmt = "ktfmt",
   PackerFmt = "packer fmt",
+  Prettier = "Prettier",
   PrettierJs = "Prettier (JS)",
-  PrettierNonJs = "Prettier (non-JS)",
+  PrettierXml = "Prettier (XML)",
   Ruff = "Ruff",
   Scalafmt = "scalafmt",
   Sed = "sed",
@@ -251,6 +253,11 @@ const HOOKS: Record<HookName, Hook> = {
     include: /\.pkr\.hcl$/,
     runAfter: [HookName.Sed],
   },
+  [HookName.Prettier]: {
+    action: sources => run("prettier", ...PRETTIER_OPTIONS, ...sources),
+    include: /\.(css|html?|markdown|md|scss|tsx?|ya?ml)$/,
+    runAfter: [HookName.Sed, HookName.EsLint],
+  },
   [HookName.PrettierJs]: {
     action: sources =>
       run(
@@ -264,7 +271,7 @@ const HOOKS: Record<HookName, Hook> = {
     include: /\.jsx?$/,
     runAfter: [HookName.Sed, HookName.EsLint],
   },
-  [HookName.PrettierNonJs]: {
+  [HookName.PrettierXml]: {
     action: sources =>
       run(
         "prettier",
@@ -274,8 +281,8 @@ const HOOKS: Record<HookName, Hook> = {
         "/usr/local/lib/node_modules/@prettier/plugin-xml/src/plugin.js",
         ...sources,
       ),
-    include: /\.(css|html?|markdown|md|scss|tsx?|xml|ya?ml)$/,
-    runAfter: [HookName.Sed, HookName.Xsltproc, HookName.EsLint],
+    include: /\.xml$/,
+    runAfter: [HookName.Sed, HookName.Xsltproc],
   },
   [HookName.Ruff]: {
     action: async (sources, args) => {
