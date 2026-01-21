@@ -207,7 +207,9 @@ const HOOKS: Record<HookName, Hook> = {
   [HookName.GradleDependenciesSorter]: {
     action: sources =>
       run("java", "-jar", "/gradle-dependencies-sorter", ...sources),
-    include: /build\.gradle(\.kts)?$/,
+    // We skip Groovy for now because some language features (e.g. variables)
+    // can cause parsing errors
+    include: /build\.gradle\.kts$/,
     runAfter: [HookName.Sed],
   },
   [HookName.Isort]: {
