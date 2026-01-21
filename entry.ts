@@ -338,11 +338,7 @@ const HOOKS: Record<HookName, Hook> = {
               // is similarly implemented as a singleton
               data = data
                 .replace(/\barrayOf\(\)/g, "emptyArray()")
-                .replace(/\blistOf\(\)/g, "emptyList()")
-                .replace(/\bmapOf\(\)/g, "emptyMap()")
-                .replace(/\bsequenceOf\(\)/g, "emptySequence()")
-                .replace(/\bsetOf\(\)/g, "emptySet()");
-
+                .replace(/\bsequenceOf\(\)/g, "emptySequence()");
               // Remove unnecessary constructor keyword
               data = data.replace(/(?<=\bclass \S+) constructor(?=\()/g, "");
             }
