@@ -17,7 +17,7 @@ class OutputGenerator(ABC):
     @property
     @abstractmethod
     def default_filenames(self) -> List[str]:
-        """Default output filenames."""
+        """Default output filenames or directories."""
 
     @abstractmethod
     def generate(self, rules: Dict[str, List[RuleMetadata]], config: Dict[str, Any]) -> str:
@@ -26,3 +26,13 @@ class OutputGenerator(ABC):
     @abstractmethod
     def get_section_markers(self) -> tuple[str, str]:
         """Return start and end markers for auto-generated section."""
+
+    @property
+    def is_multi_file(self) -> bool:
+        """Whether this generator creates files directly via generate_files()."""
+        return False
+
+    def generate_files(
+        self, rules: Dict[str, List[RuleMetadata]], project_root: str
+    ) -> None:
+        """Generate multiple files directly. Only called when is_multi_file is True."""

@@ -14,7 +14,6 @@ class BaseGenerator(OutputGenerator):
     def default_filenames(self) -> List[str]:
         """Default target files for all generators."""
         return [
-            "CLAUDE.md",
             "AGENTS.md",
             ".github/copilot-instructions.md",
         ]
