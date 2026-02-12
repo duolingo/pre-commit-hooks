@@ -1,0 +1,27 @@
+sync_ai_rules/generators/skills_generator.py
+  93721213a97d6acd 1-93
+sync_ai_rules/core/generator_interface.py
+  93721213a97d6acd 20,29-38
+sync_ai_rules/__main__.py
+  93721213a97d6acd 91-99
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.3",
+  "base_commit_sha": "4765b0f209450f7829e3471610fb89d201e2e959",
+  "prompts": {
+    "93721213a97d6acd": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "5c964e73-45d5-44b0-a167-9fd0dd4626ac",
+        "model": "claude-4.6-opus-high-thinking"
+      },
+      "human_author": "carter@duolingo.com",
+      "messages": [],
+      "total_additions": 167,
+      "total_deletions": 39,
+      "accepted_lines": 114,
+      "overriden_lines": 0
+    }
+  }
+}
