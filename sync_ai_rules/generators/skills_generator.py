@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Skills Generator - generates Claude Code skills from .cursor/rules/.
-Each rule becomes a separate SKILL.md file in .claude/skills/.generated/<category>/<skill-name>/
+Each rule becomes a separate SKILL.md file in .claude/skills/.generated/,
+mirroring the folder structure of .cursor/rules/.
 """
 
 import logging
@@ -14,6 +15,7 @@ from sync_ai_rules.core.generator_interface import OutputGenerator
 from sync_ai_rules.core.rule_metadata import RuleMetadata
 
 _SKILLS_DIR = ".claude/skills/.generated"
+_SOURCE_DIR = ".cursor/rules"
 _YAML_UNSAFE = re.compile(r"[:\#\[\]\{\}&*!|>'\"%@`]")
 
 logger = logging.getLogger(__name__)
@@ -41,17 +43,22 @@ class SkillsGenerator(OutputGenerator):
     def generate_files(
         self, rules: Dict[str, List[RuleMetadata]], project_root: str
     ) -> None:
-        """Generate all skill files in .claude/skills/.generated/."""
+        """Generate skill files mirroring the .cursor/rules/ folder structure."""
         skills_root = os.path.join(project_root, _SKILLS_DIR)
 
         # Clean .generated directory on each run
         if os.path.exists(skills_root):
             shutil.rmtree(skills_root)
 
-        for category, category_rules in rules.items():
+        for category_rules in rules.values():
             for rule in category_rules:
-                skill_name = os.path.splitext(os.path.basename(rule.file_path))[0]
-                skill_dir = os.path.join(skills_root, category, skill_name)
+                # Mirror the source folder structure:
+                #   .cursor/rules/arch/my-rule.mdc → .generated/arch/my-rule/SKILL.md
+                rel_path = _strip_source_prefix(rule.relative_path)
+                skill_name = os.path.splitext(os.path.basename(rel_path))[0]
+                skill_dir = os.path.join(
+                    skills_root, os.path.dirname(rel_path), skill_name
+                ) if os.path.dirname(rel_path) else os.path.join(skills_root, skill_name)
                 skill_file = os.path.join(skill_dir, "SKILL.md")
 
                 try:
@@ -59,13 +66,25 @@ class SkillsGenerator(OutputGenerator):
                     os.makedirs(skill_dir, exist_ok=True)
                     with open(skill_file, "w", encoding="utf-8") as f:
                         f.write(content)
-                    print(f"  ✓ Created skill: {category}/{skill_name}")
+                    print(f"  ✓ Created skill: {os.path.relpath(skill_dir, skills_root)}")
                 except OSError as e:
-                    logger.warning("Failed to write skill %s/%s: %s", category, skill_name, e)
-                    print(f"  ✗ Failed to create skill: {category}/{skill_name}")
+                    logger.warning("Failed to write skill %s: %s", skill_name, e)
+                    print(f"  ✗ Failed to create skill: {skill_name}")
 
     def get_section_markers(self) -> tuple[str, str]:
         return ("", "")
+
+
+def _strip_source_prefix(relative_path: str) -> str:
+    """Strip the .cursor/rules/ prefix from a rule's relative path."""
+    prefix = _SOURCE_DIR + os.sep
+    if relative_path.startswith(prefix):
+        return relative_path[len(prefix):]
+    # Also handle forward-slash separators
+    prefix_fwd = _SOURCE_DIR + "/"
+    if relative_path.startswith(prefix_fwd):
+        return relative_path[len(prefix_fwd):]
+    return relative_path
 
 
 def _yaml_safe(value: str) -> str:
