@@ -4,6 +4,7 @@ Skills Generator - generates Claude Code skills from .cursor/rules/.
 Each rule becomes a separate SKILL.md file in .claude/skills/.generated/<category>/<skill-name>/
 """
 
+import logging
 import os
 import re
 import shutil
@@ -13,6 +14,9 @@ from sync_ai_rules.core.generator_interface import OutputGenerator
 from sync_ai_rules.core.rule_metadata import RuleMetadata
 
 _SKILLS_DIR = ".claude/skills/.generated"
+_YAML_UNSAFE = re.compile(r"[:\#\[\]\{\}&*!|>'\"%@`]")
+
+logger = logging.getLogger(__name__)
 
 
 class SkillsGenerator(OutputGenerator):
@@ -50,16 +54,26 @@ class SkillsGenerator(OutputGenerator):
                 skill_dir = os.path.join(skills_root, category, skill_name)
                 skill_file = os.path.join(skill_dir, "SKILL.md")
 
-                content = _format_skill(rule, skill_name)
-
-                os.makedirs(skill_dir, exist_ok=True)
-                with open(skill_file, "w", encoding="utf-8") as f:
-                    f.write(content)
-
-                print(f"  ✓ Created skill: {category}/{skill_name}")
+                try:
+                    content = _format_skill(rule, skill_name)
+                    os.makedirs(skill_dir, exist_ok=True)
+                    with open(skill_file, "w", encoding="utf-8") as f:
+                        f.write(content)
+                    print(f"  ✓ Created skill: {category}/{skill_name}")
+                except OSError as e:
+                    logger.warning("Failed to write skill %s/%s: %s", category, skill_name, e)
+                    print(f"  ✗ Failed to create skill: {category}/{skill_name}")
 
     def get_section_markers(self) -> tuple[str, str]:
         return ("", "")
+
+
+def _yaml_safe(value: str) -> str:
+    """Quote a YAML scalar value if it contains special characters."""
+    if _YAML_UNSAFE.search(value):
+        escaped = value.replace('"', '\\"')
+        return f'"{escaped}"'
+    return value
 
 
 def _format_skill(rule: RuleMetadata, skill_name: str) -> str:
@@ -68,8 +82,8 @@ def _format_skill(rule: RuleMetadata, skill_name: str) -> str:
 
     lines = [
         "---",
-        f"name: {skill_name}",
-        f"description: {description}",
+        f"name: {_yaml_safe(skill_name)}",
+        f"description: {_yaml_safe(description)}",
         "---",
         "",
     ]
