@@ -88,21 +88,18 @@ def main():
         grouped_rules = group_by_category(all_rules)
         print(f"  Found {len(all_rules)} rules in {len(grouped_rules)} categories")
 
-        # Generate content using pipeline's generator
-        content = pipeline.generator.generate(grouped_rules, {})
-
-        # Update target files for this generator
-        output_files = [
-            os.path.join(project_root, filename)
-            for filename in pipeline.generator.default_filenames
-        ]
-
-        for file_path in output_files:
-            success, message = update_documentation_file(
-                file_path, content, pipeline.generator.get_section_markers()
-            )
-            status = "✓" if success else "✗"
-            print(f"  {status} {message}")
+        # Generate output
+        if pipeline.generator.is_multi_file:
+            pipeline.generator.generate_files(grouped_rules, project_root)
+        else:
+            content = pipeline.generator.generate(grouped_rules, {})
+            for filename in pipeline.generator.default_filenames:
+                file_path = os.path.join(project_root, filename)
+                success, message = update_documentation_file(
+                    file_path, content, pipeline.generator.get_section_markers()
+                )
+                status = "✓" if success else "✗"
+                print(f"  {status} {message}")
 
     print("\n✓ Rules synchronization completed!")
 
