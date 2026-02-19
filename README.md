@@ -49,6 +49,148 @@ This hook synchronizes AI coding rules from `.cursor/rules/` and `.code_review/`
 
 This ensures all AI coding assistants stay aware of the same rules and coding conventions.
 
+## Codex AI Code Review Hook (`codex-review`)
+
+On-demand AI code review using the OpenAI Codex CLI. This hook runs in `manual` stage by default, meaning it won't block normal commits.
+
+**Prerequisites:**
+- Install Codex CLI: `brew install codex` or `npm install -g @openai/codex`
+- Authenticate: `codex auth login` (uses Duolingo ChatGPT org credentials)
+
+**Usage:**
+```bash
+# Run Codex review on staged changes
+pre-commit run codex-review
+
+# Run on all files
+pre-commit run codex-review --all-files
+```
+
+For direct CLI usage without pre-commit:
+```bash
+codex review --uncommitted
+codex review --base master
+```
+
+## Codex PR-grade Hook (`codexw`)
+
+Profile-aware multi-pass local review using `codexw`. This hook is also `manual` by default and does not block normal commits.
+
+It runs detailed PR-grade review from `local-review-profile.yaml`.
+`codexw` also includes compatibility fallback for Codex CLI versions that reject prompt+target combinations.
+Canonical command is `codexw review`; `codexw review-pr` is kept as a compatibility alias.
+If profile is missing, `codexw` auto-generates `local-review-profile.yaml` on first run.
+On each run, `codexw` auto-syncs profile entries derived from repository signals (rules/domains/domain prompts) while preserving manual overrides. Stale auto-managed entries are pruned when source-of-truth changes.
+
+PR-grade outputs now include:
+- deterministic rule-coverage accounting (`rule-coverage-accounting.json`)
+- machine-readable findings (`findings.json`, `findings.sarif`)
+- waiver + baseline filtering (for strict gate on net-new active findings)
+- optional GitHub publish adapter (`--publish-github`, optional inline comments)
+
+**Prerequisites:**
+- Install Codex CLI: `brew install codex` or `npm install -g @openai/codex`
+- Authenticate: `codex auth login`
+- Optional: pre-seed `local-review-profile.yaml` in target repo root (see example below)
+
+**Usage:**
+```bash
+# Run PR-grade review for current diff vs profile default base branch
+pre-commit run codexw
+
+# Run PR-grade review for all files (still uses profile + pass orchestration)
+pre-commit run codexw --all-files
+```
+
+Direct execution (without pre-commit):
+```bash
+./codexw review
+./codexw review --base main
+./codexw review --domains core,testing --no-fail-on-findings
+./codexw review --full-repo --max-files-per-shard 50 --parallel-shards 2
+# Runtime budget controls
+./codexw review --max-passes 8 --time-budget-minutes 12
+# Create missing profile and exit
+./codexw review --bootstrap-only
+# Sync profile from repository signals and exit
+./codexw review --sync-profile-only
+# Use waivers/baseline files and update baseline from current active findings
+./codexw review --waiver-file .codex/review-waivers.yaml --baseline-file .codex/review-baseline.json
+./codexw review --update-baseline --no-fail-on-findings
+# Replace baseline instead of merge
+./codexw review --update-baseline --replace-baseline --no-fail-on-findings
+# Validate profile loading only (no Codex run)
+./codexw review --print-effective-profile
+# Disable profile sync for one run
+./codexw review --no-sync-profile
+# Keep stale auto-managed profile entries for this run
+./codexw review --no-prune-autogen
+# Publish summary (and optional inline comments) to current PR
+./codexw review --publish-github
+./codexw review --publish-github --github-inline
+# Note: inline comments are automatically skipped in --full-repo mode
+```
+
+`local-review-profile.yaml` schema (minimum practical shape):
+```yaml
+version: 1
+
+repo:
+  name: Repo Name
+
+review:
+  default_base: main
+  strict_gate: true
+  depth_hotspots: 3
+  output_root: .codex/review-runs
+  max_files_per_shard: 40
+  max_shards: 5
+  parallel_shards: 1
+  max_passes: 0 # 0 = unlimited
+  time_budget_minutes: 0 # 0 = unlimited
+  waiver_file: .codex/review-waivers.yaml
+  baseline_file: .codex/review-baseline.json
+
+rules:
+  include:
+    - AGENTS.md
+    - .cursor/rules/**/*.mdc
+
+domains:
+  default: [core]
+  allowed: [core, testing]
+
+prompts:
+  global: |
+    Additional repo-wide review context.
+  by_domain:
+    testing: |
+      Additional testing-specific context.
+
+pipeline:
+  include_policy_pass: true
+  include_core_passes: true
+  include_domain_passes: true
+  include_depth_passes: true
+  policy_instructions: |
+    Custom policy pass instructions.
+  core_passes:
+    - id: core-breadth
+      name: Core breadth
+      shard: changed_files # none | changed_files
+      instructions: |
+        Custom breadth pass instructions.
+  depth_instructions: |
+    Task:
+    - Perform depth-first review of hotspot file: {hotspot}
+```
+
+Reference profile:
+`local-review-profile.example.yaml`
+
+Backward-compatible hook id alias is available:
+`codex-review-pr-grade`
+
 ## Usage
 
 Repo maintainers can declare these hooks in `.pre-commit-config.yaml`:
@@ -68,6 +210,10 @@ Repo maintainers can declare these hooks in `.pre-commit-config.yaml`:
         - --scala-version=3 # Defaults to Scala 2.12
     # Sync AI rules hook (for repos with Cursor AI rules)
     - id: sync-ai-rules
+    # On-demand Codex AI code review (manual stage, requires codex CLI)
+    - id: codex-review
+    # On-demand PR-grade Codex review (manual stage, profile-aware)
+    - id: codexw
 ```
 
 Directories named `build` and `node_modules` are excluded by default - no need to declare them in the hook's `exclude` key.
