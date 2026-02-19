@@ -8,13 +8,6 @@ review:
   strict_gate: true
   depth_hotspots: 3
   output_root: .codex/review-runs
-  max_files_per_shard: 40
-  max_shards: 5
-  parallel_shards: 1
-  max_passes: 0
-  time_budget_minutes: 0
-  waiver_file: .codex/review-waivers.yaml
-  baseline_file: .codex/review-baseline.json
 
 rules:
   include:
@@ -56,21 +49,17 @@ pipeline:
   core_passes:
     - id: core-breadth
       name: Core breadth coverage
-      shard: changed_files
       instructions: |
         Review every changed file in this shard and report actionable findings only.
     - id: core-regressions
       name: Core regressions
-      shard: none
       instructions: |
         Focus on behavioral regressions, crash/nullability, and security/privacy issues.
     - id: core-architecture
       name: Core architecture
-      shard: none
       instructions: |
         Focus on architecture boundaries, concurrency, and lifecycle correctness.
     - id: core-tests
       name: Core tests
-      shard: none
       instructions: |
         Focus on missing tests and high-risk edge cases without coverage.

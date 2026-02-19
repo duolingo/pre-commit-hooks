@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-"""Generic Codex PR-grade review wrapper (profile-aware)."""
+"""Generic Codex PR-grade review wrapper (profile-aware, essentials-only)."""
 
 from __future__ import annotations
 
 import argparse
 import datetime as dt
-import fnmatch
 import glob
-import hashlib
 import json
 import os
 import re
 import shlex
 import subprocess
 import sys
-import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -82,7 +78,6 @@ DEFAULT_CORE_PASS_SPECS: list[dict[str, str]] = [
             "- Then output actionable findings using the required schema.\n"
             f"- If no actionable findings exist, include exactly this line: {NO_FINDINGS_SENTINEL}"
         ),
-        "shard": "changed_files",
     },
     {
         "id": "core-regressions",
@@ -94,7 +89,6 @@ DEFAULT_CORE_PASS_SPECS: list[dict[str, str]] = [
             "- state corruption and data-loss risks\n"
             "- security and privacy issues"
         ),
-        "shard": "none",
     },
     {
         "id": "core-architecture",
@@ -106,7 +100,6 @@ DEFAULT_CORE_PASS_SPECS: list[dict[str, str]] = [
             "- error-handling/fallback correctness\n"
             "- protocol/contract boundary failures"
         ),
-        "shard": "none",
     },
     {
         "id": "core-tests",
@@ -117,7 +110,6 @@ DEFAULT_CORE_PASS_SPECS: list[dict[str, str]] = [
             "- high-risk edge cases without coverage\n"
             "- regressions likely to escape without tests"
         ),
-        "shard": "none",
     },
 ]
 
@@ -129,10 +121,6 @@ DEFAULT_DEPTH_PASS_INSTRUCTIONS = (
     "- Output only actionable findings with required schema\n"
     f"- If no actionable findings exist, include exactly this line: {NO_FINDINGS_SENTINEL}"
 )
-
-DEFAULT_WAIVER_FILE = ".codex/review-waivers.yaml"
-DEFAULT_BASELINE_FILE = ".codex/review-baseline.json"
-
 
 
 def die(message: str, code: int = 1) -> None:
@@ -158,22 +146,6 @@ def run_checked(cmd: list[str], cwd: Path) -> str:
     return proc.stdout
 
 
-def run_streaming(cmd: list[str], cwd: Path, out_file: Path) -> int:
-    with out_file.open("w", encoding="utf-8") as fh:
-        proc = subprocess.Popen(
-            cmd,
-            cwd=str(cwd),
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
-        assert proc.stdout is not None
-        for line in proc.stdout:
-            print(line, end="")
-            fh.write(line)
-        return proc.wait()
-
-
 def run_captured(cmd: list[str], cwd: Path, out_file: Path, *, stream_output: bool) -> int:
     proc = subprocess.run(
         cmd,
@@ -196,12 +168,9 @@ def run_review_pass_with_compat(
     target_desc: str,
     prompt: str,
     pass_name: str,
-    *,
-    stream_output: bool = True,
 ) -> None:
-    """Run one pass, with fallback for Codex CLI versions that reject prompt+target flags."""
     primary_cmd = ["codex", "review", *target_args, prompt]
-    exit_code = run_captured(primary_cmd, repo_root, out_file, stream_output=stream_output)
+    exit_code = run_captured(primary_cmd, repo_root, out_file, stream_output=True)
     if exit_code == 0:
         return
 
@@ -219,7 +188,7 @@ def run_review_pass_with_compat(
             "Apply review findings to the requested target using the repository context below."
         )
         compat_cmd = ["codex", "review", f"{compat_prefix}\n\n{prompt}"]
-        exit_code = run_captured(compat_cmd, repo_root, out_file, stream_output=stream_output)
+        exit_code = run_captured(compat_cmd, repo_root, out_file, stream_output=True)
         if exit_code == 0:
             return
 
@@ -248,7 +217,6 @@ def git_ref_exists(repo_root: Path, ref: str) -> bool:
 
 
 def detect_default_base(repo_root: Path) -> str:
-    # Prefer local branch refs first, then origin refs.
     for candidate in ("master", "main"):
         if git_ref_exists(repo_root, f"refs/heads/{candidate}"):
             return candidate
@@ -311,7 +279,6 @@ def parse_yaml_mapping_fragment(raw: str) -> dict[str, Any]:
     except Exception:
         return {}
 
-    # Lightweight fallback parser for simple key/value YAML.
     parsed: dict[str, Any] = {}
     current_key: str | None = None
     for raw_line in text.splitlines():
@@ -388,29 +355,6 @@ def _to_boolish(value: Any) -> bool | None:
     return None
 
 
-def _extract_rule_globs(meta: dict[str, Any]) -> list[str]:
-    globs: list[str] = []
-    candidates: list[Any] = [
-        meta.get("file_scope"),
-        meta.get("fileScope"),
-        meta.get("scope"),
-        meta.get("scopes"),
-        meta.get("globs"),
-        meta.get("files"),
-        meta.get("include"),
-    ]
-    for candidate in candidates:
-        for raw_item in to_string_list(candidate, []):
-            item = raw_item.strip()
-            if not item:
-                continue
-            lowered = item.lower()
-            if lowered in {"all files", "all", "*"}:
-                continue
-            globs.append(item)
-    return _unique(globs)
-
-
 def _extract_rule_domains(meta: dict[str, Any], rel_path: str) -> list[str]:
     domains: list[str] = []
     domain_candidates = [
@@ -452,14 +396,14 @@ def discover_rule_metadata(repo_root: Path, patterns: list[str]) -> list[dict[st
         if always_apply is None:
             always_apply = _to_boolish(meta.get("alwaysApply"))
         description = str(meta.get("description", "")).strip()
-        row = {
-            "path": rel,
-            "always_apply": bool(always_apply) if always_apply is not None else False,
-            "file_globs": _extract_rule_globs(meta),
-            "domains": _extract_rule_domains(meta, rel),
-            "description": description,
-        }
-        rows.append(row)
+        rows.append(
+            {
+                "path": rel,
+                "always_apply": bool(always_apply) if always_apply is not None else False,
+                "domains": _extract_rule_domains(meta, rel),
+                "description": description,
+            }
+        )
     return rows
 
 
@@ -469,7 +413,6 @@ def infer_domains_from_rule_metadata(rule_metadata: list[dict[str, Any]]) -> lis
         for domain in to_string_list(row.get("domains"), []):
             domains.add(domain)
 
-    # Keep known domains first, then repo-specific domains.
     preferred = ["core", "experiments", "compose", "coroutines", "testing"]
     result = [d for d in preferred if d in domains]
     for domain in sorted(domains):
@@ -508,13 +451,6 @@ def build_bootstrap_profile(repo_root: Path) -> dict[str, Any]:
             "strict_gate": True,
             "depth_hotspots": 3,
             "output_root": ".codex/review-runs",
-            "max_files_per_shard": 40,
-            "max_shards": 5,
-            "parallel_shards": 1,
-            "max_passes": 0,
-            "time_budget_minutes": 0,
-            "waiver_file": DEFAULT_WAIVER_FILE,
-            "baseline_file": DEFAULT_BASELINE_FILE,
         },
         "rules": {"include": rule_patterns},
         "domains": {"default": domains, "allowed": domains},
@@ -528,7 +464,6 @@ def build_bootstrap_profile(repo_root: Path) -> dict[str, Any]:
 
 def write_profile(path: Path, profile: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    # Write JSON-compatible YAML to avoid hard dependency on PyYAML.
     path.write_text(json.dumps(profile, indent=2) + "\n", encoding="utf-8")
 
 
@@ -562,7 +497,6 @@ def sync_profile_with_repo(
     *,
     prune_autogen: bool,
 ) -> tuple[dict[str, Any], bool]:
-    """Merge repository-derived signals into profile while preserving manual overrides."""
     before = _stable(raw_profile)
     profile: dict[str, Any] = json.loads(json.dumps(raw_profile))
     inferred = build_bootstrap_profile(repo_root)
@@ -593,20 +527,6 @@ def sync_profile_with_repo(
         review["depth_hotspots"] = 3
     if not str(review.get("output_root", "")).strip():
         review["output_root"] = ".codex/review-runs"
-    if "max_files_per_shard" not in review:
-        review["max_files_per_shard"] = 40
-    if "max_shards" not in review:
-        review["max_shards"] = 5
-    if "parallel_shards" not in review:
-        review["parallel_shards"] = 1
-    if "max_passes" not in review:
-        review["max_passes"] = 0
-    if "time_budget_minutes" not in review:
-        review["time_budget_minutes"] = 0
-    if not str(review.get("waiver_file", "")).strip():
-        review["waiver_file"] = DEFAULT_WAIVER_FILE
-    if not str(review.get("baseline_file", "")).strip():
-        review["baseline_file"] = DEFAULT_BASELINE_FILE
 
     rules = _ensure_dict(profile, "rules")
     existing_patterns = to_string_list(rules.get("include"), [])
@@ -614,8 +534,7 @@ def sync_profile_with_repo(
     if prune_autogen and prev_autogen_rules:
         prev_rule_set = set(prev_autogen_rules)
         existing_patterns = [p for p in existing_patterns if p not in prev_rule_set]
-    merged_patterns = _unique(existing_patterns + inferred_patterns)
-    rules["include"] = merged_patterns
+    rules["include"] = _unique(existing_patterns + inferred_patterns)
 
     domains = _ensure_dict(profile, "domains")
     existing_allowed = to_string_list(domains.get("allowed"), [])
@@ -625,10 +544,9 @@ def sync_profile_with_repo(
         prev_domain_set = set(prev_autogen_domains)
         existing_allowed = [d for d in existing_allowed if d not in prev_domain_set]
         existing_default = [d for d in existing_default if d not in prev_domain_set]
+
     merged_allowed = _unique(existing_allowed + inferred_domains)
     merged_default = _unique(existing_default + inferred_domains)
-
-    # Default must be subset of allowed.
     merged_default = [d for d in merged_default if d in set(merged_allowed)]
     if not merged_allowed:
         merged_allowed = ["core"]
@@ -641,6 +559,7 @@ def sync_profile_with_repo(
     prompts = _ensure_dict(profile, "prompts")
     if not str(prompts.get("global", "")).strip():
         prompts["global"] = inferred["prompts"]["global"]
+
     by_domain = prompts.get("by_domain")
     if not isinstance(by_domain, dict):
         by_domain = {}
@@ -650,17 +569,13 @@ def sync_profile_with_repo(
     for domain in merged_allowed:
         if domain not in inferred_by_domain:
             continue
-
         inferred_prompt = inferred_by_domain[domain]
         existing_prompt = str(by_domain.get(domain, "")).strip()
         prev_prompt = str(prev_autogen_prompt_map.get(domain, "")).strip()
-
-        # Add missing template prompts; refresh only if this entry was auto-managed and unchanged.
         if not existing_prompt:
             by_domain[domain] = inferred_prompt
         elif prev_prompt and existing_prompt == prev_prompt and existing_prompt != inferred_prompt:
             by_domain[domain] = inferred_prompt
-
         new_autogen_prompt_map[domain] = inferred_prompt
 
     if prune_autogen:
@@ -700,8 +615,6 @@ def sync_profile_with_repo(
             if domain in inferred_by_domain
         }
     else:
-        # Preserve full auto-managed provenance when prune is disabled so future prune runs can still
-        # remove stale entries safely.
         autogen["rules_include"] = _unique(prev_autogen_rules + inferred_patterns)
         autogen["domains"] = _unique(prev_autogen_domains + inferred_domains)
         preserved_prompt_map = dict(prev_autogen_prompt_map)
@@ -722,7 +635,6 @@ def sync_profile_with_repo(
 def load_yaml_or_json(path: Path) -> dict[str, Any]:
     text = path.read_text(encoding="utf-8")
 
-    # Preferred: PyYAML
     try:
         import yaml  # type: ignore
 
@@ -735,7 +647,6 @@ def load_yaml_or_json(path: Path) -> dict[str, Any]:
     except Exception as exc:
         die(f"invalid YAML in {path}: {exc}")
 
-    # Fallback: JSON (YAML is superset of JSON)
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
@@ -746,27 +657,6 @@ def load_yaml_or_json(path: Path) -> dict[str, Any]:
     if not isinstance(data, dict):
         die(f"profile at {path} must be a mapping/object")
     return data
-
-
-def load_yaml_or_json_any(path: Path) -> Any:
-    text = path.read_text(encoding="utf-8")
-
-    try:
-        import yaml  # type: ignore
-
-        return yaml.safe_load(text)
-    except ModuleNotFoundError:
-        pass
-    except Exception as exc:
-        die(f"invalid YAML in {path}: {exc}")
-
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        die(
-            f"{path} is not valid JSON-compatible YAML. "
-            "Install PyYAML (python3 -m pip install pyyaml) or provide JSON syntax."
-        )
 
 
 def to_bool(value: Any, default: bool) -> bool:
@@ -799,7 +689,6 @@ def to_string_list(value: Any, default: list[str] | None = None) -> list[str]:
     if isinstance(value, list):
         return [str(x).strip() for x in value if str(x).strip()]
     if isinstance(value, str):
-        # Support comma-separated shorthand
         return [x.strip() for x in value.split(",") if x.strip()]
     return list(default or [])
 
@@ -827,10 +716,10 @@ def normalize_profile(raw: dict[str, Any]) -> dict[str, Any]:
 
     allowed_domains = to_string_list(domains.get("allowed"), ["core"])
     default_domains = to_string_list(domains.get("default"), allowed_domains)
-    if not default_domains:
-        default_domains = list(allowed_domains)
     if not allowed_domains:
         allowed_domains = ["core"]
+    if not default_domains:
+        default_domains = list(allowed_domains)
 
     domain_prompt_map = prompts.get("by_domain")
     if not isinstance(domain_prompt_map, dict):
@@ -850,22 +739,18 @@ def normalize_profile(raw: dict[str, Any]) -> dict[str, Any]:
         instructions = str(raw_pass.get("instructions", "")).strip()
         if not instructions:
             continue
-        shard_mode = str(raw_pass.get("shard", "none")).strip().lower()
-        if shard_mode not in {"none", "changed_files"}:
-            shard_mode = "none"
         pipeline_core_passes.append(
             {
                 "id": pass_id,
                 "name": pass_name,
                 "instructions": instructions,
-                "shard": shard_mode,
             }
         )
 
     if not pipeline_core_passes:
         pipeline_core_passes = json.loads(json.dumps(default_pipeline["core_passes"]))
 
-    normalized = {
+    return {
         "version": str(raw.get("version", "1")),
         "repo_name": str(repo.get("name", "Repository")).strip() or "Repository",
         "default_base": str(review.get("default_base", "main")).strip() or "main",
@@ -873,18 +758,7 @@ def normalize_profile(raw: dict[str, Any]) -> dict[str, Any]:
         "depth_hotspots": to_int(review.get("depth_hotspots"), 3),
         "output_root": str(review.get("output_root", ".codex/review-runs")).strip()
         or ".codex/review-runs",
-        "max_files_per_shard": to_int(review.get("max_files_per_shard"), 40),
-        "max_shards": to_int(review.get("max_shards"), 5),
-        "parallel_shards": max(1, to_int(review.get("parallel_shards"), 1)),
-        "max_passes": to_int(review.get("max_passes"), 0),
-        "time_budget_minutes": to_int(review.get("time_budget_minutes"), 0),
-        "waiver_file": str(review.get("waiver_file", DEFAULT_WAIVER_FILE)).strip()
-        or DEFAULT_WAIVER_FILE,
-        "baseline_file": str(review.get("baseline_file", DEFAULT_BASELINE_FILE)).strip()
-        or DEFAULT_BASELINE_FILE,
-        "rule_patterns": to_string_list(
-            rules.get("include"), ["AGENTS.md", ".cursor/rules/**/*.mdc"]
-        ),
+        "rule_patterns": to_string_list(rules.get("include"), ["AGENTS.md", ".cursor/rules/**/*.mdc"]),
         "default_domains": default_domains,
         "allowed_domains": allowed_domains,
         "global_prompt": str(prompts.get("global", "")).strip(),
@@ -919,7 +793,6 @@ def normalize_profile(raw: dict[str, Any]) -> dict[str, Any]:
             or default_pipeline["depth_instructions"],
         },
     }
-    return normalized
 
 
 def discover_rule_files(repo_root: Path, patterns: list[str]) -> list[str]:
@@ -928,67 +801,24 @@ def discover_rule_files(repo_root: Path, patterns: list[str]) -> list[str]:
         expanded = glob.glob(str(repo_root / pattern), recursive=True)
         for abs_path in expanded:
             p = Path(abs_path)
-            if p.is_file():
-                try:
-                    rel = p.relative_to(repo_root)
-                except ValueError:
-                    continue
-                matches.add(str(rel))
+            if not p.is_file():
+                continue
+            try:
+                rel = p.relative_to(repo_root)
+            except ValueError:
+                continue
+            matches.add(str(rel))
     return sorted(matches)
 
 
-def is_git_repo(repo_root: Path) -> bool:
-    proc = subprocess.run(
-        ["git", "rev-parse", "--is-inside-work-tree"],
-        cwd=str(repo_root),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        text=True,
-    )
-    return proc.returncode == 0
-
-
 def collect_changed_files(repo_root: Path, mode: str, base: str, commit: str) -> list[str]:
-    if mode == "full_repo":
-        if is_git_repo(repo_root):
-            tracked = run_checked(["git", "ls-files"], repo_root)
-            others = run_checked(["git", "ls-files", "--others", "--exclude-standard"], repo_root)
-            return sorted(
-                {
-                    line.strip()
-                    for line in (tracked + "\n" + others).splitlines()
-                    if line.strip()
-                }
-            )
-        files: list[str] = []
-        for abs_path in repo_root.rglob("*"):
-            if not abs_path.is_file():
-                continue
-            try:
-                rel = abs_path.relative_to(repo_root)
-            except ValueError:
-                continue
-            if any(part.startswith(".git") for part in rel.parts):
-                continue
-            files.append(str(rel))
-        return sorted(files)
-
     if mode == "base":
-        cmd = ["git", "diff", "--name-only", f"{base}...HEAD"]
-        out = run_checked(cmd, repo_root)
+        out = run_checked(["git", "diff", "--name-only", f"{base}...HEAD"], repo_root)
         return sorted({line.strip() for line in out.splitlines() if line.strip()})
     if mode == "uncommitted":
         out1 = run_checked(["git", "diff", "--name-only", "HEAD"], repo_root)
-        out2 = run_checked(
-            ["git", "ls-files", "--others", "--exclude-standard"], repo_root
-        )
-        return sorted(
-            {
-                line.strip()
-                for line in (out1 + "\n" + out2).splitlines()
-                if line.strip()
-            }
-        )
+        out2 = run_checked(["git", "ls-files", "--others", "--exclude-standard"], repo_root)
+        return sorted({line.strip() for line in (out1 + "\n" + out2).splitlines() if line.strip()})
     if mode == "commit":
         out = run_checked(["git", "show", "--name-only", "--pretty=", commit], repo_root)
         return sorted({line.strip() for line in out.splitlines() if line.strip()})
@@ -996,27 +826,7 @@ def collect_changed_files(repo_root: Path, mode: str, base: str, commit: str) ->
     return []
 
 
-def collect_numstat(
-    repo_root: Path,
-    mode: str,
-    base: str,
-    commit: str,
-    *,
-    files_for_full_repo: list[str] | None = None,
-) -> list[tuple[int, str]]:
-    if mode == "full_repo":
-        files = files_for_full_repo or collect_changed_files(repo_root, mode, base, commit)
-        rows: list[tuple[int, str]] = []
-        for rel in files:
-            abs_path = repo_root / rel
-            try:
-                size = abs_path.stat().st_size
-            except OSError:
-                size = 0
-            rows.append((size, rel))
-        rows.sort(key=lambda x: x[0], reverse=True)
-        return rows
-
+def collect_numstat(repo_root: Path, mode: str, base: str, commit: str) -> list[tuple[int, str]]:
     if mode == "base":
         cmd = ["git", "diff", "--numstat", f"{base}...HEAD"]
     elif mode == "uncommitted":
@@ -1089,127 +899,13 @@ def domain_prompt(domain: str, profile: dict[str, Any]) -> str:
     base = (
         f"Domain focus: {domain}\n"
         f"- identify domain-specific correctness and policy violations for '{domain}'\n"
-        f"- prioritize regressions and production-risk behavior in changed code"
+        "- prioritize regressions and production-risk behavior in changed code"
     )
     return base + ("\n" + custom if custom else "")
 
 
 def sanitize_pass_id(value: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_-]", "-", value.strip()).strip("-") or "pass"
-
-
-def shard_files(files: list[str], max_files_per_shard: int, max_shards: int) -> list[list[str]]:
-    if max_files_per_shard <= 0 or len(files) <= max_files_per_shard:
-        return [files]
-    shards = [files[i : i + max_files_per_shard] for i in range(0, len(files), max_files_per_shard)]
-    if max_shards > 0 and len(shards) > max_shards:
-        keep = shards[: max_shards - 1]
-        tail: list[str] = []
-        for shard in shards[max_shards - 1 :]:
-            tail.extend(shard)
-        keep.append(tail)
-        return keep
-    return shards
-
-
-def build_rule_coverage_accounting(
-    rule_metadata: list[dict[str, Any]],
-    changed_files: list[str],
-) -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for rule in rule_metadata:
-        path = str(rule.get("path", "")).strip()
-        always_apply = bool(rule.get("always_apply"))
-        globs = to_string_list(rule.get("file_globs"), [])
-        matched_files: list[str] = []
-        if globs:
-            for candidate in changed_files:
-                if any(fnmatch.fnmatch(candidate, pattern) for pattern in globs):
-                    matched_files.append(candidate)
-        if always_apply:
-            applicability = "required"
-        elif globs and matched_files:
-            applicability = "applicable"
-        elif globs and not matched_files:
-            applicability = "not_applicable"
-        else:
-            applicability = "unknown_scope"
-        rows.append(
-            {
-                "rule_file": path,
-                "always_apply": always_apply,
-                "file_globs": globs,
-                "domains": to_string_list(rule.get("domains"), []),
-                "applicability": applicability,
-                "matched_files_count": len(matched_files),
-                "matched_files_sample": matched_files[:20],
-            }
-        )
-    return rows
-
-
-def finding_mentions_rule_file(finding_rule_text: str, rule_file: str) -> bool:
-    finding_text = finding_rule_text.strip().lower()
-    if not finding_text:
-        return False
-    normalized_rule = rule_file.strip().lower()
-    if normalized_rule and normalized_rule in finding_text:
-        return True
-    basename = Path(rule_file).name.strip().lower()
-    return bool(basename) and basename in finding_text
-
-
-def evaluate_rule_coverage_rows(
-    rows: list[dict[str, Any]],
-    executed_passes: list[dict[str, Any]],
-    findings: list[dict[str, Any]],
-) -> list[dict[str, Any]]:
-    executed_pass_ids = [str(p.get("id", "")) for p in executed_passes if str(p.get("id", "")).strip()]
-
-    for row in rows:
-        rule_domains = to_string_list(row.get("domains"), [])
-        relevant_pass_ids: list[str] = []
-        for pass_spec in executed_passes:
-            pass_id = str(pass_spec.get("id", "")).strip()
-            if not pass_id:
-                continue
-            kind = str(pass_spec.get("kind", "")).strip()
-            if kind == "policy":
-                relevant_pass_ids.append(pass_id)
-                continue
-            pass_domains = to_string_list(pass_spec.get("domains"), [])
-            if not rule_domains:
-                # Unknown domain mapping -> consider all non-domain passes as potentially relevant.
-                if kind in {"core", "depth"} or not pass_domains:
-                    relevant_pass_ids.append(pass_id)
-                continue
-            if any(domain in pass_domains for domain in rule_domains):
-                relevant_pass_ids.append(pass_id)
-
-        evidence_count = 0
-        for finding in findings:
-            if finding_mentions_rule_file(str(finding.get("rule", "")), str(row.get("rule_file", ""))):
-                evidence_count += 1
-
-        applicability = str(row.get("applicability", "")).strip()
-        if applicability == "not_applicable":
-            coverage_status = "not_applicable_by_scope"
-        elif evidence_count > 0:
-            coverage_status = "evidenced_in_findings"
-        elif relevant_pass_ids:
-            coverage_status = "prompted_no_explicit_evidence"
-        elif executed_pass_ids:
-            coverage_status = "not_prompted_for_domain"
-        else:
-            coverage_status = "uncovered"
-
-        row["relevant_executed_passes"] = relevant_pass_ids
-        row["relevant_executed_pass_count"] = len(relevant_pass_ids)
-        row["executed_pass_count"] = len(executed_pass_ids)
-        row["evidence_findings_count"] = evidence_count
-        row["coverage_status"] = coverage_status
-
-    return rows
 
 
 def extract_line_number(raw: str) -> int | None:
@@ -1228,11 +924,8 @@ def normalize_finding_line(raw_line: str) -> str:
     if not line:
         return ""
 
-    # Allow markdown list styles: "-", "*", "1.", "1)".
     line = re.sub(r"^[-*+]\s*", "", line)
     line = re.sub(r"^\d+[.)]\s*", "", line)
-
-    # Accept markdown-wrapped keys: **Severity:** P1, **Severity**: P1, __Type__: Bug, `Line`: 10.
     line = re.sub(r"^\*\*([^*]+)\*\*\s*", r"\1 ", line)
     line = re.sub(r"^__([^_]+)__\s*", r"\1 ", line)
     line = re.sub(r"^`([^`]+)`\s*", r"\1 ", line)
@@ -1296,336 +989,11 @@ def parse_findings_from_pass(text: str, pass_id: str) -> list[dict[str, Any]]:
         elif re.match(r"(?i)^title\s*:", line):
             current["title"] = line.split(":", 1)[1].strip()
         else:
-            # Keep additional context attached to risk if available.
             if current.get("risk"):
                 current["risk"] = f"{current['risk']} {line}".strip()
 
     flush()
     return findings
-
-
-def finding_fingerprint(finding: dict[str, Any]) -> str:
-    raw = "|".join(
-        [
-            str(finding.get("severity", "")).upper(),
-            str(finding.get("type", "")).lower(),
-            str(finding.get("file_path", "")).lower(),
-            str(finding.get("line", "")),
-            str(finding.get("rule", "")).lower(),
-            str(finding.get("risk", "")).lower()[:200],
-        ]
-    )
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest()
-
-
-def parse_date_yyyy_mm_dd(raw: str) -> dt.date | None:
-    value = raw.strip()
-    if not value:
-        return None
-    try:
-        return dt.datetime.strptime(value, "%Y-%m-%d").date()
-    except ValueError:
-        return None
-
-
-def load_waivers(repo_root: Path, waiver_path: str) -> list[dict[str, Any]]:
-    path = Path(waiver_path)
-    if not path.is_absolute():
-        path = repo_root / path
-    if not path.exists():
-        return []
-
-    payload = load_yaml_or_json_any(path)
-    if isinstance(payload, dict):
-        rows = payload.get("waivers")
-    else:
-        rows = payload
-    if not isinstance(rows, list):
-        return []
-
-    normalized: list[dict[str, Any]] = []
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        normalized.append(row)
-    return normalized
-
-
-def load_baseline_fingerprints(repo_root: Path, baseline_path: str) -> set[str]:
-    path = Path(baseline_path)
-    if not path.is_absolute():
-        path = repo_root / path
-    if not path.exists():
-        return set()
-
-    payload = load_yaml_or_json_any(path)
-    rows: list[str] = []
-    if isinstance(payload, dict):
-        rows = to_string_list(payload.get("fingerprints"), [])
-    elif isinstance(payload, list):
-        rows = [str(x).strip() for x in payload if str(x).strip()]
-    return {x for x in rows if x}
-
-
-def waiver_matches(finding: dict[str, Any], waiver: dict[str, Any], today: dt.date) -> bool:
-    owner = str(waiver.get("owner", "")).strip()
-    reason = str(waiver.get("reason", "")).strip()
-    if not owner or not reason:
-        return False
-
-    expiry_raw = str(waiver.get("expires_on", "")).strip()
-    if expiry_raw:
-        expiry = parse_date_yyyy_mm_dd(expiry_raw)
-        if not expiry:
-            return False
-        if expiry < today:
-            return False
-
-    file_pattern = str(waiver.get("file", "")).strip()
-    if file_pattern and not fnmatch.fnmatch(str(finding.get("file_path", "")), file_pattern):
-        return False
-
-    severity = str(waiver.get("severity", "")).strip().upper()
-    if severity and severity != str(finding.get("severity", "")).strip().upper():
-        return False
-
-    finding_type = str(waiver.get("type", "")).strip().lower()
-    if finding_type and finding_type != str(finding.get("type", "")).strip().lower():
-        return False
-
-    line_value = waiver.get("line")
-    if line_value is not None:
-        try:
-            expected_line = int(line_value)
-        except (TypeError, ValueError):
-            return False
-        if expected_line != int(finding.get("line") or 0):
-            return False
-
-    contains = str(waiver.get("contains", "")).strip().lower()
-    if contains:
-        haystack = " ".join(
-            [
-                str(finding.get("title", "")),
-                str(finding.get("risk", "")),
-                str(finding.get("fix", "")),
-                str(finding.get("rule", "")),
-            ]
-        ).lower()
-        if contains not in haystack:
-            return False
-
-    return True
-
-
-def apply_waivers_and_baseline(
-    findings: list[dict[str, Any]],
-    waivers: list[dict[str, Any]],
-    baseline_fingerprints: set[str],
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
-    active: list[dict[str, Any]] = []
-    waived: list[dict[str, Any]] = []
-    baselined: list[dict[str, Any]] = []
-    today = dt.datetime.utcnow().date()
-
-    for finding in findings:
-        finding = dict(finding)
-        fp = finding_fingerprint(finding)
-        finding["fingerprint"] = fp
-
-        matched_waiver: dict[str, Any] | None = None
-        for waiver in waivers:
-            if waiver_matches(finding, waiver, today):
-                matched_waiver = waiver
-                break
-        if matched_waiver is not None:
-            finding["waiver"] = {
-                "owner": str(matched_waiver.get("owner", "")).strip(),
-                "reason": str(matched_waiver.get("reason", "")).strip(),
-                "expires_on": str(matched_waiver.get("expires_on", "")).strip(),
-            }
-            finding["status"] = "waived"
-            waived.append(finding)
-            continue
-
-        if fp in baseline_fingerprints:
-            finding["status"] = "baselined"
-            baselined.append(finding)
-            continue
-
-        finding["status"] = "active"
-        active.append(finding)
-
-    return active, waived, baselined
-
-
-def findings_to_sarif(findings: list[dict[str, Any]]) -> dict[str, Any]:
-    level_map = {"P0": "error", "P1": "error", "P2": "warning", "P3": "note"}
-    rules_seen: set[str] = set()
-    rules: list[dict[str, Any]] = []
-    results: list[dict[str, Any]] = []
-
-    for finding in findings:
-        finding_type = str(finding.get("type", "Unknown")).strip() or "Unknown"
-        rule_id = f"codexw/{finding_type}"
-        if rule_id not in rules_seen:
-            rules_seen.add(rule_id)
-            rules.append(
-                {
-                    "id": rule_id,
-                    "name": finding_type,
-                    "shortDescription": {"text": f"Codexw finding: {finding_type}"},
-                }
-            )
-
-        line = finding.get("line")
-        location: dict[str, Any] = {
-            "physicalLocation": {
-                "artifactLocation": {"uri": str(finding.get("file_path", ""))},
-                "region": {"startLine": int(line) if isinstance(line, int) and line > 0 else 1},
-            }
-        }
-
-        msg_parts = [
-            f"Severity {finding.get('severity', 'P2')}",
-            str(finding.get("risk", "")).strip(),
-            str(finding.get("fix", "")).strip(),
-        ]
-        message = " | ".join([part for part in msg_parts if part])
-
-        results.append(
-            {
-                "ruleId": rule_id,
-                "level": level_map.get(str(finding.get("severity", "P2")).upper(), "warning"),
-                "message": {"text": message or "Codexw finding"},
-                "locations": [location],
-            }
-        )
-
-    return {
-        "version": "2.1.0",
-        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-        "runs": [
-            {
-                "tool": {"driver": {"name": "codexw", "rules": rules}},
-                "results": results,
-            }
-        ],
-    }
-
-
-def parse_remote_slug(repo_root: Path) -> str | None:
-    proc = subprocess.run(
-        ["git", "remote", "get-url", "origin"],
-        cwd=str(repo_root),
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    if proc.returncode != 0:
-        return None
-
-    raw = proc.stdout.strip()
-    if not raw:
-        return None
-
-    ssh_match = re.match(r"git@[^:]+:([^/]+)/(.+?)(?:\.git)?$", raw)
-    if ssh_match:
-        return f"{ssh_match.group(1)}/{ssh_match.group(2)}"
-
-    https_match = re.match(r"https?://[^/]+/([^/]+)/(.+?)(?:\.git)?$", raw)
-    if https_match:
-        return f"{https_match.group(1)}/{https_match.group(2)}"
-    return None
-
-
-def resolve_pr_number(repo_root: Path, explicit_pr: str | None) -> str | None:
-    if explicit_pr:
-        return explicit_pr
-    proc = subprocess.run(
-        ["gh", "pr", "view", "--json", "number", "--jq", ".number"],
-        cwd=str(repo_root),
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    if proc.returncode != 0:
-        return None
-    out = proc.stdout.strip()
-    return out or None
-
-
-def publish_findings_to_github(
-    repo_root: Path,
-    findings: list[dict[str, Any]],
-    changed_files: list[str],
-    combined_report: Path,
-    pr_number: str | None,
-    review_mode: str,
-    *,
-    inline: bool,
-) -> None:
-    if not shutil_which("gh"):
-        print("warning: gh CLI not found; skipping GitHub publish.", file=sys.stderr)
-        return
-
-    slug = parse_remote_slug(repo_root)
-    if not slug:
-        print("warning: unable to resolve GitHub owner/repo; skipping GitHub publish.", file=sys.stderr)
-        return
-
-    pr = resolve_pr_number(repo_root, pr_number)
-    if not pr:
-        print("warning: unable to resolve PR number; skipping GitHub publish.", file=sys.stderr)
-        return
-
-    summary_cmd = ["gh", "pr", "comment", pr, "--repo", slug, "--body-file", str(combined_report)]
-    summary_proc = subprocess.run(summary_cmd, cwd=str(repo_root), text=True)
-    if summary_proc.returncode != 0:
-        print("warning: failed to publish summary PR comment via gh.", file=sys.stderr)
-        return
-
-    if not inline:
-        return
-
-    if review_mode == "full_repo":
-        print(
-            "warning: skipping inline GitHub comments for --full-repo mode; "
-            "inline API accepts only PR diff lines.",
-            file=sys.stderr,
-        )
-        return
-
-    inline_comments: list[dict[str, Any]] = []
-    changed_set = set(changed_files)
-    for finding in findings:
-        path = str(finding.get("file_path", "")).strip()
-        line = finding.get("line")
-        if not path or not isinstance(line, int) or line <= 0:
-            continue
-        if changed_set and path not in changed_set:
-            continue
-        body = (
-            f"[{finding.get('severity', 'P2')}] {finding.get('type', 'Finding')} - "
-            f"{finding.get('risk', '')}\n"
-            f"Fix: {finding.get('fix', '')}"
-        ).strip()
-        inline_comments.append({"path": path, "line": line, "side": "RIGHT", "body": body[:5000]})
-        if len(inline_comments) >= 30:
-            break
-
-    if not inline_comments:
-        return
-
-    payload = {"body": "Codexw inline findings", "event": "COMMENT", "comments": inline_comments}
-    proc = subprocess.run(
-        ["gh", "api", "--method", "POST", f"repos/{slug}/pulls/{pr}/reviews", "--input", "-"],
-        cwd=str(repo_root),
-        text=True,
-        input=json.dumps(payload),
-    )
-    if proc.returncode != 0:
-        print("warning: failed to publish inline review comments via gh api.", file=sys.stderr)
 
 
 def run_review(args: argparse.Namespace) -> int:
@@ -1662,8 +1030,6 @@ def run_review(args: argparse.Namespace) -> int:
 
     if args.sync_profile_only and args.no_sync_profile:
         die("--sync-profile-only cannot be combined with --no-sync-profile")
-    if args.replace_baseline and not args.update_baseline:
-        die("--replace-baseline requires --update-baseline")
 
     raw_profile = load_yaml_or_json(profile_path)
     if args.no_sync_profile:
@@ -1712,9 +1078,7 @@ def run_review(args: argparse.Namespace) -> int:
     mode = "base"
     base_branch = args.base or profile["default_base"]
     commit_sha = args.commit or ""
-    if args.full_repo:
-        mode = "full_repo"
-    elif args.uncommitted:
+    if args.uncommitted:
         mode = "uncommitted"
     elif args.commit:
         mode = "commit"
@@ -1726,22 +1090,6 @@ def run_review(args: argparse.Namespace) -> int:
         fail_on_findings = False
 
     depth_hotspots = args.depth_hotspots if args.depth_hotspots is not None else profile["depth_hotspots"]
-    max_files_per_shard = (
-        args.max_files_per_shard
-        if args.max_files_per_shard is not None
-        else profile["max_files_per_shard"]
-    )
-    max_shards = args.max_shards if args.max_shards is not None else profile["max_shards"]
-    parallel_shards = (
-        args.parallel_shards if args.parallel_shards is not None else profile["parallel_shards"]
-    )
-    max_passes = args.max_passes if args.max_passes is not None else profile["max_passes"]
-    time_budget_minutes = (
-        args.time_budget_minutes
-        if args.time_budget_minutes is not None
-        else profile["time_budget_minutes"]
-    )
-    time_budget_seconds = max(0, time_budget_minutes) * 60
 
     allowed_domains = profile["allowed_domains"]
     default_domains = profile["default_domains"]
@@ -1752,10 +1100,7 @@ def run_review(args: argparse.Namespace) -> int:
 
     unknown = [d for d in selected_domains if d not in allowed_domains]
     if unknown:
-        die(
-            f"invalid domain(s): {', '.join(unknown)}. "
-            f"Allowed: {', '.join(allowed_domains)}"
-        )
+        die(f"invalid domain(s): {', '.join(unknown)}. Allowed: {', '.join(allowed_domains)}")
 
     ts = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
     output_root = Path(args.output_dir) if args.output_dir else Path(profile["output_root"]) / ts
@@ -1771,11 +1116,9 @@ def run_review(args: argparse.Namespace) -> int:
     elif mode == "uncommitted":
         target_args += ["--uncommitted"]
         target_desc = "uncommitted changes"
-    elif mode == "commit":
+    else:
         target_args += ["--commit", commit_sha]
         target_desc = f"commit: {commit_sha}"
-    else:
-        target_desc = "full repository"
 
     if args.title:
         target_args += ["--title", args.title]
@@ -1785,34 +1128,29 @@ def run_review(args: argparse.Namespace) -> int:
         target_args += ["-c", f'model="{model_override}"']
 
     rule_files = discover_rule_files(repo_root, profile["rule_patterns"])
-    rule_metadata = discover_rule_metadata(repo_root, profile["rule_patterns"])
-    auto_rule_file = output_root / "enforced-rule-files.txt"
-    auto_rule_file.write_text("\n".join(rule_files) + ("\n" if rule_files else ""), encoding="utf-8")
-
-    changed_files = collect_changed_files(repo_root, mode, base_branch, commit_sha)
-    changed_files_file = output_root / "changed-files.txt"
-    changed_files_file.write_text(
-        "\n".join(changed_files) + ("\n" if changed_files else ""), encoding="utf-8"
-    )
-
-    modules = changed_modules(changed_files)
-    changed_modules_file = output_root / "changed-modules.txt"
-    changed_modules_file.write_text(
-        "\n".join([f"{count}\t{module}" for count, module in modules])
-        + ("\n" if modules else ""),
+    (output_root / "enforced-rule-files.txt").write_text(
+        "\n".join(rule_files) + ("\n" if rule_files else ""),
         encoding="utf-8",
     )
 
-    numstat = collect_numstat(
-        repo_root,
-        mode,
-        base_branch,
-        commit_sha,
-        files_for_full_repo=changed_files,
+    changed_files = collect_changed_files(repo_root, mode, base_branch, commit_sha)
+    (output_root / "changed-files.txt").write_text(
+        "\n".join(changed_files) + ("\n" if changed_files else ""),
+        encoding="utf-8",
     )
+
+    modules = changed_modules(changed_files)
+    (output_root / "changed-modules.txt").write_text(
+        "\n".join([f"{count}\t{module}" for count, module in modules]) + ("\n" if modules else ""),
+        encoding="utf-8",
+    )
+
+    numstat = collect_numstat(repo_root, mode, base_branch, commit_sha)
     hotspots = [path for _, path in numstat[: depth_hotspots if depth_hotspots > 0 else 0]]
-    hotspots_file = output_root / "hotspots.txt"
-    hotspots_file.write_text("\n".join(hotspots) + ("\n" if hotspots else ""), encoding="utf-8")
+    (output_root / "hotspots.txt").write_text(
+        "\n".join(hotspots) + ("\n" if hotspots else ""),
+        encoding="utf-8",
+    )
 
     if not changed_files:
         combined_report = output_root / "combined-report.md"
@@ -1837,8 +1175,6 @@ def run_review(args: argparse.Namespace) -> int:
         print(f"Combined report: {combined_report}")
         return 0
 
-    rule_coverage_rows = build_rule_coverage_accounting(rule_metadata, changed_files)
-
     base_rubric = (
         f"Act as a strict PR gate reviewer for {profile['repo_name']}.\n"
         "Return only actionable findings.\n\n"
@@ -1859,77 +1195,46 @@ def run_review(args: argparse.Namespace) -> int:
     )
 
     global_prompt = profile.get("global_prompt", "")
-    full_diff_context = build_diff_context(changed_files, modules, hotspots)
+    diff_context = build_diff_context(changed_files, modules, hotspots)
     rules_block = rule_block(rule_files)
 
-    def pass_prompt(extra: str, *, context_override: str | None = None) -> str:
-        parts = [base_rubric, rules_block, context_override or full_diff_context]
+    def pass_prompt(extra: str) -> str:
+        parts = [base_rubric, rules_block, diff_context]
         if global_prompt:
             parts.append("Profile global context:\n" + global_prompt)
         parts.append(extra)
         return "\n\n".join([p for p in parts if p.strip()])
 
     pipeline = profile["pipeline"]
-    passes: list[dict[str, Any]] = []
+    passes: list[tuple[str, str, str]] = []
     pass_counter = 0
 
     if pipeline.get("include_policy_pass", True):
-            pass_counter += 1
-            passes.append(
-                {
-                    "id": f"pass-{pass_counter}-policy-sweep",
-                    "name": "Policy: full standards coverage sweep",
-                    "prompt": pass_prompt(str(pipeline.get("policy_instructions", ""))),
-                    "parallel_group": "",
-                    "kind": "policy",
-                    "domains": list(selected_domains),
-                }
+        pass_counter += 1
+        passes.append(
+            (
+                f"pass-{pass_counter}-policy-sweep",
+                "Policy: full standards coverage sweep",
+                pass_prompt(str(pipeline.get("policy_instructions", ""))),
             )
+        )
 
     if pipeline.get("include_core_passes", True) and "core" in selected_domains:
         core_passes = pipeline.get("core_passes") or []
-        shards = shard_files(changed_files, max_files_per_shard, max_shards)
         for core_pass in core_passes:
             pass_id = sanitize_pass_id(str(core_pass.get("id", "core-pass")))
             pass_name = str(core_pass.get("name", pass_id)).strip() or pass_id
             instructions = str(core_pass.get("instructions", "")).strip()
             if not instructions:
                 continue
-            shard_mode = str(core_pass.get("shard", "none")).strip().lower()
-            if shard_mode == "changed_files" and len(shards) > 1:
-                for shard_index, shard in enumerate(shards, start=1):
-                    shard_modules = changed_modules(shard)
-                    shard_hotspots = [h for h in hotspots if h in set(shard)]
-                    shard_context = build_diff_context(shard, shard_modules, shard_hotspots)
-                    pass_counter += 1
-                    passes.append(
-                        {
-                            "id": f"pass-{pass_counter}-{pass_id}-shard-{shard_index}",
-                            "name": f"{pass_name} (shard {shard_index}/{len(shards)})",
-                            "prompt": pass_prompt(
-                                "Shard scope:\n"
-                                f"- shard index: {shard_index}/{len(shards)}\n"
-                                "- Review only files in this shard section, while using full repo context for dependencies.\n\n"
-                                + instructions,
-                                context_override=shard_context,
-                            ),
-                            "parallel_group": f"core-{pass_id}-shards",
-                            "kind": "core",
-                            "domains": ["core"],
-                        }
-                    )
-            else:
-                pass_counter += 1
-                passes.append(
-                    {
-                        "id": f"pass-{pass_counter}-{pass_id}",
-                        "name": pass_name,
-                        "prompt": pass_prompt(instructions),
-                        "parallel_group": "",
-                        "kind": "core",
-                        "domains": ["core"],
-                    }
+            pass_counter += 1
+            passes.append(
+                (
+                    f"pass-{pass_counter}-{pass_id}",
+                    pass_name,
+                    pass_prompt(instructions),
                 )
+            )
 
     if pipeline.get("include_domain_passes", True):
         for domain in selected_domains:
@@ -1938,14 +1243,11 @@ def run_review(args: argparse.Namespace) -> int:
             pass_counter += 1
             slug = sanitize_pass_id(domain)
             passes.append(
-                {
-                    "id": f"pass-{pass_counter}-domain-{slug}",
-                    "name": f"Domain: {domain}",
-                    "prompt": pass_prompt(domain_prompt(domain, profile)),
-                    "parallel_group": "",
-                    "kind": "domain",
-                    "domains": [domain],
-                }
+                (
+                    f"pass-{pass_counter}-domain-{slug}",
+                    f"Domain: {domain}",
+                    pass_prompt(domain_prompt(domain, profile)),
+                )
             )
 
     if pipeline.get("include_depth_passes", True):
@@ -1958,29 +1260,22 @@ def run_review(args: argparse.Namespace) -> int:
             except Exception:
                 depth_instructions = DEFAULT_DEPTH_PASS_INSTRUCTIONS.format(hotspot=hotspot)
             passes.append(
-                {
-                    "id": f"pass-{pass_counter}-depth-{hotspot_slug}",
-                    "name": f"Depth hotspot: {hotspot}",
-                    "prompt": pass_prompt(depth_instructions),
-                    "parallel_group": "",
-                    "kind": "depth",
-                    "domains": list(selected_domains),
-                }
+                (
+                    f"pass-{pass_counter}-depth-{hotspot_slug}",
+                    f"Depth hotspot: {hotspot}",
+                    pass_prompt(depth_instructions),
+                )
             )
 
     if not passes:
         die("no review passes configured; check profile.pipeline settings")
 
-    run_started = time.monotonic()
-    executed_passes: dict[str, dict[str, Any]] = {}
-    skipped_passes: dict[str, str] = {}
+    summary_lines: list[str] = []
+    raw_findings: list[dict[str, Any]] = []
 
-    def run_one_pass(pass_spec: dict[str, Any], ordinal: int, total: int, *, stream_output: bool) -> dict[str, Any]:
-        pass_id = str(pass_spec["id"])
-        pass_name = str(pass_spec["name"])
-        prompt = str(pass_spec["prompt"])
+    for index, (pass_id, pass_name, prompt) in enumerate(passes, start=1):
         out_file = output_root / f"{pass_id}.md"
-        print(f"\n==> ({ordinal}/{total}) {pass_name}")
+        print(f"\n==> ({index}/{len(passes)}) {pass_name}")
         run_review_pass_with_compat(
             repo_root=repo_root,
             out_file=out_file,
@@ -1988,8 +1283,8 @@ def run_review(args: argparse.Namespace) -> int:
             target_desc=target_desc,
             prompt=prompt,
             pass_name=pass_name,
-            stream_output=stream_output,
         )
+
         text = out_file.read_text(encoding="utf-8", errors="replace")
         parsed = parse_findings_from_pass(text, pass_id)
         no_findings = pass_has_no_findings(text, parsed)
@@ -2008,169 +1303,31 @@ def run_review(args: argparse.Namespace) -> int:
                     "pass_id": pass_id,
                 }
             ]
-        return {
-            "id": pass_id,
-            "name": pass_name,
-            "out_file": str(out_file),
-            "parsed_findings": parsed,
-            "no_findings": no_findings,
-        }
 
-    index = 0
-    executed_count = 0
-    while index < len(passes):
-        if max_passes > 0 and executed_count >= max_passes:
-            for pass_spec in passes[index:]:
-                skipped_passes[str(pass_spec["id"])] = "max_passes"
-            break
-
-        elapsed = time.monotonic() - run_started
-        if time_budget_seconds > 0 and elapsed >= time_budget_seconds:
-            for pass_spec in passes[index:]:
-                skipped_passes[str(pass_spec["id"])] = "time_budget"
-            break
-
-        current = passes[index]
-        group = str(current.get("parallel_group", "")).strip()
-        if group and parallel_shards > 1:
-            batch: list[dict[str, Any]] = []
-            cursor = index
-            while cursor < len(passes):
-                candidate = passes[cursor]
-                if str(candidate.get("parallel_group", "")).strip() != group:
-                    break
-                batch.append(candidate)
-                cursor += 1
-
-            if max_passes > 0:
-                remaining = max_passes - executed_count
-                if remaining <= 0:
-                    for pass_spec in batch:
-                        skipped_passes[str(pass_spec["id"])] = "max_passes"
-                    index = cursor
-                    continue
-                if len(batch) > remaining:
-                    for pass_spec in batch[remaining:]:
-                        skipped_passes[str(pass_spec["id"])] = "max_passes"
-                    batch = batch[:remaining]
-
-            with ThreadPoolExecutor(max_workers=parallel_shards) as executor:
-                future_map = {
-                    executor.submit(
-                        run_one_pass,
-                        pass_spec,
-                        (index + offset + 1),
-                        len(passes),
-                        stream_output=False,
-                    ): pass_spec
-                    for offset, pass_spec in enumerate(batch)
-                }
-                for future in as_completed(future_map):
-                    result = future.result()
-                    executed_passes[result["id"]] = result
-                    executed_count += 1
-
-            index = cursor
-            continue
-
-        result = run_one_pass(current, index + 1, len(passes), stream_output=True)
-        executed_passes[result["id"]] = result
-        executed_count += 1
-        index += 1
-
-    summary_lines: list[str] = []
-    raw_findings: list[dict[str, Any]] = []
-    executed_pass_ids = [p["id"] for p in passes if p["id"] in executed_passes]
-    for pass_spec in passes:
-        pass_id = str(pass_spec["id"])
-        pass_name = str(pass_spec["name"])
-        if pass_id in executed_passes:
-            result = executed_passes[pass_id]
-            if result["no_findings"]:
-                summary_lines.append(f"- [PASS] {pass_name}")
-            else:
-                summary_lines.append(f"- [FINDINGS] {pass_name}")
-            raw_findings.extend(result["parsed_findings"])
+        if no_findings:
+            summary_lines.append(f"- [PASS] {pass_name}")
         else:
-            reason = skipped_passes.get(pass_id, "skipped")
-            summary_lines.append(f"- [SKIPPED:{reason}] {pass_name}")
+            summary_lines.append(f"- [FINDINGS] {pass_name}")
+            raw_findings.extend(parsed)
 
-    executed_pass_specs = [spec for spec in passes if str(spec.get("id", "")) in set(executed_pass_ids)]
-    rule_coverage_rows = evaluate_rule_coverage_rows(
-        rows=rule_coverage_rows,
-        executed_passes=executed_pass_specs,
-        findings=raw_findings,
-    )
-
-    rule_coverage_json = output_root / "rule-coverage-accounting.json"
-    rule_coverage_json.write_text(json.dumps(rule_coverage_rows, indent=2) + "\n", encoding="utf-8")
-    rule_coverage_md = output_root / "rule-coverage-accounting.md"
-    with rule_coverage_md.open("w", encoding="utf-8") as fh:
-        fh.write("# Rule Coverage Accounting\n\n")
-        for row in rule_coverage_rows:
-            fh.write(
-                f"- {row['rule_file']} :: applicability={row['applicability']} "
-                f":: status={row['coverage_status']} "
-                f":: relevant_passes={row['relevant_executed_pass_count']} "
-                f":: evidence_findings={row['evidence_findings_count']} "
-                f":: matched_files={row['matched_files_count']}\n"
-            )
-
-    waiver_file = str(args.waiver_file or profile["waiver_file"]).strip() or DEFAULT_WAIVER_FILE
-    baseline_file = str(args.baseline_file or profile["baseline_file"]).strip() or DEFAULT_BASELINE_FILE
-    waivers = load_waivers(repo_root, waiver_file)
-    baseline_fingerprints = load_baseline_fingerprints(repo_root, baseline_file)
-
-    active_findings, waived_findings, baselined_findings = apply_waivers_and_baseline(
-        raw_findings,
-        waivers,
-        baseline_fingerprints,
-    )
-
-    if args.update_baseline:
-        baseline_path = Path(baseline_file)
-        if not baseline_path.is_absolute():
-            baseline_path = repo_root / baseline_path
-        baseline_path.parent.mkdir(parents=True, exist_ok=True)
-        new_fingerprint_set = {finding["fingerprint"] for finding in active_findings}
-        if args.replace_baseline:
-            final_fingerprints = sorted(new_fingerprint_set)
-            baseline_mode = "replace"
-        else:
-            final_fingerprints = sorted(set(baseline_fingerprints) | new_fingerprint_set)
-            baseline_mode = "merge"
-        baseline_payload = {
-            "updated_utc": dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "mode": baseline_mode,
-            "fingerprints": final_fingerprints,
-        }
-        baseline_path.write_text(json.dumps(baseline_payload, indent=2) + "\n", encoding="utf-8")
-        print(
-            f"Updated baseline file ({baseline_mode}): {baseline_path} "
-            f"[count={len(final_fingerprints)}]"
-        )
+    (output_root / "pass-status.md").write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
 
     findings_json = output_root / "findings.json"
-    findings_payload = {
-        "generated_utc": dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "target": target_desc,
-        "counts": {
-            "raw": len(raw_findings),
-            "active": len(active_findings),
-            "waived": len(waived_findings),
-            "baselined": len(baselined_findings),
-        },
-        "active_findings": active_findings,
-        "waived_findings": waived_findings,
-        "baselined_findings": baselined_findings,
-    }
-    findings_json.write_text(json.dumps(findings_payload, indent=2) + "\n", encoding="utf-8")
-
-    sarif_file = output_root / "findings.sarif"
-    sarif_file.write_text(json.dumps(findings_to_sarif(active_findings), indent=2) + "\n", encoding="utf-8")
-
-    summary_file = output_root / "pass-status.md"
-    summary_file.write_text("\n".join(summary_lines) + "\n", encoding="utf-8")
+    findings_json.write_text(
+        json.dumps(
+            {
+                "generated_utc": dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "target": target_desc,
+                "counts": {
+                    "active": len(raw_findings),
+                },
+                "active_findings": raw_findings,
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
 
     combined_report = output_root / "combined-report.md"
     with combined_report.open("w", encoding="utf-8") as fh:
@@ -2187,29 +1344,19 @@ def run_review(args: argparse.Namespace) -> int:
         fh.write(f"- Auto-enforced rule files: {len(rule_files)}\n")
         fh.write(f"- Changed files: {len(changed_files)}\n")
         fh.write(f"- Depth hotspots: {depth_hotspots}\n")
-        fh.write(f"- Pass count (planned/executed): {len(passes)}/{len(executed_pass_ids)}\n")
-        fh.write(f"- Waiver file: {waiver_file}\n")
-        fh.write(f"- Baseline file: {baseline_file}\n")
         if args.title:
             fh.write(f"- Title: {args.title}\n")
         if model_override:
             fh.write(f"- Model override: {model_override}\n")
+        fh.write(f"- Pass count: {len(passes)}\n")
         fh.write(f"- Profile file: {profile_display}\n\n")
 
         fh.write("## Findings Summary\n\n")
-        fh.write(f"- Raw findings: {len(raw_findings)}\n")
-        fh.write(f"- Active findings: {len(active_findings)}\n")
-        fh.write(f"- Waived findings: {len(waived_findings)}\n")
-        fh.write(f"- Baselined findings: {len(baselined_findings)}\n")
-        fh.write(f"- JSON artifact: {findings_json}\n")
-        fh.write(f"- SARIF artifact: {sarif_file}\n\n")
+        fh.write(f"- Active findings: {len(raw_findings)}\n")
+        fh.write(f"- JSON artifact: {findings_json}\n\n")
 
         fh.write("## Pass Status\n\n")
         fh.write("\n".join(summary_lines) + "\n\n")
-
-        fh.write("## Rule Coverage Accounting\n\n")
-        fh.write(f"- JSON: {rule_coverage_json}\n")
-        fh.write(f"- Markdown: {rule_coverage_md}\n\n")
 
         fh.write("## Auto-Enforced Rule Files\n\n")
         if rule_files:
@@ -2237,22 +1384,11 @@ def run_review(args: argparse.Namespace) -> int:
                 fh.write("\n")
             fh.write("\n")
 
-    if args.publish_github:
-        publish_findings_to_github(
-            repo_root=repo_root,
-            findings=active_findings,
-            changed_files=changed_files,
-            combined_report=combined_report,
-            pr_number=args.github_pr,
-            review_mode=mode,
-            inline=args.github_inline,
-        )
-
     print("\nDone.")
     print(f"Per-pass outputs: {output_root}")
     print(f"Combined report: {combined_report}")
 
-    if active_findings:
+    if raw_findings:
         print("Status: active findings detected.")
         if fail_on_findings:
             print("Exiting non-zero because fail-on-findings is enabled.", file=sys.stderr)
@@ -2294,41 +1430,11 @@ def build_parser() -> argparse.ArgumentParser:
         mode.add_argument("--base", help="Base branch", default=None)
         mode.add_argument("--uncommitted", action="store_true", help="Review uncommitted changes")
         mode.add_argument("--commit", help="Review a specific commit SHA", default=None)
-        mode.add_argument("--full-repo", action="store_true", help="Review full repository files")
         target_parser.add_argument("--domains", help="Comma-separated domain list", default=None)
         target_parser.add_argument("--depth-hotspots", type=int, help="Number of hotspot depth passes")
-        target_parser.add_argument(
-            "--max-files-per-shard",
-            type=int,
-            help="Shard breadth passes when changed files exceed this count (0 disables)",
-        )
-        target_parser.add_argument("--max-shards", type=int, help="Max shards for breadth passes")
-        target_parser.add_argument(
-            "--parallel-shards",
-            type=int,
-            help="Execute shard passes in parallel with this worker count",
-        )
-        target_parser.add_argument("--max-passes", type=int, help="Hard cap on executed passes")
-        target_parser.add_argument(
-            "--time-budget-minutes",
-            type=int,
-            help="Stop scheduling new passes after this runtime budget",
-        )
         target_parser.add_argument("--title", help="Optional review title", default=None)
         target_parser.add_argument("--output-dir", help="Output directory for artifacts", default=None)
         target_parser.add_argument("--model", help="Optional model override", default=None)
-        target_parser.add_argument("--waiver-file", help="Override waiver config path", default=None)
-        target_parser.add_argument("--baseline-file", help="Override baseline file path", default=None)
-        target_parser.add_argument(
-            "--update-baseline",
-            action="store_true",
-            help="Update baseline file from active findings (merge by default)",
-        )
-        target_parser.add_argument(
-            "--replace-baseline",
-            action="store_true",
-            help="When used with --update-baseline, replace baseline instead of merge",
-        )
         target_parser.add_argument(
             "--print-effective-profile",
             action="store_true",
@@ -2357,28 +1463,13 @@ def build_parser() -> argparse.ArgumentParser:
         target_parser.add_argument(
             "--no-prune-autogen",
             action="store_true",
-            help="Keep previously auto-managed entries even if no longer inferred",
+            help="Keep stale auto-managed profile entries for this run",
         )
         target_parser.add_argument("--fail-on-findings", action="store_true", help="Force strict gate")
         target_parser.add_argument(
             "--no-fail-on-findings",
             action="store_true",
             help="Exploratory mode; do not fail when findings exist",
-        )
-        target_parser.add_argument(
-            "--publish-github",
-            action="store_true",
-            help="Publish review summary to current GitHub PR using gh CLI",
-        )
-        target_parser.add_argument(
-            "--github-pr",
-            help="Explicit GitHub PR number for publish step",
-            default=None,
-        )
-        target_parser.add_argument(
-            "--github-inline",
-            action="store_true",
-            help="Also publish inline PR review comments when line/path are available",
         )
 
     add_review_args(review)

@@ -82,11 +82,10 @@ Canonical command is `codexw review`; `codexw review-pr` is kept as a compatibil
 If profile is missing, `codexw` auto-generates `local-review-profile.yaml` on first run.
 On each run, `codexw` auto-syncs profile entries derived from repository signals (rules/domains/domain prompts) while preserving manual overrides. Stale auto-managed entries are pruned when source-of-truth changes.
 
-PR-grade outputs now include:
-- deterministic rule-coverage accounting (`rule-coverage-accounting.json`)
-- machine-readable findings (`findings.json`, `findings.sarif`)
-- waiver + baseline filtering (for strict gate on net-new active findings)
-- optional GitHub publish adapter (`--publish-github`, optional inline comments)
+PR-grade outputs include:
+- pass-level markdown reports
+- combined markdown report (`combined-report.md`)
+- machine-readable findings (`findings.json`)
 
 **Prerequisites:**
 - Install Codex CLI: `brew install codex` or `npm install -g @openai/codex`
@@ -107,28 +106,16 @@ Direct execution (without pre-commit):
 ./codexw review
 ./codexw review --base main
 ./codexw review --domains core,testing --no-fail-on-findings
-./codexw review --full-repo --max-files-per-shard 50 --parallel-shards 2
-# Runtime budget controls
-./codexw review --max-passes 8 --time-budget-minutes 12
 # Create missing profile and exit
 ./codexw review --bootstrap-only
 # Sync profile from repository signals and exit
 ./codexw review --sync-profile-only
-# Use waivers/baseline files and update baseline from current active findings
-./codexw review --waiver-file .codex/review-waivers.yaml --baseline-file .codex/review-baseline.json
-./codexw review --update-baseline --no-fail-on-findings
-# Replace baseline instead of merge
-./codexw review --update-baseline --replace-baseline --no-fail-on-findings
 # Validate profile loading only (no Codex run)
 ./codexw review --print-effective-profile
 # Disable profile sync for one run
 ./codexw review --no-sync-profile
 # Keep stale auto-managed profile entries for this run
 ./codexw review --no-prune-autogen
-# Publish summary (and optional inline comments) to current PR
-./codexw review --publish-github
-./codexw review --publish-github --github-inline
-# Note: inline comments are automatically skipped in --full-repo mode
 ```
 
 `local-review-profile.yaml` schema (minimum practical shape):
@@ -143,13 +130,6 @@ review:
   strict_gate: true
   depth_hotspots: 3
   output_root: .codex/review-runs
-  max_files_per_shard: 40
-  max_shards: 5
-  parallel_shards: 1
-  max_passes: 0 # 0 = unlimited
-  time_budget_minutes: 0 # 0 = unlimited
-  waiver_file: .codex/review-waivers.yaml
-  baseline_file: .codex/review-baseline.json
 
 rules:
   include:
@@ -177,7 +157,6 @@ pipeline:
   core_passes:
     - id: core-breadth
       name: Core breadth
-      shard: changed_files # none | changed_files
       instructions: |
         Custom breadth pass instructions.
   depth_instructions: |
