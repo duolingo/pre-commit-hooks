@@ -462,9 +462,530 @@ def build_bootstrap_profile(repo_root: Path) -> dict[str, Any]:
     }
 
 
+def _yaml_plain_scalar_allowed(value: str) -> bool:
+    if not value or value.strip() != value:
+        return False
+    if any(ch in value for ch in ":#{}[]&,*!?|>'\"%@`"):
+        return False
+    if value[0] in "-?:!&*@`":
+        return False
+    if "\n" in value or "\r" in value or "\t" in value:
+        return False
+    lowered = value.lower()
+    if lowered in {"true", "false", "null", "~", "yes", "no", "on", "off"}:
+        return False
+    if re.fullmatch(r"[+-]?\d+(?:\.\d+)?", value):
+        return False
+    return True
+
+
+def _yaml_inline_scalar(value: Any) -> str:
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return str(value)
+    text = str(value)
+    if _yaml_plain_scalar_allowed(text):
+        return text
+    return json.dumps(text)
+
+
+def _yaml_emit(value: Any, indent: int = 0) -> list[str]:
+    pad = " " * indent
+
+    if isinstance(value, dict):
+        if not value:
+            return [pad + "{}"]
+        lines: list[str] = []
+        for key, raw_val in value.items():
+            key_text = str(key)
+            if isinstance(raw_val, str) and "\n" in raw_val:
+                lines.append(f"{pad}{key_text}: |")
+                for line in raw_val.splitlines():
+                    lines.append(" " * (indent + 2) + line)
+                continue
+            if isinstance(raw_val, dict):
+                if raw_val:
+                    lines.append(f"{pad}{key_text}:")
+                    lines.extend(_yaml_emit(raw_val, indent + 2))
+                else:
+                    lines.append(f"{pad}{key_text}: {{}}")
+                continue
+            if isinstance(raw_val, list):
+                if raw_val:
+                    lines.append(f"{pad}{key_text}:")
+                    lines.extend(_yaml_emit(raw_val, indent + 2))
+                else:
+                    lines.append(f"{pad}{key_text}: []")
+                continue
+            lines.append(f"{pad}{key_text}: {_yaml_inline_scalar(raw_val)}")
+        return lines
+
+    if isinstance(value, list):
+        if not value:
+            return [pad + "[]"]
+        lines: list[str] = []
+        for item in value:
+            if isinstance(item, str) and "\n" in item:
+                lines.append(f"{pad}- |")
+                for line in item.splitlines():
+                    lines.append(" " * (indent + 2) + line)
+                continue
+            if isinstance(item, dict):
+                if not item:
+                    lines.append(f"{pad}- {{}}")
+                else:
+                    lines.append(f"{pad}-")
+                    lines.extend(_yaml_emit(item, indent + 2))
+                continue
+            if isinstance(item, list):
+                if not item:
+                    lines.append(f"{pad}- []")
+                else:
+                    lines.append(f"{pad}-")
+                    lines.extend(_yaml_emit(item, indent + 2))
+                continue
+            lines.append(f"{pad}- {_yaml_inline_scalar(item)}")
+        return lines
+
+    return [pad + _yaml_inline_scalar(value)]
+
+
+def _dump_yaml_text(value: Any) -> str:
+    return "\n".join(_yaml_emit(value)).rstrip() + "\n"
+
+
 def write_profile(path: Path, profile: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(profile, indent=2) + "\n", encoding="utf-8")
+    path.write_text(_dump_yaml_text(profile), encoding="utf-8")
+
+
+def _is_closed_quoted_scalar(text: str) -> bool:
+    stripped = text.strip()
+    if len(stripped) < 2:
+        return False
+
+    if stripped[0] == "'" and stripped[-1] == "'":
+        idx = 1
+        while idx < len(stripped) - 1:
+            if stripped[idx] == "'":
+                if idx + 1 < len(stripped) and stripped[idx + 1] == "'":
+                    idx += 2
+                    continue
+                return False
+            idx += 1
+        return True
+
+    if stripped[0] == '"' and stripped[-1] == '"':
+        escaped = False
+        for ch in stripped[1:-1]:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                return False
+        return not escaped
+
+    return False
+
+
+def _is_closed_flow_collection(text: str) -> bool:
+    stripped = text.strip()
+    if len(stripped) < 2:
+        return False
+    if stripped[0] not in "[{":
+        return False
+    expected_end = "]" if stripped[0] == "[" else "}"
+    if stripped[-1] != expected_end:
+        return False
+
+    depth = 0
+    in_single = False
+    in_double = False
+    escaped = False
+    idx = 0
+    while idx < len(stripped):
+        ch = stripped[idx]
+        if in_double:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_double = False
+            idx += 1
+            continue
+
+        if in_single:
+            if ch == "'":
+                if idx + 1 < len(stripped) and stripped[idx + 1] == "'":
+                    idx += 2
+                    continue
+                in_single = False
+            idx += 1
+            continue
+
+        if ch == '"':
+            in_double = True
+            idx += 1
+            continue
+        if ch == "'":
+            in_single = True
+            idx += 1
+            continue
+
+        if ch in "[{":
+            depth += 1
+        elif ch in "]}":
+            depth -= 1
+            if depth < 0:
+                return False
+        idx += 1
+
+    return depth == 0 and not in_single and not in_double and not escaped
+
+
+def _strip_yaml_inline_comment(raw: str) -> str:
+    text = raw.rstrip()
+    in_single = False
+    in_double = False
+    escaped = False
+    idx = 0
+    while idx < len(text):
+        ch = text[idx]
+        if in_double:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_double = False
+            idx += 1
+            continue
+
+        if in_single:
+            if ch == "'":
+                # YAML single-quote escape: doubled apostrophe.
+                if idx + 1 < len(text) and text[idx + 1] == "'":
+                    idx += 2
+                    continue
+                in_single = False
+            idx += 1
+            continue
+
+        if ch == '"':
+            in_double = True
+        elif ch == "'":
+            in_single = True
+        elif ch == "#":
+            prefix = text[:idx].rstrip()
+            if (
+                idx == 0
+                or text[idx - 1].isspace()
+                or _is_closed_quoted_scalar(prefix)
+                or _is_closed_flow_collection(prefix)
+            ):
+                return text[:idx].rstrip()
+        idx += 1
+    return text
+
+
+def _split_yaml_flow_items(raw: str) -> list[str]:
+    items: list[str] = []
+    buf: list[str] = []
+    in_single = False
+    in_double = False
+    escaped = False
+    depth = 0
+
+    idx = 0
+    while idx < len(raw):
+        ch = raw[idx]
+        if in_double:
+            buf.append(ch)
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_double = False
+            idx += 1
+            continue
+
+        if in_single:
+            buf.append(ch)
+            if ch == "'":
+                if idx + 1 < len(raw) and raw[idx + 1] == "'":
+                    buf.append(raw[idx + 1])
+                    idx += 2
+                    continue
+                in_single = False
+            idx += 1
+            continue
+
+        if ch == '"':
+            in_double = True
+            buf.append(ch)
+            idx += 1
+            continue
+        if ch == "'":
+            in_single = True
+            buf.append(ch)
+            idx += 1
+            continue
+
+        if ch in "[{(":
+            depth += 1
+            buf.append(ch)
+            idx += 1
+            continue
+        if ch in "]})":
+            if depth > 0:
+                depth -= 1
+            buf.append(ch)
+            idx += 1
+            continue
+
+        if ch == "," and depth == 0:
+            items.append("".join(buf).strip())
+            buf = []
+            idx += 1
+            continue
+
+        buf.append(ch)
+        idx += 1
+
+    tail = "".join(buf).strip()
+    if tail or raw.strip():
+        items.append(tail)
+    return [item for item in items if item != ""]
+
+
+def _parse_simple_yaml_scalar(raw: str) -> Any:
+    token = _strip_yaml_inline_comment(raw).strip()
+    if token == "":
+        return ""
+    lowered = token.lower()
+    if lowered == "true":
+        return True
+    if lowered == "false":
+        return False
+    if lowered in {"null", "~"}:
+        return None
+    if token == "{}":
+        return {}
+    if token == "[]":
+        return []
+    if token.startswith("[") and token.endswith("]"):
+        inner = token[1:-1].strip()
+        if not inner:
+            return []
+        return [_parse_simple_yaml_scalar(item) for item in _split_yaml_flow_items(inner)]
+    if token.startswith("{") and token.endswith("}"):
+        inner = token[1:-1].strip()
+        if not inner:
+            return {}
+        out: dict[str, Any] = {}
+        for item in _split_yaml_flow_items(inner):
+            if ":" not in item:
+                return token
+            key_raw, value_raw = item.split(":", 1)
+            key = _parse_simple_yaml_scalar(key_raw)
+            out[str(key)] = _parse_simple_yaml_scalar(value_raw)
+        return out
+    if re.fullmatch(r"[+-]?\d+", token):
+        try:
+            return int(token)
+        except ValueError:
+            return token
+    if re.fullmatch(r"[+-]?\d+\.\d+", token):
+        try:
+            return float(token)
+        except ValueError:
+            return token
+    if token.startswith('"') and token.endswith('"'):
+        try:
+            return json.loads(token)
+        except json.JSONDecodeError:
+            return token[1:-1]
+    if token.startswith("'") and token.endswith("'") and len(token) >= 2:
+        return token[1:-1].replace("''", "'")
+    return token
+
+
+class _SimpleYamlParser:
+    def __init__(self, text: str) -> None:
+        self.lines = text.splitlines()
+        self.index = 0
+
+    @staticmethod
+    def _indent(line: str) -> int:
+        return len(line) - len(line.lstrip(" "))
+
+    @staticmethod
+    def _is_ignorable(line: str) -> bool:
+        stripped = line.strip()
+        return not stripped or stripped.startswith("#") or stripped in {"---", "..."}
+
+    def _skip_ignorable(self) -> None:
+        while self.index < len(self.lines) and self._is_ignorable(self.lines[self.index]):
+            self.index += 1
+
+    def parse(self) -> Any:
+        self._skip_ignorable()
+        if self.index >= len(self.lines):
+            return {}
+        start_indent = self._indent(self.lines[self.index])
+        value = self._parse_block(start_indent)
+        self._skip_ignorable()
+        if self.index < len(self.lines):
+            raise ValueError(f"unexpected trailing content near line {self.index + 1}")
+        return value
+
+    def _parse_block(self, indent: int) -> Any:
+        self._skip_ignorable()
+        if self.index >= len(self.lines):
+            return {}
+
+        cur_indent = self._indent(self.lines[self.index])
+        if cur_indent < indent:
+            return {}
+        if cur_indent > indent:
+            indent = cur_indent
+
+        content = self.lines[self.index][indent:]
+        if content == "-" or content.startswith("- "):
+            return self._parse_list(indent)
+        return self._parse_map(indent)
+
+    def _parse_map(self, indent: int) -> dict[str, Any]:
+        out: dict[str, Any] = {}
+        while True:
+            self._skip_ignorable()
+            if self.index >= len(self.lines):
+                break
+
+            line = self.lines[self.index]
+            cur_indent = self._indent(line)
+            if cur_indent < indent:
+                break
+            if cur_indent > indent:
+                raise ValueError(f"unexpected indentation at line {self.index + 1}")
+
+            content = line[indent:]
+            if content == "-" or content.startswith("- "):
+                break
+            if ":" not in content:
+                raise ValueError(f"invalid mapping entry at line {self.index + 1}")
+
+            key, raw_rest = content.split(":", 1)
+            key = key.strip()
+            rest = _strip_yaml_inline_comment(raw_rest).strip()
+            self.index += 1
+
+            if not key:
+                raise ValueError(f"empty mapping key at line {self.index}")
+
+            if rest in {"|", "|-", ">", ">-"}:
+                out[key] = self._parse_block_scalar(indent + 2)
+            elif rest == "":
+                out[key] = self._parse_nested(indent + 2)
+            else:
+                out[key] = _parse_simple_yaml_scalar(rest)
+
+        return out
+
+    def _parse_nested(self, expected_indent: int) -> Any:
+        self._skip_ignorable()
+        if self.index >= len(self.lines):
+            return None
+
+        cur_indent = self._indent(self.lines[self.index])
+        if cur_indent < expected_indent:
+            return None
+        if cur_indent > expected_indent:
+            expected_indent = cur_indent
+
+        content = self.lines[self.index][expected_indent:]
+        if content == "-" or content.startswith("- "):
+            return self._parse_list(expected_indent)
+        return self._parse_map(expected_indent)
+
+    def _parse_list(self, indent: int) -> list[Any]:
+        out: list[Any] = []
+        while True:
+            self._skip_ignorable()
+            if self.index >= len(self.lines):
+                break
+
+            line = self.lines[self.index]
+            cur_indent = self._indent(line)
+            if cur_indent < indent:
+                break
+            if cur_indent > indent:
+                raise ValueError(f"unexpected indentation at line {self.index + 1}")
+
+            content = line[indent:]
+            if not (content == "-" or content.startswith("- ")):
+                break
+
+            rest = "" if content == "-" else _strip_yaml_inline_comment(content[2:]).strip()
+            self.index += 1
+
+            if rest in {"|", "|-", ">", ">-"}:
+                out.append(self._parse_block_scalar(indent + 2))
+                continue
+
+            if rest == "":
+                out.append(self._parse_nested(indent + 2))
+                continue
+
+            inline_map_match = re.match(r"^([A-Za-z0-9_.-]+):(?:\s+|$)(.*)$", rest)
+            if inline_map_match:
+                key = inline_map_match.group(1).strip()
+                tail = _strip_yaml_inline_comment(inline_map_match.group(2)).strip()
+                item: dict[str, Any] = {}
+                if tail in {"|", "|-", ">", ">-"}:
+                    item[key] = self._parse_block_scalar(indent + 4)
+                elif tail == "":
+                    item[key] = self._parse_nested(indent + 4)
+                else:
+                    item[key] = _parse_simple_yaml_scalar(tail)
+                for extra_key, extra_val in self._parse_map(indent + 2).items():
+                    item[extra_key] = extra_val
+                out.append(item)
+                continue
+
+            out.append(_parse_simple_yaml_scalar(rest))
+
+        return out
+
+    def _parse_block_scalar(self, indent: int) -> str:
+        lines: list[str] = []
+        while self.index < len(self.lines):
+            raw = self.lines[self.index]
+            if raw.strip() == "":
+                lines.append("")
+                self.index += 1
+                continue
+
+            cur_indent = self._indent(raw)
+            if cur_indent < indent:
+                break
+
+            lines.append(raw[indent:])
+            self.index += 1
+
+        while lines and lines[-1] == "":
+            lines.pop()
+        return "\n".join(lines)
+
+
+def _parse_simple_yaml(text: str) -> Any:
+    return _SimpleYamlParser(text).parse()
 
 
 def _stable(obj: Any) -> str:
@@ -650,10 +1171,14 @@ def load_yaml_or_json(path: Path) -> dict[str, Any]:
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
-        die(
-            "PyYAML not available and profile is not valid JSON-compatible YAML. "
-            "Install PyYAML (python3 -m pip install pyyaml) or provide JSON syntax."
-        )
+        try:
+            data = _parse_simple_yaml(text)
+        except ValueError as exc:
+            die(
+                "PyYAML not available and profile parsing failed. "
+                "Install PyYAML (python3 -m pip install pyyaml) or provide supported YAML/JSON syntax. "
+                f"Details: {exc}"
+            )
     if not isinstance(data, dict):
         die(f"profile at {path} must be a mapping/object")
     return data
@@ -691,6 +1216,13 @@ def to_string_list(value: Any, default: list[str] | None = None) -> list[str]:
     if isinstance(value, str):
         return [x.strip() for x in value.split(",") if x.strip()]
     return list(default or [])
+
+
+def to_nonempty_string(value: Any, default: str) -> str:
+    if isinstance(value, str):
+        text = value.strip()
+        return text if text else default
+    return default
 
 
 def normalize_profile(raw: dict[str, Any]) -> dict[str, Any]:
@@ -752,12 +1284,11 @@ def normalize_profile(raw: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "version": str(raw.get("version", "1")),
-        "repo_name": str(repo.get("name", "Repository")).strip() or "Repository",
-        "default_base": str(review.get("default_base", "main")).strip() or "main",
+        "repo_name": to_nonempty_string(repo.get("name"), "Repository"),
+        "default_base": to_nonempty_string(review.get("default_base"), "main"),
         "strict_gate": to_bool(review.get("strict_gate"), True),
         "depth_hotspots": to_int(review.get("depth_hotspots"), 3),
-        "output_root": str(review.get("output_root", ".codex/review-runs")).strip()
-        or ".codex/review-runs",
+        "output_root": to_nonempty_string(review.get("output_root"), ".codex/review-runs"),
         "rule_patterns": to_string_list(rules.get("include"), ["AGENTS.md", ".cursor/rules/**/*.mdc"]),
         "default_domains": default_domains,
         "allowed_domains": allowed_domains,
@@ -809,6 +1340,24 @@ def discover_rule_files(repo_root: Path, patterns: list[str]) -> list[str]:
                 continue
             matches.add(str(rel))
     return sorted(matches)
+
+
+def validate_rule_patterns(repo_root: Path, patterns: list[str]) -> tuple[list[str], list[str]]:
+    valid_patterns: list[str] = []
+    warnings: list[str] = []
+    for pattern in patterns:
+        normalized = str(pattern).strip()
+        if not normalized:
+            continue
+        matches = discover_rule_files(repo_root, [normalized])
+        if matches:
+            valid_patterns.append(normalized)
+            continue
+        if any(ch in normalized for ch in "*?[]"):
+            warnings.append(f"rule pattern '{normalized}' matched no files")
+        else:
+            warnings.append(f"rule file '{normalized}' not found")
+    return valid_patterns, warnings
 
 
 def collect_changed_files(repo_root: Path, mode: str, base: str, commit: str) -> list[str]:
@@ -1053,6 +1602,20 @@ def run_review(args: argparse.Namespace) -> int:
             )
 
     profile = normalize_profile(synced_profile)
+
+    resolved_rule_patterns, rule_pattern_warnings = validate_rule_patterns(
+        repo_root,
+        profile["rule_patterns"],
+    )
+    for warning in rule_pattern_warnings:
+        print(f"warning: {warning}", file=sys.stderr)
+    if profile["rule_patterns"] and not resolved_rule_patterns:
+        print(
+            "warning: no enforceable rule files were resolved from profile rule patterns; "
+            "continuing without rule-file enforcement.",
+            file=sys.stderr,
+        )
+    profile["rule_patterns"] = resolved_rule_patterns
 
     if args.print_effective_profile:
         print(

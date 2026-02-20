@@ -72,7 +72,7 @@ codex review --uncommitted
 codex review --base master
 ```
 
-## Codex PR-grade Hook (`codexw`)
+## Codex PR-grade Hook (`codex-review-pr-grade`)
 
 Profile-aware multi-pass local review using `codexw`. This hook is also `manual` by default and does not block normal commits.
 
@@ -95,10 +95,10 @@ PR-grade outputs include:
 **Usage:**
 ```bash
 # Run PR-grade review for current diff vs profile default base branch
-pre-commit run codexw
+pre-commit run codex-review-pr-grade
 
 # Run PR-grade review for all files (still uses profile + pass orchestration)
-pre-commit run codexw --all-files
+pre-commit run codex-review-pr-grade --all-files
 ```
 
 Direct execution (without pre-commit):
@@ -167,7 +167,7 @@ pipeline:
 Reference profile:
 `local-review-profile.example.yaml`
 
-Backward-compatible hook id alias is available:
+Hook id for pre-commit:
 `codex-review-pr-grade`
 
 ## Usage
@@ -192,7 +192,7 @@ Repo maintainers can declare these hooks in `.pre-commit-config.yaml`:
     # On-demand Codex AI code review (manual stage, requires codex CLI)
     - id: codex-review
     # On-demand PR-grade Codex review (manual stage, profile-aware)
-    - id: codexw
+    - id: codex-review-pr-grade
 ```
 
 Directories named `build` and `node_modules` are excluded by default - no need to declare them in the hook's `exclude` key.

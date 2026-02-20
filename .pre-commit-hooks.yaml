@@ -35,15 +35,6 @@
   stages: [manual]
   verbose: true
 
-- id: codexw
-  name: Codex AI Code Review (PR-grade, codexw)
-  description: Alias for codex-review-pr-grade. Run with: pre-commit run codexw
-  entry: ./codexw review
-  language: script
-  pass_filenames: false
-  stages: [manual]
-  verbose: true
-
 # Nobody should ever use these hooks in production. They're just for testing PRs in
 # the duolingo/pre-commit-hooks repo more easily without having to tag and push
 # temporary images to Docker Hub. Usage: edit a consumer repo's hook config to
@@ -72,14 +63,6 @@
 
 - id: codex-review-pr-grade-dev
   name: Codex AI Code Review (PR-grade, dev)
-  entry: ./codexw review
-  language: script
-  pass_filenames: false
-  stages: [manual]
-  verbose: true
-
-- id: codexw-dev
-  name: Codex AI Code Review (PR-grade, codexw dev)
   entry: ./codexw review
   language: script
   pass_filenames: false
