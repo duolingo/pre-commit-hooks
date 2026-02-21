@@ -31,15 +31,16 @@ domains:
 prompts:
   global: |
     Prioritize behavior-changing issues over style concerns.
+    Treat AGENTS.md and synced AI rules as enforcement sources.
   by_domain:
     experiments: |
-      Focus on experiment gating, control/treatment leakage, and cleanup correctness.
+      Focus on experiment gating correctness, control/treatment isolation, and cleanup safety.
     compose: |
-      Focus on design-system usage, state/recomposition behavior, and lifecycle correctness.
+      Focus on design-system conformance, state/recomposition behavior, and lifecycle safety.
     coroutines: |
-      Focus on structured concurrency, cancellation, dispatcher correctness, and interop risks.
+      Focus on structured concurrency, cancellation behavior, and dispatcher/lifecycle correctness.
     testing: |
-      Focus on missing tests for high-risk behavior and weak assertions.
+      Focus on missing tests for high-risk paths and weak assertions around side effects.
 
 pipeline:
   include_policy_pass: true

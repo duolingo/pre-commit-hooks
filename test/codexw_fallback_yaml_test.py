@@ -6,11 +6,12 @@ from __future__ import annotations
 import importlib.machinery
 import importlib.util
 import pathlib
+import tempfile
 import unittest
 
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[1]
-CODEXW_PATH = REPO_ROOT / "codexw"
+CODEXW_PATH = REPO_ROOT / "codexw" / "__main__.py"
 
 
 def load_codexw_module():
@@ -163,6 +164,51 @@ pipeline:
         self.assertEqual(parsed["domains"]["allowed"], ["core", "testing"])
         self.assertEqual(parsed["review"]["depth_hotspots"], 2)
         self.assertEqual(parsed["prompts"]["global"], "Line 1\nLine 2")
+
+    def test_default_domain_prompt_template_is_repo_agnostic(self):
+        prompt = self.codexw.default_domain_prompt_template("custom-domain")
+        self.assertIn("Domain focus: custom-domain", prompt)
+        self.assertIn("domain-specific correctness and policy compliance", prompt)
+        self.assertNotIn("FakeUsersRepository", prompt)
+        self.assertNotIn("Duolingo", prompt)
+
+    def test_bootstrap_profile_uses_generic_domain_prompts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo_root = pathlib.Path(tmp)
+            rules_dir = repo_root / ".cursor" / "rules"
+            rules_dir.mkdir(parents=True, exist_ok=True)
+            (rules_dir / "testing-rule.mdc").write_text(
+                """---
+description: Testing conventions
+domain: testing
+---
+Use testing standards.
+""",
+                encoding="utf-8",
+            )
+
+            profile = self.codexw.build_bootstrap_profile(repo_root)
+            self.assertIn("testing", profile["domains"]["allowed"])
+            self.assertEqual(
+                profile["prompts"]["by_domain"]["testing"],
+                self.codexw.default_domain_prompt_template("testing"),
+            )
+
+    def test_extract_rule_domains_does_not_keyword_infer_from_description(self):
+        domains = self.codexw._extract_rule_domains(
+            {"description": "check experiment treatment and dispatcher usage"},
+            "rules/misc-rule.mdc",
+        )
+        self.assertEqual(domains, [])
+
+    def test_infer_domains_from_rule_metadata_is_generic(self):
+        inferred = self.codexw.infer_domains_from_rule_metadata(
+            [
+                {"domains": ["zeta"]},
+                {"domains": ["alpha"]},
+            ]
+        )
+        self.assertEqual(inferred, ["core", "alpha", "zeta"])
 
 
 if __name__ == "__main__":

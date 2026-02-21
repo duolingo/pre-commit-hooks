@@ -78,7 +78,7 @@ Profile-aware multi-pass local review using `codexw`. This hook is also `manual`
 
 It runs detailed PR-grade review from `local-review-profile.yaml`.
 `codexw` also includes compatibility fallback for Codex CLI versions that reject prompt+target combinations.
-Canonical command is `codexw review`; `codexw review-pr` is kept as a compatibility alias.
+Canonical command is `./codexw/__main__.py review`; `./codexw/__main__.py review-pr` is kept as a compatibility alias.
 If profile is missing, `codexw` auto-generates `local-review-profile.yaml` on first run.
 On each run, `codexw` auto-syncs profile entries derived from repository signals (rules/domains/domain prompts) while preserving manual overrides. Stale auto-managed entries are pruned when source-of-truth changes.
 
@@ -103,19 +103,19 @@ pre-commit run codex-review-pr-grade --all-files
 
 Direct execution (without pre-commit):
 ```bash
-./codexw review
-./codexw review --base main
-./codexw review --domains core,testing --no-fail-on-findings
+./codexw/__main__.py review
+./codexw/__main__.py review --base main
+./codexw/__main__.py review --domains core,testing --no-fail-on-findings
 # Create missing profile and exit
-./codexw review --bootstrap-only
+./codexw/__main__.py review --bootstrap-only
 # Sync profile from repository signals and exit
-./codexw review --sync-profile-only
+./codexw/__main__.py review --sync-profile-only
 # Validate profile loading only (no Codex run)
-./codexw review --print-effective-profile
+./codexw/__main__.py review --print-effective-profile
 # Disable profile sync for one run
-./codexw review --no-sync-profile
+./codexw/__main__.py review --no-sync-profile
 # Keep stale auto-managed profile entries for this run
-./codexw review --no-prune-autogen
+./codexw/__main__.py review --no-prune-autogen
 ```
 
 `local-review-profile.yaml` schema (minimum practical shape):
@@ -164,8 +164,12 @@ pipeline:
     - Perform depth-first review of hotspot file: {hotspot}
 ```
 
-Reference profile:
-`local-review-profile.example.yaml`
+Reference profiles:
+- `codexw/local-review-profile.example.yaml` (generic template)
+- `codexw/local-review-profile.duolingo-android.example.yaml` (concrete Duolingo Android example)
+
+Feature/use-case guide:
+- `codexw/codexw-features-and-usecases.md`
 
 Hook id for pre-commit:
 `codex-review-pr-grade`

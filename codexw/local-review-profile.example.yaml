@@ -1,0 +1,53 @@
+version: 1
+
+repo:
+  name: Repo Name
+
+review:
+  default_base: main
+  strict_gate: true
+  depth_hotspots: 3
+  output_root: .codex/review-runs
+
+rules:
+  include:
+    - AGENTS.md
+    - .cursor/rules/**/*.mdc
+
+domains:
+  default:
+    - core
+    - testing
+  allowed:
+    - core
+    - testing
+
+prompts:
+  global: |
+    Add repository-wide review context here.
+  by_domain:
+    testing: |
+      Add testing-specific context for this repository.
+
+pipeline:
+  include_policy_pass: true
+  include_core_passes: true
+  include_domain_passes: true
+  include_depth_passes: true
+  core_passes:
+    - id: core-breadth
+      name: Core breadth coverage
+      instructions: |
+        Review every changed file in this shard and report actionable findings only.
+    - id: core-regressions
+      name: Core regressions
+      instructions: |
+        Focus on behavioral regressions, crash/nullability, and security/privacy issues.
+    - id: core-architecture
+      name: Core architecture
+      instructions: |
+        Focus on architecture boundaries, concurrency, and lifecycle correctness.
+    - id: core-tests
+      name: Core tests
+      instructions: |
+        Focus on missing tests and high-risk edge cases without coverage.

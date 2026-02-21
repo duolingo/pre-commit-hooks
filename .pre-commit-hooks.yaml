@@ -28,8 +28,8 @@
 
 - id: codex-review-pr-grade
   name: Codex AI Code Review (PR-grade)
-  description: Profile-aware multi-pass Codex review via ./codexw (auto-generates and auto-syncs local-review-profile.yaml).
-  entry: ./codexw review
+  description: Profile-aware multi-pass Codex review via ./codexw/__main__.py (auto-generates and auto-syncs local-review-profile.yaml).
+  entry: ./codexw/__main__.py review
   language: script
   pass_filenames: false
   stages: [manual]
@@ -63,7 +63,7 @@
 
 - id: codex-review-pr-grade-dev
   name: Codex AI Code Review (PR-grade, dev)
-  entry: ./codexw review
+  entry: ./codexw/__main__.py review
   language: script
   pass_filenames: false
   stages: [manual]

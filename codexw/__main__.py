@@ -18,39 +18,6 @@ from typing import Any
 
 NO_FINDINGS_SENTINEL = "No actionable findings."
 
-DOMAIN_PROMPT_TEMPLATES: dict[str, str] = {
-    "experiments": (
-        "Focus areas:\n"
-        "- experiment overtreatment risk and incorrect gating\n"
-        "- control/treatment behavior leaks and inverted conditions\n"
-        "- stale experiment branches and incomplete cleanup\n"
-        "- observeTreatmentRecord/getConditionAndTreat usage correctness\n"
-        "- missing test coverage for control/treatment behavior"
-    ),
-    "compose": (
-        "Focus areas:\n"
-        "- required Compose conventions from rule files\n"
-        "- prohibited patterns (Text usage, theming violations, forbidden components)\n"
-        "- misuse of shared design-compose/common-compose primitives\n"
-        "- state/recomposition/lifecycle mistakes in composables"
-    ),
-    "coroutines": (
-        "Focus areas:\n"
-        "- dispatcher injection and hardcoded dispatcher violations\n"
-        "- cancellation handling and structured concurrency issues\n"
-        "- viewModelScope/lifecycle flow collection correctness\n"
-        "- RxJava/Coroutines interop and migration pattern violations\n"
-        "- coroutine test pattern correctness (runTest/TestScope/dispatchers)"
-    ),
-    "testing": (
-        "Focus areas:\n"
-        "- unit testing conventions and AAA structure violations\n"
-        "- required fake-vs-mock usage pattern violations\n"
-        "- FakeUsersRepository and User.emptyUser().copy migration correctness\n"
-        "- weak assertions and missing verification for side effects"
-    ),
-}
-
 DEFAULT_GLOBAL_PROMPT = (
     "Use repository standards for lifecycle, state, architecture boundaries, and "
     "production-safety. Prioritize behavior-changing issues and policy violations "
@@ -329,18 +296,10 @@ def parse_frontmatter(path: Path) -> dict[str, Any]:
 
 
 def _domain_hints_from_text(text: str) -> list[str]:
-    lowered = text.lower()
-    out: list[str] = []
-    hints: list[tuple[str, tuple[str, ...]]] = [
-        ("experiments", ("experiment", "treatment", "abtest", "feature-flag")),
-        ("compose", ("compose", "composable", "design-compose")),
-        ("coroutines", ("coroutine", "flow", "rxjava", "dispatcher")),
-        ("testing", ("testing", "test", "fake", "mock", "assert", "junit")),
-    ]
-    for domain, needles in hints:
-        if any(needle in lowered for needle in needles):
-            out.append(domain)
-    return out
+    # Keep inference repo-agnostic: domain ownership should come from explicit
+    # rule metadata or repository profile, not keyword guesses in script code.
+    _ = text
+    return []
 
 
 def _to_boolish(value: Any) -> bool | None:
@@ -367,17 +326,7 @@ def _extract_rule_domains(meta: dict[str, Any], rel_path: str) -> list[str]:
     for candidate in domain_candidates:
         for item in to_string_list(candidate, []):
             normalized = item.strip().lower().replace(" ", "-")
-            if normalized in {"experiment", "experiments"}:
-                domains.append("experiments")
-            elif normalized in {"compose", "ui-compose"}:
-                domains.append("compose")
-            elif normalized in {"coroutines", "coroutine", "async", "rxjava"}:
-                domains.append("coroutines")
-            elif normalized in {"testing", "tests", "test"}:
-                domains.append("testing")
-            elif normalized in {"core"}:
-                domains.append("core")
-            elif normalized:
+            if normalized:
                 domains.append(normalized)
 
     if not domains:
@@ -413,10 +362,11 @@ def infer_domains_from_rule_metadata(rule_metadata: list[dict[str, Any]]) -> lis
         for domain in to_string_list(row.get("domains"), []):
             domains.add(domain)
 
-    preferred = ["core", "experiments", "compose", "coroutines", "testing"]
-    result = [d for d in preferred if d in domains]
+    result: list[str] = []
+    if "core" in domains:
+        result.append("core")
     for domain in sorted(domains):
-        if domain not in result:
+        if domain and domain not in result:
             result.append(domain)
     return result
 
@@ -433,14 +383,25 @@ def default_pipeline_config() -> dict[str, Any]:
     }
 
 
+def default_domain_prompt_template(domain: str) -> str:
+    return (
+        f"Domain focus: {domain}\n"
+        "Focus areas:\n"
+        "- domain-specific correctness and policy compliance\n"
+        "- behavior/regression risks and boundary-condition failures\n"
+        "- state, contract, lifecycle, or concurrency issues relevant to this domain\n"
+        "- missing or weak tests for critical domain behavior"
+    )
+
+
 def build_bootstrap_profile(repo_root: Path) -> dict[str, Any]:
     rule_patterns = infer_rule_patterns(repo_root)
     rule_metadata = discover_rule_metadata(repo_root, rule_patterns)
     domains = infer_domains_from_rule_metadata(rule_metadata)
     by_domain: dict[str, str] = {
-        d: DOMAIN_PROMPT_TEMPLATES[d]
+        d: default_domain_prompt_template(d)
         for d in domains
-        if d in DOMAIN_PROMPT_TEMPLATES and d != "core"
+        if d != "core"
     }
 
     return {
