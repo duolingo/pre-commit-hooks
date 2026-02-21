@@ -49,6 +49,10 @@ This hook synchronizes AI coding rules from `.cursor/rules/` and `.code_review/`
 
 This ensures all AI coding assistants stay aware of the same rules and coding conventions.
 
+Execution model note:
+- `sync-ai-rules` is deterministic file generation, so it uses `language: docker_image` and a `files:` filter to run automatically when rule files change.
+- Codex hooks are AI-review workflows (`codex review` / `codexw`) that may take longer and require local auth, so they run in `manual` stage by default and are triggered on demand.
+
 ## Codex AI Code Review Hook (`codex-review`)
 
 On-demand AI code review using the OpenAI Codex CLI. This hook runs in `manual` stage by default, meaning it won't block normal commits.
