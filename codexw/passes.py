@@ -571,13 +571,18 @@ class PassRunner:
             preferred_model=normalize_model_name(model_override),
         )
 
-    def run_all(self, passes: list[PassSpec]) -> tuple[list[str], list[dict[str, Any]]]:
-        """Run all passes, return (summary_lines, raw_findings)."""
+    def run_all(
+        self,
+        passes: list[PassSpec],
+    ) -> tuple[list[str], list[dict[str, Any]], list[Path]]:
+        """Run all passes, return (summary_lines, raw_findings, executed_pass_files)."""
         summary_lines: list[str] = []
         raw_findings: list[dict[str, Any]] = []
+        executed_pass_files: list[Path] = []
 
         for index, pass_spec in enumerate(passes, start=1):
             out_file = self.output_root / f"{pass_spec.id}.md"
+            executed_pass_files.append(out_file)
             print(f"\n==> ({index}/{len(passes)}) {pass_spec.name}")
 
             run_review_pass_with_compat(
@@ -616,4 +621,4 @@ class PassRunner:
                 summary_lines.append(f"- [FINDINGS] {pass_spec.name}")
                 raw_findings.extend(parsed)
 
-        return summary_lines, raw_findings
+        return summary_lines, raw_findings, executed_pass_files

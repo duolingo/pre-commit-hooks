@@ -8,7 +8,7 @@ This document describes the local review capabilities provided by `codexw` and a
    Runs plain `codex review` from manual pre-commit stage for fast local sanity checks before push.
    Why it matters: lowest-latency feedback path.
 
-2. **PR-grade review (`codex-review-pr-grade`)**
+2. **PR-grade review (`codex-review-pr-grade`, alias `codexw`)**
    Runs `./codexw/__main__.py review` with profile-driven multi-pass orchestration.
    Why it matters: deeper and more consistent review than one-shot prompts.
 

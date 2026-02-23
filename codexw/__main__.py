@@ -35,6 +35,7 @@ if __package__ in {None, ""}:
         collect_changed_files,
         collect_numstat,
         find_repo_root,
+        resolve_base_ref,
     )
     from codexw.passes import PassBuilder, PassRunner
     from codexw.profile import (
@@ -60,6 +61,7 @@ else:
         collect_changed_files,
         collect_numstat,
         find_repo_root,
+        resolve_base_ref,
     )
     from .passes import PassBuilder, PassRunner
     from .profile import (
@@ -176,6 +178,8 @@ def run_review(args) -> int:
         mode = "uncommitted"
     elif args.commit:
         mode = "commit"
+    elif mode == "base":
+        base_branch = resolve_base_ref(repo_root, base_branch)
 
     # Determine gating mode
     fail_on_findings = profile["strict_gate"]
@@ -268,7 +272,7 @@ def run_review(args) -> int:
         target_desc=target_desc,
         model_override=model_override or None,
     )
-    summary_lines, raw_findings = pass_runner.run_all(passes)
+    summary_lines, raw_findings, executed_pass_files = pass_runner.run_all(passes)
 
     # Write support files
     write_support_files(
@@ -302,7 +306,7 @@ def run_review(args) -> int:
         summary_lines=summary_lines,
         raw_findings=raw_findings,
         findings_json_path=findings_json,
-        output_root=output_root,
+        executed_pass_files=executed_pass_files,
         title=args.title,
         model_override=model_override,
     )

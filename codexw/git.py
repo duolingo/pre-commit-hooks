@@ -70,22 +70,41 @@ def git_ref_exists(repo_root: Path, ref: str) -> bool:
 
 def detect_default_base(repo_root: Path) -> str:
     """Detect the default base branch (master or main)."""
-    # Check local branches first, then remote
-    candidates = ["master", "main"]
-    ref_types = ["refs/heads/{}", "refs/remotes/origin/{}"]
-
-    for ref_template in ref_types:
-        for candidate in candidates:
-            if git_ref_exists(repo_root, ref_template.format(candidate)):
-                return candidate
+    # Prefer local branches; if only remote-tracking exists, return
+    # remote-qualified ref so diff commands remain valid in detached clones.
+    for candidate in ("master", "main"):
+        if git_ref_exists(repo_root, f"refs/heads/{candidate}"):
+            return candidate
+    for candidate in ("master", "main"):
+        if git_ref_exists(repo_root, f"refs/remotes/origin/{candidate}"):
+            return f"origin/{candidate}"
 
     return "main"
+
+
+def resolve_base_ref(repo_root: Path, base: str) -> str:
+    """Resolve branch-like base to a usable git ref.
+
+    If the requested base is a plain branch name and no local branch exists
+    but `origin/<base>` does, return `origin/<base>`.
+    """
+    raw = str(base).strip()
+    if not raw:
+        return raw
+    if "/" in raw:
+        return raw
+    if git_ref_exists(repo_root, f"refs/heads/{raw}"):
+        return raw
+    if git_ref_exists(repo_root, f"refs/remotes/origin/{raw}"):
+        return f"origin/{raw}"
+    return raw
 
 
 def collect_changed_files(repo_root: Path, mode: str, base: str, commit: str) -> list[str]:
     """Collect list of changed files based on review mode."""
     if mode == "base":
-        out = run_checked(["git", "diff", "--name-only", f"{base}...HEAD"], repo_root)
+        base_ref = resolve_base_ref(repo_root, base)
+        out = run_checked(["git", "diff", "--name-only", f"{base_ref}...HEAD"], repo_root)
         return sorted({line.strip() for line in out.splitlines() if line.strip()})
 
     if mode == "uncommitted":
@@ -103,7 +122,8 @@ def collect_changed_files(repo_root: Path, mode: str, base: str, commit: str) ->
 def collect_numstat(repo_root: Path, mode: str, base: str, commit: str) -> list[tuple[int, str]]:
     """Collect file change statistics (added + deleted lines per file)."""
     if mode == "base":
-        cmd = ["git", "diff", "--numstat", f"{base}...HEAD"]
+        base_ref = resolve_base_ref(repo_root, base)
+        cmd = ["git", "diff", "--numstat", f"{base_ref}...HEAD"]
     elif mode == "uncommitted":
         cmd = ["git", "diff", "--numstat", "HEAD"]
     elif mode == "commit":

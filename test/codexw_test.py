@@ -20,13 +20,14 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from codexw.yaml_fallback import parse_simple_yaml, dump_yaml_text
 from codexw.cli import build_parser
-from codexw.git import collect_numstat
+from codexw.git import collect_numstat, detect_default_base, resolve_base_ref
 from codexw.profile import (
     normalize_profile,
     default_domain_prompt_template,
     build_bootstrap_profile,
     infer_domains_from_rule_metadata,
 )
+from codexw.reporting import write_combined_report
 from codexw.passes import (
     ModelFallbackState,
     PassSpec,
@@ -415,7 +416,70 @@ Body
             self.assertIn("new_untracked.py", by_path)
             self.assertEqual(by_path["new_untracked.py"], 3)
 
-    def test_pre_commit_hook_runs_pr_grade_wrapper_with_print_effective_profile(self):
+    def test_detect_default_base_returns_remote_qualified_ref_when_local_missing(self):
+        def fake_ref_exists(_repo_root, ref):
+            return ref == "refs/remotes/origin/main"
+
+        with mock.patch("codexw.git.git_ref_exists", side_effect=fake_ref_exists):
+            self.assertEqual(detect_default_base(REPO_ROOT), "origin/main")
+
+    def test_resolve_base_ref_prefers_local_branch_over_remote(self):
+        def fake_ref_exists(_repo_root, ref):
+            return ref in {"refs/heads/main", "refs/remotes/origin/main"}
+
+        with mock.patch("codexw.git.git_ref_exists", side_effect=fake_ref_exists):
+            self.assertEqual(resolve_base_ref(REPO_ROOT, "main"), "main")
+
+    def test_resolve_base_ref_maps_to_origin_when_only_remote_exists(self):
+        def fake_ref_exists(_repo_root, ref):
+            return ref == "refs/remotes/origin/main"
+
+        with mock.patch("codexw.git.git_ref_exists", side_effect=fake_ref_exists):
+            self.assertEqual(resolve_base_ref(REPO_ROOT, "main"), "origin/main")
+
+    def test_combined_report_appends_only_executed_pass_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo_root = pathlib.Path(tmp)
+            output_root = repo_root / "out"
+            output_root.mkdir(parents=True, exist_ok=True)
+            profile_path = repo_root / "local-review-profile.yaml"
+            profile_path.write_text("version: 1\n", encoding="utf-8")
+
+            current_pass = output_root / "pass-1-current.md"
+            stale_pass = output_root / "pass-2-stale.md"
+            pass_status = output_root / "pass-status.md"
+            combined = output_root / "combined-report.md"
+            findings_json = output_root / "findings.json"
+
+            current_pass.write_text("Current pass output\n", encoding="utf-8")
+            stale_pass.write_text("Stale pass output\n", encoding="utf-8")
+            pass_status.write_text("- [PASS] status\n", encoding="utf-8")
+
+            write_combined_report(
+                path=combined,
+                profile={"repo_name": "Repo"},
+                profile_path=profile_path,
+                repo_root=repo_root,
+                target_desc="base branch: main",
+                selected_domains=["core"],
+                rule_files=[],
+                changed_files=["a.py"],
+                modules=[(1, "a.py")],
+                hotspots=[],
+                depth_hotspots=0,
+                pass_count=1,
+                summary_lines=["- [PASS] current"],
+                raw_findings=[],
+                findings_json_path=findings_json,
+                executed_pass_files=[current_pass],
+            )
+
+            report = combined.read_text(encoding="utf-8")
+            self.assertIn("## pass-1-current", report)
+            self.assertNotIn("## pass-2-stale", report)
+            self.assertNotIn("## pass-status", report)
+
+    def test_pre_commit_hook_runs_codexw_alias_with_print_effective_profile(self):
         skip_flag = os.environ.get(self._SKIP_PRE_COMMIT_INTEGRATION_ENV, "").strip().lower()
         if skip_flag in {"1", "true", "yes", "on"}:
             self.skipTest(
@@ -467,7 +531,7 @@ Body
                     f"  - repo: {hook_repo_root}\n"
                     f"    rev: {repo_rev}\n"
                     "    hooks:\n"
-                    "      - id: codex-review-pr-grade\n"
+                    "      - id: codexw\n"
                     "        args:\n"
                     "          - --print-effective-profile\n"
                 ),
@@ -478,7 +542,7 @@ Body
                 [
                     *pre_commit_cmd,
                     "run",
-                    "codex-review-pr-grade",
+                    "codexw",
                     "--all-files",
                     "--hook-stage",
                     "manual",
@@ -491,12 +555,12 @@ Body
 
             if proc.returncode != 0:
                 self.fail(
-                    "pre-commit codex-review-pr-grade hook failed.\n"
+                    "pre-commit codexw hook failed.\n"
                     f"stdout:\n{proc.stdout}\n"
                     f"stderr:\n{proc.stderr}"
                 )
 
-            self.assertIn("Codex AI Code Review (PR-grade)", proc.stdout)
+            self.assertIn("Codexw (alias)", proc.stdout)
             self.assertIn('"effective_profile"', proc.stdout)
             self.assertTrue((consumer_root / "local-review-profile.yaml").is_file())
 

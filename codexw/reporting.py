@@ -56,7 +56,7 @@ def write_combined_report(
     summary_lines: list[str],
     raw_findings: list[dict[str, Any]],
     findings_json_path: Path,
-    output_root: Path,
+    executed_pass_files: list[Path],
     title: str | None = None,
     model_override: str | None = None,
 ) -> None:
@@ -107,8 +107,8 @@ def write_combined_report(
         fh.write("## Hotspots\n\n")
         fh.write(("\n".join(hotspots) if hotspots else "(none)") + "\n\n")
 
-        # Append per-pass outputs
-        for pass_file in sorted(output_root.glob("pass-*.md")):
+        # Append outputs from passes executed in this run only.
+        for pass_file in executed_pass_files:
             fh.write(f"## {pass_file.stem}\n\n")
             pass_text = pass_file.read_text(encoding="utf-8")
             fh.write(pass_text)
