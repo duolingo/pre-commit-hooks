@@ -50,6 +50,7 @@ This hook synchronizes AI coding rules from `.cursor/rules/` and `.code_review/`
 This ensures all AI coding assistants stay aware of the same rules and coding conventions.
 
 Execution model note:
+
 - `sync-ai-rules` is deterministic file generation, so it uses `language: docker_image` and a `files:` filter to run automatically when rule files change.
 - Codex hooks are AI-review workflows (`codex review` / `codexw`) that may take longer and require local auth, so they run in `manual` stage by default and are triggered on demand.
 
@@ -58,10 +59,12 @@ Execution model note:
 On-demand AI code review using the OpenAI Codex CLI. This hook runs in `manual` stage by default, meaning it won't block normal commits.
 
 **Prerequisites:**
+
 - Install Codex CLI: `brew install codex` or `npm install -g @openai/codex`
 - Authenticate: `codex auth login` (uses Duolingo ChatGPT org credentials)
 
 **Usage:**
+
 ```bash
 # Run Codex review on staged changes
 pre-commit run codex-review
@@ -71,6 +74,7 @@ pre-commit run codex-review --all-files
 ```
 
 For direct CLI usage without pre-commit:
+
 ```bash
 codex review --uncommitted
 codex review --base master
@@ -82,21 +86,25 @@ Profile-aware multi-pass local review using `codexw`. This hook is also `manual`
 
 It runs detailed PR-grade review from `local-review-profile.yaml`.
 `codexw` also includes compatibility fallback for Codex CLI versions that reject prompt+target combinations.
+`codexw` also includes recency-biased model fallback (latest 5 candidates, for example `gpt-5.3-codex` → `gpt-5.2-codex` → `gpt-5.1-codex` → `gpt-5-codex` → `gpt-4.2-codex`) and reasoning-effort fallback (`xhigh` → `high` → `medium` → `low`).
 Canonical command is `./codexw/__main__.py review`; `./codexw/__main__.py review-pr` is kept as a compatibility alias.
 If profile is missing, `codexw` auto-generates `local-review-profile.yaml` on first run.
 On each run, `codexw` auto-syncs profile entries derived from repository signals (rules/domains/domain prompts) while preserving manual overrides. Stale auto-managed entries are pruned when source-of-truth changes.
 
 PR-grade outputs include:
+
 - pass-level markdown reports
 - combined markdown report (`combined-report.md`)
 - machine-readable findings (`findings.json`)
 
 **Prerequisites:**
+
 - Install Codex CLI: `brew install codex` or `npm install -g @openai/codex`
 - Authenticate: `codex auth login`
 - Optional: pre-seed `local-review-profile.yaml` in target repo root (see example below)
 
 **Usage:**
+
 ```bash
 # Run PR-grade review for current diff vs profile default base branch
 pre-commit run codex-review-pr-grade
@@ -106,6 +114,7 @@ pre-commit run codex-review-pr-grade --all-files
 ```
 
 Direct execution (without pre-commit):
+
 ```bash
 ./codexw/__main__.py review
 ./codexw/__main__.py review --base main
@@ -122,7 +131,98 @@ Direct execution (without pre-commit):
 ./codexw/__main__.py review --no-prune-autogen
 ```
 
+`review-pr` is an alias for `review` (kept for backward compatibility):
+
+```bash
+./codexw/__main__.py review-pr --base master
+```
+
+### codexw CLI Flags Reference
+
+| Flag | Purpose | Default / Notes |
+| --- | --- | --- |
+| `--profile <path>` | Profile file to load/write. | Defaults to `local-review-profile.yaml` at repo root. |
+| `--base <branch>` | Review `branch...HEAD` diff. | Mutually exclusive with `--uncommitted` and `--commit`. Defaults to profile `review.default_base` when no target flag is passed. |
+| `--uncommitted` | Review working tree changes. | Mutually exclusive target mode. Includes tracked and untracked files. |
+| `--commit <sha>` | Review a specific commit. | Mutually exclusive target mode. |
+| `--domains <a,b,c>` | Restrict domain passes to selected domains. | Must be subset of profile `domains.allowed`. Defaults to profile `domains.default`. |
+| `--depth-hotspots <n>` | Override hotspot depth pass count for this run. | Overrides profile `review.depth_hotspots`. |
+| `--title <text>` | Pass custom title to `codex review`. | Optional metadata for review runs. |
+| `--output-dir <path>` | Write artifacts to explicit output directory. | Defaults to `<profile.review.output_root>/<timestamp>`. |
+| `--model <name>` | Requested model override for this run. | Used as preferred model; fallback chain may apply if unavailable. |
+| `--print-effective-profile` | Print normalized effective profile and exit. | No review passes executed. |
+| `--bootstrap-only` | Create missing profile (if needed) and exit. | No review passes executed. |
+| `--sync-profile-only` | Sync profile from repo signals and exit. | No review passes executed. Cannot be combined with `--no-sync-profile`. |
+| `--no-bootstrap-profile` | Disable automatic profile generation when missing. | Fails if profile file is absent. |
+| `--no-sync-profile` | Disable sync from repository signals for this run. | Uses profile file as-is. |
+| `--no-prune-autogen` | Keep stale auto-managed entries during sync for this run. | Sync still runs unless `--no-sync-profile` is set. |
+| `--fail-on-findings` | Force strict gate (exit 2 when findings exist). | Mutually exclusive with `--no-fail-on-findings`. |
+| `--no-fail-on-findings` | Advisory mode (do not fail on findings). | Mutually exclusive with `--fail-on-findings`. |
+
+### Common Flag Combos
+
+```bash
+# Validate profile and inspect resolved settings (no Codex call)
+./codexw/__main__.py review --profile local-review-profile.yaml --print-effective-profile
+
+# Advisory targeted review for local iteration
+./codexw/__main__.py review --uncommitted --domains core,testing --no-fail-on-findings
+
+# Strict PR-grade run with explicit artifacts path
+./codexw/__main__.py review --base master --fail-on-findings --output-dir .codex/review-runs/manual
+```
+
+### Sample Output for codexw-only Flags
+
+`--bootstrap-only` (missing profile):
+
+```text
+$ ./codexw/__main__.py review --bootstrap-only
+Generated local-review-profile.yaml from repository signals. Review and commit it.
+Synchronized local-review-profile.yaml from repository signals.
+warning: rule file 'AGENTS.md' not found
+warning: rule pattern '.cursor/rules/**/*.mdc' matched no files
+Profile ready: <repo>/local-review-profile.yaml
+```
+
+`--sync-profile-only`:
+
+```text
+$ ./codexw/__main__.py review --sync-profile-only
+warning: rule file 'AGENTS.md' not found
+warning: rule pattern '.cursor/rules/**/*.mdc' matched no files
+Profile ready: <repo>/local-review-profile.yaml
+```
+
+`--print-effective-profile`:
+
+```text
+$ ./codexw/__main__.py review --print-effective-profile
+warning: rule file 'AGENTS.md' not found
+warning: rule pattern '.cursor/rules/**/*.mdc' matched no files
+{
+  "profile_path": "<repo>/local-review-profile.yaml",
+  "repo_root": "<repo>",
+  "effective_profile": { ...normalized profile JSON... }
+}
+```
+
+`--no-bootstrap-profile` (profile missing):
+
+```text
+$ ./codexw/__main__.py review --no-bootstrap-profile --print-effective-profile
+error: profile not found: <repo>/local-review-profile.yaml. Add local-review-profile.yaml or pass --profile.
+```
+
+`--sync-profile-only` with `--no-sync-profile` (invalid combination):
+
+```text
+$ ./codexw/__main__.py review --sync-profile-only --no-sync-profile
+error: --sync-profile-only cannot be combined with --no-sync-profile
+```
+
 `local-review-profile.yaml` schema (minimum practical shape):
+
 ```yaml
 version: 1
 
@@ -169,11 +269,14 @@ pipeline:
 ```
 
 Reference profiles:
-- `codexw/local-review-profile.example.yaml` (generic template)
+
+- `codexw/local-review-profile.repo.example.yaml` (generic template)
 - `codexw/local-review-profile.duolingo-android.example.yaml` (concrete Duolingo Android example)
 
 Feature/use-case guide:
-- `codexw/codexw-features-and-usecases.md`
+
+- `codexw/features-and-usecases.md`
+- `codexw/architecture.md` (internal architecture)
 
 Hook id for pre-commit:
 `codex-review-pr-grade`

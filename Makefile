@@ -48,8 +48,8 @@ shell:
 # Runs tests
 .PHONY: test
 test:
-	echo "Running codexw fallback parser tests..."
-	python3 test/codexw_fallback_yaml_test.py
+	echo "Running codexw tests..."
+	python3 test/codexw_test.py
 	docker run --rm -v "$${PWD}/test:/test" "$$(docker build --network=host -q .)" sh -c \
 		'cd /tmp \
 			&& cp -r /test/before actual \
