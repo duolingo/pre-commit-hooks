@@ -1,8 +1,11 @@
-const { defineConfig } = require("eslint/config");
-const jsdoc = require("eslint-plugin-jsdoc");
-const sortKeys = require("eslint-plugin-sort-keys");
-const unicorn = require("eslint-plugin-unicorn");
-const tseslint = require("typescript-eslint");
+import { fixupPluginRules } from "@eslint/compat";
+import { defineConfig } from "eslint/config";
+import perfectionist from "eslint-plugin-perfectionist";
+import { Alphabet } from "eslint-plugin-perfectionist/alphabet";
+import jsdoc from "eslint-plugin-jsdoc";
+import sortKeys from "eslint-plugin-sort-keys";
+import unicorn from "eslint-plugin-unicorn";
+import tseslint from "typescript-eslint";
 
 const config = {
   files: ["**/*.{js,jsx,mjs,ts,tsx}"],
@@ -19,7 +22,8 @@ const config = {
   plugins: {
     "@typescript-eslint": tseslint.plugin,
     jsdoc,
-    "sort-keys": sortKeys,
+    perfectionist,
+    "sort-keys": fixupPluginRules(sortKeys),
     unicorn,
   },
   //
@@ -80,17 +84,7 @@ const config = {
     // "prefer-object-has-own": "error",
     // "prefer-object-spread": "error",
     "prefer-template": "error",
-    // This only sorts members within an individual import statement, not import
-    // statements ("declarations") themselves. We disable that because this
-    // rule sorts in a weird way: by first member rather than by module name.
-    // The `import/order` rule provided by eslint-plugin-import does sort
-    // declarations by module name, but we forgo that too because it groups
-    // declarations based on environmental factors (e.g. node_modules, Node
-    // version) that we can't easily determine or reproduce here in a
-    // repo-agnostic way. One compromise might be to use `import/order` and
-    // simply disable its regrouping feature in favor of whatever groups are
-    // found in the source code to be formatted, but no such option exists :/
-    "sort-imports": ["error", { ignoreDeclarationSort: true }],
+    // "sort-imports" // Replaced by perfectionist/sort-imports and perfectionist/sort-named-imports
     "sort-vars": "error",
     // "strict": "error",
     // "unicode-bom": "error",
@@ -132,6 +126,25 @@ const config = {
     // "jsdoc/tag-lines": "error",
     // "jsdoc/text-escaping": "error",
 
+    // perfectionist rules. https://perfectionist.dev/rules
+    // "perfectionist/sort-enums" // Reordering can change numeric enum values
+    // "perfectionist/sort-heritage-clauses" // Not worth the churn when interfaces are involved
+    "perfectionist/sort-imports": [
+      "error",
+      { newlinesBetween: "ignore", newlinesInside: "ignore" },
+    ],
+    "perfectionist/sort-interfaces": "error",
+    // "perfectionist/sort-intersection-types" // Not worth the churn when interfaces are involved
+    "perfectionist/sort-named-exports": "error",
+    "perfectionist/sort-named-imports": [
+      "error",
+      { partitionByNewLine: false },
+    ],
+    "perfectionist/sort-object-types": "error",
+    // "perfectionist/sort-objects // Prefer sort-keys because it leaves computed properties alone
+    // "perfectionist/sort-switch-case" // TODO: Enable once it supports partitionByNewLine
+    // "perfectionist/sort-union-types" // Not worth the churn when interfaces are involved
+
     // sort-keys rules. https://github.com/namnm/eslint-plugin-sort-keys
     "sort-keys/sort-keys-fix": ["error", "asc", { natural: true }],
 
@@ -155,13 +168,7 @@ const config = {
     ],
     // "@typescript-eslint/consistent-type-definitions": ["error", "interface"], // Can cause `Index signature for type 'string' is missing in type`
     // "@typescript-eslint/consistent-type-imports": ["error", { disallowTypeAnnotations: false, prefer: "type-imports" }], // TODO: Enable once all our code is on TS 3.8+
-    "@typescript-eslint/explicit-member-accessibility": [
-      "error",
-      {
-        accessibility: "explicit",
-        overrides: { accessors: "explicit", constructors: "explicit" },
-      },
-    ],
+    // "@typescript-eslint/explicit-member-accessibility" // Buggy? Doesn't actually add `public` when absent
     // "@typescript-eslint/method-signature-style": "error",
     "@typescript-eslint/no-array-constructor": "error",
     // "@typescript-eslint/no-dynamic-delete": "error",
@@ -189,10 +196,9 @@ const config = {
     // "unicorn/new-for-builtins": "error",
     // "unicorn/no-array-for-each": "error", // Bug: fixer deletes comments
     // "unicorn/no-array-method-this-argument": "error",
-    // "unicorn/no-array-push-push": "error", // Bug: fixer deletes comments
     // "unicorn/no-await-expression-member": "error",
     "unicorn/no-console-spaces": "error",
-    // "unicorn/no-for-loop": "error", // Bug: https://github.com/sindresorhus/eslint-plugin-unicorn/issues/1802
+    "unicorn/no-for-loop": "error",
     // "unicorn/no-hex-escape": "error",
     // "unicorn/no-lonely-if": "error", // Bug: Moves comments around
     "unicorn/no-negated-condition": "error",
@@ -249,6 +255,7 @@ const config = {
     "unicorn/prefer-regexp-test": "error",
     // "unicorn/prefer-set-has": "error",
     "unicorn/prefer-set-size": "error",
+    // "unicorn/prefer-single-call": "error", // Bug: fixer deletes comments
     // "unicorn/prefer-spread": "error", // Bug: https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2041
     // "unicorn/prefer-string-raw": "error",
     // "unicorn/prefer-string-replace-all": "error",
@@ -270,6 +277,22 @@ const config = {
 
     /* eslint-enable */
   },
+  settings: {
+    perfectionist: {
+      // By default, perfectionist sorts lowercase before uppercase. We reverse
+      // that behavior here to match our existing pre-2026 convention, which is
+      // also arguably more sensible from a coding perspective because it
+      // prioritizes SCREAMING_SNAKE_CASE constants, similar to how such
+      // constants are typically defined first in a source file
+      alphabet: Alphabet.generateRecommendedAlphabet()
+        .placeAllWithCaseBeforeAllWithOtherCase("uppercase")
+        .getCharacters(),
+      ignoreCase: false,
+      order: "asc",
+      partitionByNewLine: true,
+      type: "custom",
+    },
+  },
 };
 
-module.exports = defineConfig([config]);
+export default defineConfig([config]);

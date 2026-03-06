@@ -183,7 +183,7 @@ const HOOKS: Record<HookName, Hook> = {
           "eslint",
           "--fix",
           "--config",
-          "/eslint.config.js",
+          "/eslint.config.mjs",
           ...sources,
         );
       } catch {

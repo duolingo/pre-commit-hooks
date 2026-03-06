@@ -59,24 +59,14 @@ echo 'source /black21-venv/bin/activate && black "$@"' > /usr/bin/black21
 chmod +x /usr/bin/black21
 
 # Install Node dependencies
-#
-# We stay on eslint-plugin-unicorn 56.0.1 because 57+ removed support for
-# importing this plugin into the ESLint config as CommonJS. (We use CommonJS
-# instead of ESM in the ESLint config mainly because the latter requires a new
-# local package.json file that declares `"type": "module"`, which interferes
-# with other tools like SVGO). I couldn't get the `deasync` hack to work - it
-# just hung forever. TODO: Try updating this plugin after updating Node.js to
-# v22+, which has experimental support for synchronously require()-ing ESM?
-# https://github.com/sindresorhus/eslint-plugin-unicorn/releases/tag/v57.0.0
-# https://gist.github.com/sindresorhus/a39789f98801d908bbc7ff3ecc99d99c
-# https://nodejs.org/en/blog/announcements/v22-release-announce#support-requireing-synchronous-esm-graphs
-# https://github.com/eslint/eslint/issues/13684#issuecomment-722949152
 npm install -g \
+  @eslint/compat@2.0.3 \
   @prettier/plugin-xml@3.4.2 \
-  eslint@9.39.2 \
+  eslint@10.0.2 \
   eslint-plugin-jsdoc@62.9.0 \
+  eslint-plugin-perfectionist@5.6.0 \
   eslint-plugin-sort-keys@2.3.5 \
-  eslint-plugin-unicorn@56.0.1 \
+  eslint-plugin-unicorn@63.0.0 \
   prettier@3.8.3 \
   svgo@4.0.1 \
   typescript-eslint@8.58.2
@@ -133,3 +123,5 @@ COPY --from=entry /entry.js /entry
 ENV COURSIER_CACHE=/tmp/coursier-cache
 ENV COURSIER_JVM_CACHE=/tmp/coursier-jvm-cache
 ENV NODE_PATH=/usr/local/lib/node_modules
+# .mjs import resolution doesn't respect NODE_PATH
+RUN ln -s /usr/local/lib/node_modules /node_modules

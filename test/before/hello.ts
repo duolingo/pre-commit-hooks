@@ -1,6 +1,6 @@
 
-import   {  execSync , execFile }  from  "child_process"  ;
  import  {  writeFile,  FSWatcher, readFile  }  from  "fs" ;
+import   {  execSync , execFile }  from  "child_process"  ;
 
  import  {  foo  }  from "./bar";
 
@@ -25,3 +25,21 @@ try  {
   }catch( err)  {
 if  (8.00  > foo!!) console.log("hi ", "world" + err);
 }
+
+interface Serializable { serialize(): string }
+interface Printable { print(): void }
+class Report implements Serializable, Printable {
+  print(): void {}
+  serialize(): string { return "" }
+}
+
+interface Options {
+  verbose: boolean;
+  Format: string;
+  debug: boolean;
+  Cache: boolean;
+}
+
+type Point = { y: number; x: number };
+
+export type { Options, Combined, Level, Point };
