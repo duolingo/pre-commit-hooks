@@ -274,7 +274,7 @@ const HOOKS: Record<HookName, Hook> = {
         "/usr/local/lib/node_modules/@prettier/plugin-xml/src/plugin.js",
         ...sources,
       ),
-    include: /\.(css|html?|markdown|md|scss|tsx?|xml|ya?ml)$/,
+    include: /\.(css|html?|markdown|mdx?|scss|tsx?|xml|ya?ml)$/,
     runAfter: [HookName.Sed, HookName.Xsltproc, HookName.EsLint],
   },
   [HookName.Ruff]: {
