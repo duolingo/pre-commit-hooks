@@ -5,7 +5,7 @@ const unicorn = require("eslint-plugin-unicorn");
 const tseslint = require("typescript-eslint");
 
 const config = {
-  files: ["**/*.{js,jsx,ts,tsx}"],
+  files: ["**/*.{js,jsx,mjs,ts,tsx}"],
   languageOptions: { parser: tseslint.parser },
   linterOptions: {
     // Individual repos may have their own additional ESLint setups that enable

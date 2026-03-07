@@ -10,7 +10,7 @@ indent_style=tab
 indent_size=2
 max_line_length=100
 
-[*.{js,jsx,ts,tsx}]
+[*.{js,jsx,mjs,ts,tsx}]
 indent_size=2
 max_line_length=80
 
