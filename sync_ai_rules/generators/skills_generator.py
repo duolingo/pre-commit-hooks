@@ -2,7 +2,7 @@
 """
 Skills Generator - generates Claude Code skills from .cursor/rules/.
 Each rule becomes a separate SKILL.md file in .claude/skills/.generated/,
-mirroring the folder structure of .cursor/rules/.
+with a flat name encoding the full path: generated_<category>_<skill-name>.
 """
 
 import logging
@@ -52,13 +52,14 @@ class SkillsGenerator(OutputGenerator):
 
         for category_rules in rules.values():
             for rule in category_rules:
-                # Mirror the source folder structure:
-                #   .cursor/rules/arch/my-rule.mdc → .generated/arch/my-rule/SKILL.md
+                # Flatten full path into skill name:
+                #   .cursor/rules/arch/my-rule.mdc → .generated/generated_arch_my-rule/SKILL.md
+                #   .cursor/rules/my-rule.mdc      → .generated/generated_my-rule/SKILL.md
                 rel_path = _strip_source_prefix(rule.relative_path)
-                skill_name = os.path.splitext(os.path.basename(rel_path))[0]
-                skill_dir = os.path.join(
-                    skills_root, os.path.dirname(rel_path), skill_name
-                ) if os.path.dirname(rel_path) else os.path.join(skills_root, skill_name)
+                path_parts = rel_path.replace(os.sep, "/").split("/")
+                path_parts[-1] = os.path.splitext(path_parts[-1])[0]
+                skill_name = "generated_" + "_".join(path_parts)
+                skill_dir = os.path.join(skills_root, skill_name)
                 skill_file = os.path.join(skill_dir, "SKILL.md")
 
                 try:

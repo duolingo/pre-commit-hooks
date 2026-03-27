@@ -1,5 +1,5 @@
 ---
-name: architecture-rule
+name: generated_architecture_architecture-rule
 description: Architecture rule description
 ---
 
