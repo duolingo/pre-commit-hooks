@@ -50,6 +50,16 @@ class SkillsGenerator(OutputGenerator):
         if os.path.exists(skills_root):
             shutil.rmtree(skills_root)
 
+        # Also remove any stale generated_* dirs that may exist directly in .claude/skills/
+        # (e.g. from a previous migration or manual copy)
+        skills_parent = os.path.dirname(skills_root)
+        if os.path.isdir(skills_parent):
+            for entry in os.listdir(skills_parent):
+                if entry.startswith("generated_"):
+                    stale = os.path.join(skills_parent, entry)
+                    if os.path.isdir(stale):
+                        shutil.rmtree(stale)
+
         for category_rules in rules.values():
             for rule in category_rules:
                 # Flatten full path into skill name:
