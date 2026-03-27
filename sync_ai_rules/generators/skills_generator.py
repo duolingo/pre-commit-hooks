@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Skills Generator - generates Claude Code skills from .cursor/rules/.
-Each rule becomes a separate SKILL.md file in .claude/skills/.generated/,
+Each rule becomes a separate SKILL.md file in .claude/skills/,
 with a flat name encoding the full path: generated_<category>_<skill-name>.
 """
 
@@ -14,7 +14,7 @@ from typing import Any, Dict, List
 from sync_ai_rules.core.generator_interface import OutputGenerator
 from sync_ai_rules.core.rule_metadata import RuleMetadata
 
-_SKILLS_DIR = ".claude/skills/.generated"
+_SKILLS_DIR = ".claude/skills"
 _SOURCE_DIR = ".cursor/rules"
 _YAML_UNSAFE = re.compile(r"[:\#\[\]\{\}&*!|>'\"%@`]")
 
@@ -43,28 +43,20 @@ class SkillsGenerator(OutputGenerator):
     def generate_files(
         self, rules: Dict[str, List[RuleMetadata]], project_root: str
     ) -> None:
-        """Generate skill files mirroring the .cursor/rules/ folder structure."""
+        """Generate skill files as direct children of .claude/skills/."""
         skills_root = os.path.join(project_root, _SKILLS_DIR)
 
-        # Clean .generated directory on each run
-        if os.path.exists(skills_root):
-            shutil.rmtree(skills_root)
-
-        # Also remove any stale generated_* dirs that may exist directly in .claude/skills/
-        # (e.g. from a previous migration or manual copy)
-        skills_parent = os.path.dirname(skills_root)
-        if os.path.isdir(skills_parent):
-            for entry in os.listdir(skills_parent):
+        # Remove any existing generated_* dirs before regenerating
+        if os.path.isdir(skills_root):
+            for entry in os.listdir(skills_root):
                 if entry.startswith("generated_"):
-                    stale = os.path.join(skills_parent, entry)
-                    if os.path.isdir(stale):
-                        shutil.rmtree(stale)
+                    shutil.rmtree(os.path.join(skills_root, entry))
 
         for category_rules in rules.values():
             for rule in category_rules:
-                # Flatten full path into skill name:
-                #   .cursor/rules/arch/my-rule.mdc → .generated/generated_arch_my-rule/SKILL.md
-                #   .cursor/rules/my-rule.mdc      → .generated/generated_my-rule/SKILL.md
+                # Flatten full path into a single skill dir name:
+                #   .cursor/rules/arch/my-rule.mdc → .claude/skills/generated_arch_my-rule/SKILL.md
+                #   .cursor/rules/my-rule.mdc      → .claude/skills/generated_my-rule/SKILL.md
                 rel_path = _strip_source_prefix(rule.relative_path)
                 path_parts = rel_path.replace(os.sep, "/").split("/")
                 path_parts[-1] = os.path.splitext(path_parts[-1])[0]
@@ -77,7 +69,7 @@ class SkillsGenerator(OutputGenerator):
                     os.makedirs(skill_dir, exist_ok=True)
                     with open(skill_file, "w", encoding="utf-8") as f:
                         f.write(content)
-                    print(f"  ✓ Created skill: {os.path.relpath(skill_dir, skills_root)}")
+                    print(f"  ✓ Created skill: {skill_name}")
                 except OSError as e:
                     logger.warning("Failed to write skill %s: %s", skill_name, e)
                     print(f"  ✗ Failed to create skill: {skill_name}")
