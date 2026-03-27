@@ -1,5 +1,5 @@
 ---
-name: testing-rule
+name: generated_testing_testing-rule
 description: Testing rule description
 ---
 
