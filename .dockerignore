@@ -4,6 +4,5 @@
 !entry.ts
 !eslint.config.mjs
 !ruff.toml
-!stylesheet.xml
 !svgo.config.js
 !sync_ai_rules
