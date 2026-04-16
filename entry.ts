@@ -90,6 +90,7 @@ const enum HookName {
   PackerFmt = "packer fmt",
   Prettier = "Prettier",
   PrettierJs = "Prettier (JS)",
+  PrettierXml = "Prettier (XML)",
   Ruff = "Ruff",
   Scalafmt = "scalafmt",
   Sed = "sed",
@@ -97,7 +98,6 @@ const enum HookName {
   Svgo = "SVGO",
   Taplo = "Taplo",
   TerraformFmt = "terraform fmt",
-  Xsltproc = "xsltproc",
 }
 
 /** Arguments passed into this hook via the `args` pre-commit config key */
@@ -269,6 +269,52 @@ const HOOKS: Record<HookName, Hook> = {
     exclude: MINIFIED_JS_REGEX,
     include: /\.jsx?$/,
     runAfter: [HookName.Sed, HookName.EsLint],
+  },
+  [HookName.PrettierXml]: {
+    action: async sources => {
+      await run(
+        "prettier",
+        ...PRETTIER_OPTIONS,
+        "--plugin",
+        // https://github.com/prettier/prettier/issues/15141#issuecomment-1685112479
+        "/usr/local/lib/node_modules/@prettier/plugin-xml/src/plugin.js",
+        "--xml-whitespace-sensitivity",
+        "preserve",
+        ...sources,
+      );
+      await Promise.all(
+        sources.map(source =>
+          transformFile(source, data => {
+            const lines = data.split("\n");
+            const result: string[] = [];
+            let attrs: string[] = [];
+            const flush = () => {
+              if (attrs.length) {
+                const xmlns: string[] = [];
+                const rest: string[] = [];
+                for (const a of attrs) {
+                  (/^\s+xmlns[=:]/.test(a) ? xmlns : rest).push(a);
+                }
+                result.push(...xmlns.sort(), ...rest.sort());
+                attrs = [];
+              }
+            };
+            for (const line of lines) {
+              if (/^\s+\S+="[^"]*"$/.test(line)) {
+                attrs.push(line);
+              } else {
+                flush();
+                result.push(line);
+              }
+            }
+            flush();
+            return result.join("\n");
+          }),
+        ),
+      );
+    },
+    include: /\.xml$/,
+    runAfter: [HookName.Sed],
   },
   [HookName.Ruff]: {
     action: async (sources, args) => {
@@ -460,16 +506,6 @@ const HOOKS: Record<HookName, Hook> = {
         sources.map(source => run("/terraform", "fmt", "-write=true", source)),
       ),
     include: /\.tf$/,
-    runAfter: [HookName.Sed],
-  },
-  [HookName.Xsltproc]: {
-    action: sources =>
-      Promise.all(
-        sources.map(source =>
-          run("xsltproc", "--output", source, "/stylesheet.xml", source),
-        ),
-      ),
-    include: /\.xml$/,
     runAfter: [HookName.Sed],
   },
 };

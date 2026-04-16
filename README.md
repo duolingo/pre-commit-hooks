@@ -6,7 +6,7 @@ This repo contains [pre-commit](https://pre-commit.com/) hooks for Duolingo deve
 
 The main hook that runs several code formatters in parallel:
 
-- [Prettier](https://github.com/prettier/prettier) v3.8.3 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, YAML
+- [Prettier](https://github.com/prettier/prettier) v3.8.3 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
 - [ESLint](https://eslint.org/) v10.2.0 for JS, TypeScript
 - [Ruff](https://docs.astral.sh/ruff/) v0.15.10 for Python 3
 - [Black](https://github.com/psf/black) v21.12b0 for Python 2
@@ -18,7 +18,6 @@ The main hook that runs several code formatters in parallel:
 - [gofmt](https://pkg.go.dev/cmd/gofmt) v1.26.2 for Go
 - [scalafmt](https://scalameta.org/scalafmt/) v3.11.0 for Scala
 - [shfmt](https://github.com/mvdan/sh) v3.13.1 for Shell
-- [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10143 for XML
 - [terraform fmt](https://github.com/hashicorp/terraform) v1.14.8 for Terraform
 - [packer fmt](https://github.com/hashicorp/packer) v1.15.1 for Packer
 - [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v20.1.0 for C++, Protobuf

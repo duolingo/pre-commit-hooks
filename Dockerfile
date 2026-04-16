@@ -41,7 +41,6 @@ apk add --no-cache --virtual .build-deps \
   py3-pip \
   python3-dev
 apk add --no-cache \
-  libxslt \
   nodejs \
   python3
 pip3 install --break-system-packages \
@@ -61,6 +60,7 @@ chmod +x /usr/bin/black21
 # Install Node dependencies
 npm install -g \
   @eslint/compat@2.0.5 \
+  @prettier/plugin-xml@3.4.2 \
   eslint@10.2.0 \
   eslint-plugin-jsdoc@62.9.0 \
   eslint-plugin-perfectionist@5.8.0 \
