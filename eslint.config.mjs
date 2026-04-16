@@ -84,7 +84,17 @@ const config = {
     // "prefer-object-has-own": "error",
     // "prefer-object-spread": "error",
     "prefer-template": "error",
-    // "sort-imports" // Replaced by perfectionist/sort-imports and perfectionist/sort-named-imports
+    // This only sorts members within an individual import statement, not import
+    // statements ("declarations") themselves. We disable that because this
+    // rule sorts in a weird way: by first member rather than by module name.
+    // The `import/order` rule provided by eslint-plugin-import does sort
+    // declarations by module name, but we forgo that too because it groups
+    // declarations based on environmental factors (e.g. node_modules, Node
+    // version) that we can't easily determine or reproduce here in a
+    // repo-agnostic way. One compromise might be to use `import/order` and
+    // simply disable its regrouping feature in favor of whatever groups are
+    // found in the source code to be formatted, but no such option exists :/
+    // "sort-imports": ["error", { ignoreDeclarationSort: true }], // Replaced by perfectionist/sort-named-imports
     "sort-vars": "error",
     // "strict": "error",
     // "unicode-bom": "error",
@@ -129,17 +139,11 @@ const config = {
     // perfectionist rules. https://perfectionist.dev/rules
     // "perfectionist/sort-enums" // Reordering can change numeric enum values
     // "perfectionist/sort-heritage-clauses" // Not worth the churn when interfaces are involved
-    "perfectionist/sort-imports": [
-      "error",
-      { newlinesBetween: "ignore", newlinesInside: "ignore" },
-    ],
+    // "perfectionist/sort-imports" // TODO: Enable once grouping is more configurable
     "perfectionist/sort-interfaces": "error",
     // "perfectionist/sort-intersection-types" // Not worth the churn when interfaces are involved
     "perfectionist/sort-named-exports": "error",
-    "perfectionist/sort-named-imports": [
-      "error",
-      { partitionByNewLine: false },
-    ],
+    "perfectionist/sort-named-imports": "error",
     "perfectionist/sort-object-types": "error",
     // "perfectionist/sort-objects // Prefer sort-keys because it leaves computed properties alone
     // "perfectionist/sort-switch-case" // TODO: Enable once it supports partitionByNewLine
