@@ -21,3 +21,27 @@ try {
     console.log("hi", `world${ex}`);
   }
 }
+
+interface Serializable {
+  serialize(): string;
+}
+interface Printable {
+  print(): void;
+}
+class Report implements Serializable, Printable {
+  print(): void {}
+  serialize(): string {
+    return "";
+  }
+}
+
+interface Options {
+  Cache: boolean;
+  Format: string;
+  debug: boolean;
+  verbose: boolean;
+}
+
+type Point = { x: number; y: number };
+
+export type { Combined, Level, Options, Point };
