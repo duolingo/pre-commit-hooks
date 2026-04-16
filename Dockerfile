@@ -60,13 +60,13 @@ chmod +x /usr/bin/black21
 
 # Install Node dependencies
 npm install -g \
-  @eslint/compat@2.0.3 \
+  @eslint/compat@2.0.5 \
   @prettier/plugin-xml@3.4.2 \
-  eslint@10.0.2 \
+  eslint@10.2.0 \
   eslint-plugin-jsdoc@62.9.0 \
-  eslint-plugin-perfectionist@5.6.0 \
+  eslint-plugin-perfectionist@5.8.0 \
   eslint-plugin-sort-keys@2.3.5 \
-  eslint-plugin-unicorn@63.0.0 \
+  eslint-plugin-unicorn@64.0.0 \
   prettier@3.8.3 \
   svgo@4.0.1 \
   typescript-eslint@8.58.2

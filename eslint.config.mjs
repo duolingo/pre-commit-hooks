@@ -193,6 +193,7 @@ const config = {
     "unicorn/consistent-destructuring": "error",
     "unicorn/consistent-empty-array-spread": "error",
     // "unicorn/consistent-existence-index-check": "error",
+    // "unicorn/consistent-template-literal-escape": "error",
     // "unicorn/custom-error-definition": "error",
     // "unicorn/empty-brace-spaces": "error",
     // "unicorn/escape-case": "error", // Implemented by Prettier
@@ -217,6 +218,7 @@ const config = {
     "unicorn/no-unnecessary-await": "error",
     "unicorn/no-unreadable-array-destructuring": "error",
     "unicorn/no-useless-fallback-in-spread": "error",
+    // "unicorn/no-useless-iterator-to-array": "error",
     // "unicorn/no-useless-length-check": "error",
     // "unicorn/no-useless-promise-resolve-reject": "error", // Conflicts with @typescript-eslint/no-throw-literal
     "unicorn/no-useless-spread": "error",
@@ -259,6 +261,7 @@ const config = {
     "unicorn/prefer-regexp-test": "error",
     // "unicorn/prefer-set-has": "error",
     "unicorn/prefer-set-size": "error",
+    // "unicorn/prefer-simple-condition-first": "error",
     // "unicorn/prefer-single-call": "error", // Bug: fixer deletes comments
     // "unicorn/prefer-spread": "error", // Bug: https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2041
     // "unicorn/prefer-string-raw": "error",
@@ -275,6 +278,7 @@ const config = {
     // "unicorn/require-number-to-fixed-digits-argument": "error",
     // "unicorn/string-content": "error",
     // "unicorn/switch-case-braces": "error",
+    // "unicorn/switch-case-break-position": "error",
     // "unicorn/template-indent": "error",
     "unicorn/text-encoding-identifier-case": "error",
     // "unicorn/throw-new-error": "error",
