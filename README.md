@@ -6,7 +6,7 @@ This repo contains [pre-commit](https://pre-commit.com/) hooks for Duolingo deve
 
 The main hook that runs several code formatters in parallel:
 
-- [Prettier](https://github.com/prettier/prettier) v3.8.3 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, XML, YAML
+- [Prettier](https://github.com/prettier/prettier) v3.8.3 for CSS, HTML, JS, JSX, Markdown, Sass, TypeScript, YAML
 - [ESLint](https://eslint.org/) v10.2.0 for JS, TypeScript
 - [Ruff](https://docs.astral.sh/ruff/) v0.15.10 for Python 3
 - [Black](https://github.com/psf/black) v21.12b0 for Python 2

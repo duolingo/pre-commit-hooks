@@ -90,7 +90,6 @@ const enum HookName {
   PackerFmt = "packer fmt",
   Prettier = "Prettier",
   PrettierJs = "Prettier (JS)",
-  PrettierXml = "Prettier (XML)",
   Ruff = "Ruff",
   Scalafmt = "scalafmt",
   Sed = "sed",
@@ -270,19 +269,6 @@ const HOOKS: Record<HookName, Hook> = {
     exclude: MINIFIED_JS_REGEX,
     include: /\.jsx?$/,
     runAfter: [HookName.Sed, HookName.EsLint],
-  },
-  [HookName.PrettierXml]: {
-    action: sources =>
-      run(
-        "prettier",
-        ...PRETTIER_OPTIONS,
-        "--plugin",
-        // https://github.com/prettier/prettier/issues/15141#issuecomment-1685112479
-        "/usr/local/lib/node_modules/@prettier/plugin-xml/src/plugin.js",
-        ...sources,
-      ),
-    include: /\.xml$/,
-    runAfter: [HookName.Sed, HookName.Xsltproc],
   },
   [HookName.Ruff]: {
     action: async (sources, args) => {

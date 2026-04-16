@@ -1,28 +1,140 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<xsl:stylesheet
-  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  version="1.0"
->
-  <!-- Indent output -->
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+  <xsl:output encoding="utf-8" method="text" />
   <xsl:strip-space elements="*" />
-  <xsl:output encoding="utf-8" indent="yes" method="xml" />
-  <!-- Document root -->
+  <xsl:template name="escape">
+    <xsl:param name="s" />
+    <xsl:choose>
+      <xsl:when test="contains($s, '&amp;')">
+        <xsl:call-template name="escape">
+          <xsl:with-param name="s" select="substring-before($s, '&amp;')" />
+        </xsl:call-template>
+        <xsl:text>&amp;amp;</xsl:text>
+        <xsl:call-template name="escape">
+          <xsl:with-param name="s" select="substring-after($s, '&amp;')" />
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:when test="contains($s, '&lt;')">
+        <xsl:call-template name="escape">
+          <xsl:with-param name="s" select="substring-before($s, '&lt;')" />
+        </xsl:call-template>
+        <xsl:text>&amp;lt;</xsl:text>
+        <xsl:call-template name="escape">
+          <xsl:with-param name="s" select="substring-after($s, '&lt;')" />
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:when test="contains($s, '&quot;')">
+        <xsl:call-template name="escape">
+          <xsl:with-param name="s" select="substring-before($s, '&quot;')" />
+        </xsl:call-template>
+        <xsl:text>&amp;quot;</xsl:text>
+        <xsl:call-template name="escape">
+          <xsl:with-param name="s" select="substring-after($s, '&quot;')" />
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$s" />
+      </xsl:otherwise>
+    </xsl:choose>
+  </xsl:template>
   <xsl:template match="/">
-    <xsl:apply-templates />
+    <xsl:text>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+</xsl:text>
+    <xsl:apply-templates select="*" />
   </xsl:template>
-  <!-- Sort non-text nodes' attributes -->
   <xsl:template match="*">
-    <xsl:copy>
-      <xsl:for-each select="@*">
-        <xsl:sort select="name(.)" />
-        <xsl:copy />
-      </xsl:for-each>
-      <xsl:apply-templates />
-    </xsl:copy>
+    <xsl:param name="indent" select="''" />
+    <xsl:variable name="ai" select="concat($indent, '  ')" />
+    <xsl:variable
+      name="n"
+      select="count(@*) + count(namespace::*[name() != 'xml']) - count(../namespace::*[name() != 'xml'])"
+    />
+    <xsl:variable
+      name="multiline"
+      select="$n &gt; 1 or ($n = 1 and string-length($indent) + string-length(name()) + string-length(name(@*)) + string-length(@*) + 8 &gt; 80)"
+    />
+    <xsl:value-of select="$indent" />
+    <xsl:text>&lt;</xsl:text>
+    <xsl:value-of select="name()" />
+    <xsl:for-each select="namespace::*[name() != 'xml']">
+      <xsl:sort select="name()" />
+      <xsl:if
+        test="not(../../namespace::*[name() = name(current()) and . = current()])"
+      >
+        <xsl:choose>
+          <xsl:when test="$multiline">
+            <xsl:value-of select="concat('&#10;', $ai)" />
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="' '" />
+          </xsl:otherwise>
+        </xsl:choose>
+        <xsl:text>xmlns</xsl:text>
+        <xsl:if test="name() != ''">
+          <xsl:text>:</xsl:text>
+          <xsl:value-of select="name()" />
+        </xsl:if>
+        <xsl:text>="</xsl:text>
+        <xsl:call-template name="escape">
+          <xsl:with-param name="s" select="." />
+        </xsl:call-template>
+        <xsl:text>"</xsl:text>
+      </xsl:if>
+    </xsl:for-each>
+    <xsl:for-each select="@*">
+      <xsl:sort select="name()" />
+      <xsl:choose>
+        <xsl:when test="$multiline">
+          <xsl:value-of select="concat('&#10;', $ai)" />
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="' '" />
+        </xsl:otherwise>
+      </xsl:choose>
+      <xsl:value-of select="name()" />
+      <xsl:text>="</xsl:text>
+      <xsl:call-template name="escape">
+        <xsl:with-param name="s" select="." />
+      </xsl:call-template>
+      <xsl:text>"</xsl:text>
+    </xsl:for-each>
+    <xsl:if test="$multiline">
+      <xsl:value-of select="concat('&#10;', $indent)" />
+    </xsl:if>
+    <xsl:choose>
+      <xsl:when test="node()">
+        <xsl:text>&gt;
+</xsl:text>
+        <xsl:apply-templates>
+          <xsl:with-param name="indent" select="$ai" />
+        </xsl:apply-templates>
+        <xsl:value-of select="$indent" />
+        <xsl:text>&lt;/</xsl:text>
+        <xsl:value-of select="name()" />
+        <xsl:text>&gt;
+</xsl:text>
+      </xsl:when>
+      <xsl:when test="not($multiline)">
+        <xsl:text> /&gt;
+</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:text>/&gt;
+</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
-  <!-- Leave text nodes untouched -->
-  <xsl:template match="text()|comment()|processing-instruction()">
-    <xsl:copy />
+  <xsl:template match="text()">
+    <xsl:call-template name="escape">
+      <xsl:with-param name="s" select="." />
+    </xsl:call-template>
+  </xsl:template>
+  <xsl:template match="comment()">
+    <xsl:param name="indent" select="''" />
+    <xsl:value-of select="$indent" />
+    <xsl:text>&lt;!--</xsl:text>
+    <xsl:value-of select="." />
+    <xsl:text>--&gt;
+</xsl:text>
   </xsl:template>
 </xsl:stylesheet>
