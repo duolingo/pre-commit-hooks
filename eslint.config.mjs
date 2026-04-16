@@ -224,7 +224,7 @@ const config = {
     "unicorn/no-useless-spread": "error",
     // "unicorn/no-useless-undefined": "error", // Doesn't play well with TS
     "unicorn/no-zero-fractions": "error",
-    "unicorn/number-literal-case": "error",
+    // "unicorn/number-literal-case": "error", // Implemented by Prettier
     // "unicorn/numeric-separators-style": "error",
     // "unicorn/prefer-add-event-listener": "error",
     // "unicorn/prefer-array-find": "error", // Doesn't play well with TS, which types `filter(...)[0]` as non-undefined
