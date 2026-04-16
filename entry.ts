@@ -271,48 +271,18 @@ const HOOKS: Record<HookName, Hook> = {
     runAfter: [HookName.Sed, HookName.EsLint],
   },
   [HookName.PrettierXml]: {
-    action: async sources => {
-      await run(
+    action: sources =>
+      run(
         "prettier",
         ...PRETTIER_OPTIONS,
         "--plugin",
         // https://github.com/prettier/prettier/issues/15141#issuecomment-1685112479
         "/usr/local/lib/node_modules/@prettier/plugin-xml/src/plugin.js",
+        "--xml-sort-attributes-by-key",
         "--xml-whitespace-sensitivity",
         "preserve",
         ...sources,
-      );
-      await Promise.all(
-        sources.map(source =>
-          transformFile(source, data => {
-            const lines = data.split("\n");
-            const result: string[] = [];
-            let attrs: string[] = [];
-            const flush = () => {
-              if (attrs.length) {
-                const xmlns: string[] = [];
-                const rest: string[] = [];
-                for (const a of attrs) {
-                  (/^\s+xmlns[=:]/.test(a) ? xmlns : rest).push(a);
-                }
-                result.push(...xmlns.sort(), ...rest.sort());
-                attrs = [];
-              }
-            };
-            for (const line of lines) {
-              if (/^\s+\S+="[^"]*"$/.test(line)) {
-                attrs.push(line);
-              } else {
-                flush();
-                result.push(line);
-              }
-            }
-            flush();
-            return result.join("\n");
-          }),
-        ),
-      );
-    },
+      ),
     include: /\.xml$/,
     runAfter: [HookName.Sed],
   },

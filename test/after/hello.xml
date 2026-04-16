@@ -10,7 +10,7 @@
   <TextView
     android:id="@+id/body"
     android:layout_width="wrap_content"
-    style="@style/foobar"
     tools:text="Hello world"
+    style="@style/foobar"
   />
 </androidx.constraintlayout.widget.ConstraintLayout>
