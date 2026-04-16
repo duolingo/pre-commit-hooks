@@ -24,7 +24,7 @@ const PRETTIER_OPTIONS = [
   "/tmp/prettier-cache",
   "--end-of-line",
   "auto",
-  "--experimental-cli",
+  // "--experimental-cli", // Buggy, breaks XML plugin
   "--ignore-path",
   EMPTY_FILE,
   "--log-level",
