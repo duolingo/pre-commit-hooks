@@ -18,7 +18,6 @@ The main hook that runs several code formatters in parallel:
 - [gofmt](https://pkg.go.dev/cmd/gofmt) v1.26.2 for Go
 - [scalafmt](https://scalameta.org/scalafmt/) v3.11.0 for Scala
 - [shfmt](https://github.com/mvdan/sh) v3.13.1 for Shell
-- [xsltproc](http://www.xmlsoft.org/xslt/xsltproc.html) from libxslt v10143 for XML
 - [terraform fmt](https://github.com/hashicorp/terraform) v1.14.8 for Terraform
 - [packer fmt](https://github.com/hashicorp/packer) v1.15.1 for Packer
 - [ClangFormat](https://clang.llvm.org/docs/ClangFormat.html) v20.1.0 for C++, Protobuf

@@ -98,7 +98,6 @@ const enum HookName {
   Svgo = "SVGO",
   Taplo = "Taplo",
   TerraformFmt = "terraform fmt",
-  Xsltproc = "xsltproc",
 }
 
 /** Arguments passed into this hook via the `args` pre-commit config key */
@@ -279,10 +278,13 @@ const HOOKS: Record<HookName, Hook> = {
         "--plugin",
         // https://github.com/prettier/prettier/issues/15141#issuecomment-1685112479
         "/usr/local/lib/node_modules/@prettier/plugin-xml/src/plugin.js",
+        "--xml-sort-attributes-by-key",
+        "--xml-whitespace-sensitivity",
+        "preserve",
         ...sources,
       ),
     include: /\.xml$/,
-    runAfter: [HookName.Sed, HookName.Xsltproc],
+    runAfter: [HookName.Sed],
   },
   [HookName.Ruff]: {
     action: async (sources, args) => {
@@ -474,16 +476,6 @@ const HOOKS: Record<HookName, Hook> = {
         sources.map(source => run("/terraform", "fmt", "-write=true", source)),
       ),
     include: /\.tf$/,
-    runAfter: [HookName.Sed],
-  },
-  [HookName.Xsltproc]: {
-    action: sources =>
-      Promise.all(
-        sources.map(source =>
-          run("xsltproc", "--output", source, "/stylesheet.xml", source),
-        ),
-      ),
-    include: /\.xml$/,
     runAfter: [HookName.Sed],
   },
 };

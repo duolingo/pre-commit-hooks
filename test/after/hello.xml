@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE ldml SYSTEM "../../common/dtd/ldml.dtd">
 <androidx.constraintlayout.widget.ConstraintLayout
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -9,7 +10,7 @@
   <TextView
     android:id="@+id/body"
     android:layout_width="wrap_content"
-    style="@style/foobar"
     tools:text="Hello world"
+    style="@style/foobar"
   />
 </androidx.constraintlayout.widget.ConstraintLayout>

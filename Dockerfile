@@ -41,7 +41,6 @@ apk add --no-cache --virtual .build-deps \
   py3-pip \
   python3-dev
 apk add --no-cache \
-  libxslt \
   nodejs \
   python3
 pip3 install --break-system-packages \
