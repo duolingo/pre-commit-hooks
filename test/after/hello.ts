@@ -45,3 +45,41 @@ interface Options {
 type Point = { x: number; y: number };
 
 export type { Combined, Level, Options, Point };
+
+const arr: string[] = [];
+const idx: Record<string, number> = {};
+const x = 5;
+namespace MyModule {
+  export const val = 1;
+}
+type Callable = () => string;
+const y = "hello" as const;
+const sliced = "hello".slice(1, 3);
+const trimmed = " hello ".trimStart();
+if (trimmed) {
+  console.log("yes");
+} else {
+  console.log("no");
+}
+console.log(
+  "argumentOne",
+  "argumentTwo",
+  "argumentThree",
+  "argumentFour",
+  "argumentFive",
+  "six",
+);
+/**
+ * @param a - first
+ * @param b - second
+ * @returns result
+ */
+function check(a, b) {
+  return a.length > b;
+}
+try {
+  check("hello", 3);
+} catch {
+  console.log("failed");
+}
+const s = "hello" as string;

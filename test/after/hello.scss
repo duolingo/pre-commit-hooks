@@ -1,5 +1,9 @@
 html {
   body {
-    height: 0;
+    a,
+    span {
+      height: 0;
+      color: red;
+    }
   }
 }

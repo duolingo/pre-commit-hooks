@@ -2,3 +2,8 @@ html,
 body {
   height: 0;
 }
+.foo,
+.bar {
+  color: #ff0000;
+  font-size: 12px;
+}

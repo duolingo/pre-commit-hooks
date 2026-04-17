@@ -42,3 +42,24 @@ interface Options {
 type Point = { y: number; x: number };
 
 export type { Options, Combined, Level, Point };
+
+// tslint:disable-next-line
+const arr: Array<string> = new Array();
+const idx: {[key: string]: number} = {};
+const x: number = 5;
+module MyModule { export const val = 1; }
+interface Callable { (): string }
+let y = "hello" as "hello";
+const sliced = "hello".substring(1, 3);
+const trimmed = " hello ".trimLeft();
+if (!trimmed) { console.log('no'); } else { console.log('yes'); }
+console.log("argumentOne", "argumentTwo", "argumentThree", "argumentFour", "argumentFive", "six");
+/**
+ * @param {string} a - first
+ * @param {number} b - second
+ * @returns {boolean} result
+ */
+function check(a, b) { return a.length > b; }
+try { check("hello", 3); } catch (err) { console.log("failed"); }
+const s = <string>"hello";
+export {};

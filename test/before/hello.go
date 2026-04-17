@@ -1,2 +1,4 @@
-package main;import   "fmt";func main(){
-fmt.Println ("Hello world");}
+package main;import(  "fmt"
+"os"  );func  main(  ){
+  fmt.Println  ("Hello world")
+    os.Exit(  0  )}
