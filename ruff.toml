@@ -10,6 +10,10 @@ ignore = [
   # hint comments. Ruff also seems to have an unfortunate bug: it can end up
   # moving a `pylint: disable=unused-import` comment from one import to another
   "F401",
+  # This rule removes `+` between string literals. Implicit concatenation is an
+  # extremely footgunny anti-feature of Python. Ideally we'd automatically add
+  # `+` but no such rule exists right now
+  "ISC003",
   # This rule inexplicably converts `elif a or isinstance(b, C) or isinstance
   # (b, D)` to `elif isinstance(b, (C, D))`, buggily removing condition `a`
   "SIM101",
