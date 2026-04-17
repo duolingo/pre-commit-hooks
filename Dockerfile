@@ -20,7 +20,8 @@ RUN tsc \
 FROM amazoncorretto:21.0.10-alpine3.23 AS jre
 RUN apk add binutils && jlink \
   --add-modules java.se,jdk.compiler,jdk.unsupported \
-  --compress zip-6 \
+  --compress zip-9 \
+  --dedup-legal-notices=error-if-not-same-content \
   --no-header-files \
   --no-man-pages \
   --output /jre \
@@ -47,7 +48,7 @@ pip3 install --break-system-packages \
   autoflake==1.7.8 \
   isort==5.13.2 \
   ruff==0.15.10 \
-  PyYAML>=6.0
+  'PyYAML>=6.0'
 
 # Install Python dependencies
 python3 -m venv /black21-venv
@@ -91,25 +92,44 @@ gzip -d taplo.gz
 chmod +x taplo
 wget https://releases.hashicorp.com/terraform/1.14.8/terraform_1.14.8_linux_amd64.zip -O tf.zip
 unzip tf.zip
-rm tf.zip
-rm LICENSE.txt
+rm tf.zip LICENSE.txt
 wget https://releases.hashicorp.com/packer/1.15.1/packer_1.15.1_linux_amd64.zip -O packer.zip
 unzip packer.zip
-rm packer.zip
+rm packer.zip LICENSE.txt
 
 # Create an empty file for the linters that need one for some reason
 touch /emptyfile
+
+# Strip unused metadata from node_modules
+find /usr/local/lib/node_modules \
+  \( -name '*.md' -o -name '*.markdown' -o -name '*.map' -o -name '*.d.ts' \
+     -o -name 'LICENSE*' -o -name 'CHANGELOG*' -o -name 'HISTORY*' \
+     -o -name 'AUTHORS*' -o -name 'CONTRIBUTORS*' \) -type f -delete
+find /usr/local/lib/node_modules -type d \
+  \( -name 'test' -o -name 'tests' -o -name '__tests__' -o -name '.github' \) \
+  -exec rm -rf {} +
 
 # Delete unused files found by running `apk add ncdu && ncdu` inside `make shell`
 apk del .build-deps
 rm -rf \
   /bin/coursier \
+  /black21-venv/bin/Activate.ps1 \
+  /black21-venv/bin/activate.csh \
+  /black21-venv/bin/activate.fish \
+  /black21-venv/bin/pip \
+  /black21-venv/bin/pip3 \
+  /black21-venv/bin/pip3.12 \
   /black21-venv/lib/python3.12/site-packages/pip \
   /black21-venv/lib/python3.12/site-packages/pkg_resources \
   /black21-venv/lib/python3.12/site-packages/setuptools \
   /root/.cache \
   /root/.npm \
   /usr/bin/lto-dump \
+  /usr/lib/python3.12/ensurepip \
+  /usr/lib/python3.12/lib2to3 \
+  /usr/lib/python3.12/site-packages/test_autoflake.py \
+  /usr/lib/python3.12/turtle.py \
+  /usr/lib/python3.12/turtledemo \
   /var/cache
 EOF
 # https://stackoverflow.com/a/59485924
