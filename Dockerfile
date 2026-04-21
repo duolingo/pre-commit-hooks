@@ -46,17 +46,8 @@ apk add --no-cache \
   python3
 pip3 install --break-system-packages \
   autoflake==1.7.8 \
-  isort==5.13.2 \
   ruff==0.15.10 \
   'PyYAML>=6.0'
-
-# Install Python dependencies
-python3 -m venv /black21-venv
-source /black21-venv/bin/activate
-pip3 install black==21.12b0 click==8.0.4
-deactivate
-echo 'source /black21-venv/bin/activate && black "$@"' > /usr/bin/black21
-chmod +x /usr/bin/black21
 
 # Install Node dependencies
 npm install -g \
@@ -113,15 +104,6 @@ find /usr/local/lib/node_modules -type d \
 apk del .build-deps
 rm -rf \
   /bin/coursier \
-  /black21-venv/bin/Activate.ps1 \
-  /black21-venv/bin/activate.csh \
-  /black21-venv/bin/activate.fish \
-  /black21-venv/bin/pip \
-  /black21-venv/bin/pip3 \
-  /black21-venv/bin/pip3.12 \
-  /black21-venv/lib/python3.12/site-packages/pip \
-  /black21-venv/lib/python3.12/site-packages/pkg_resources \
-  /black21-venv/lib/python3.12/site-packages/setuptools \
   /root/.cache \
   /root/.npm \
   /usr/bin/lto-dump \
