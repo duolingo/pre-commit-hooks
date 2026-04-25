@@ -28,10 +28,18 @@ RUN apk add binutils && jlink \
   --strip-debug
 
 FROM alpine:3.23.4
+ARG TARGETARCH
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 ENV PIP_NO_CACHE_DIR=1
 RUN <<EOF
 set -eu
+
+# Map TARGETARCH to per-tool arch slugs
+case "$TARGETARCH" in
+  amd64) TAPLO_ARCH=x86_64 ;;
+  arm64) TAPLO_ARCH=aarch64 ;;
+  *) echo "Unsupported TARGETARCH: $TARGETARCH" >&2; exit 1 ;;
+esac
 
 # Install Alpine dependencies
 apk add --no-cache --virtual .build-deps \
@@ -46,6 +54,7 @@ apk add --no-cache \
   python3
 pip3 install --break-system-packages \
   autoflake==1.7.8 \
+  clang-format==20.1.8 \
   isort==5.13.2 \
   ruff==0.15.10 \
   'PyYAML>=6.0'
@@ -80,20 +89,18 @@ coursier bootstrap org.scalameta:scalafmt-cli_2.13:3.11.0 \
   -o scalafmt
 
 # Install static binaries
-wget https://github.com/muttleyxd/clang-tools-static-binaries/releases/download/master-796e77c/clang-format-20_linux-amd64 -O clang-format
-chmod +x clang-format
 wget https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format-1.35.0-all-deps.jar -O google-java-format
 wget https://repo1.maven.org/maven2/com/facebook/ktfmt/0.62/ktfmt-0.62-with-dependencies.jar -O ktfmt
 wget https://repo1.maven.org/maven2/com/squareup/sort-gradle-dependencies-app/0.16/sort-gradle-dependencies-app-0.16-all.jar -O gradle-dependencies-sorter
-wget https://github.com/mvdan/sh/releases/download/v3.13.1/shfmt_v3.13.1_linux_amd64 -O shfmt
+wget "https://github.com/mvdan/sh/releases/download/v3.13.1/shfmt_v3.13.1_linux_${TARGETARCH}" -O shfmt
 chmod +x shfmt
-wget https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-linux-x86_64.gz -O taplo.gz
+wget "https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-linux-${TAPLO_ARCH}.gz" -O taplo.gz
 gzip -d taplo.gz
 chmod +x taplo
-wget https://releases.hashicorp.com/terraform/1.14.8/terraform_1.14.8_linux_amd64.zip -O tf.zip
+wget "https://releases.hashicorp.com/terraform/1.14.8/terraform_1.14.8_linux_${TARGETARCH}.zip" -O tf.zip
 unzip tf.zip
 rm tf.zip LICENSE.txt
-wget https://releases.hashicorp.com/packer/1.15.1/packer_1.15.1_linux_amd64.zip -O packer.zip
+wget "https://releases.hashicorp.com/packer/1.15.1/packer_1.15.1_linux_${TARGETARCH}.zip" -O packer.zip
 unzip packer.zip
 rm packer.zip LICENSE.txt
 
