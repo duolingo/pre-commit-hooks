@@ -67,13 +67,11 @@ const transformFile = async (
 
 const enum HookName {
   Autoflake = "autoflake",
-  Black = "Black",
   ClangFormat = "ClangFormat",
   EsLint = "ESLint",
   Gofmt = "gofmt",
   GoogleJavaFormat = "google-java-format",
   GradleDependenciesSorter = "gradle-dependencies-sorter",
-  Isort = "isort",
   Ktfmt = "ktfmt",
   PackerFmt = "packer fmt",
   Prettier = "Prettier",
@@ -130,28 +128,6 @@ const HOOKS: Record<HookName, Hook> = {
     include: /\.py$/,
     runAfter: [HookName.Sed],
   },
-  [HookName.Black]: {
-    action: async (sources, args) =>
-      args["python-version"]?.startsWith("2") &&
-      run(
-        // Black 21.x was the last major version with Python 2 support. It also
-        // had a bug that requires pinning click==8.0.4. Both packages should
-        // be removed once we drop Python 2 support.
-        // https://github.com/psf/black/issues/2964
-        "black21",
-        "--fast",
-        "--target-version",
-        "py27",
-        "--config",
-        EMPTY_FILE,
-        "--line-length",
-        "100",
-        "--quiet",
-        ...sources,
-      ),
-    include: /\.py$/,
-    runAfter: [HookName.Isort],
-  },
   [HookName.ClangFormat]: {
     action: sources =>
       run(
@@ -200,16 +176,6 @@ const HOOKS: Record<HookName, Hook> = {
     // can cause parsing errors
     include: /build\.gradle\.kts$/,
     runAfter: [HookName.Sed],
-  },
-  [HookName.Isort]: {
-    // isort's automatic config file detection is broken
-    // https://github.com/PyCQA/isort/issues/1907
-    // https://github.com/samueljsb/qaz/pull/104
-    action: (sources, args) =>
-      args["python-version"]?.startsWith("2") &&
-      run("isort", "--settings", "/.editorconfig", ...sources),
-    include: /\.py$/,
-    runAfter: [HookName.Autoflake],
   },
   [HookName.Ktfmt]: {
     action: async sources => {
@@ -275,10 +241,7 @@ const HOOKS: Record<HookName, Hook> = {
     runAfter: [HookName.Sed],
   },
   [HookName.Ruff]: {
-    action: async (sources, args) => {
-      if (args["python-version"]?.startsWith("2")) {
-        return;
-      }
+    action: async sources => {
       // Sometimes Ruff requires multiple passes, which is ok since it's fast
       for (let i = 0; i < 2; ++i) {
         await run("ruff", "check", "--config", "/ruff.toml", ...sources);
@@ -317,7 +280,7 @@ const HOOKS: Record<HookName, Hook> = {
   // to ever actually be needed. At Duolingo, we determine the latter criterion
   // empirically by seeing how many existing violations our codebase contains
   [HookName.Sed]: {
-    action: (sources, args) =>
+    action: sources =>
       Promise.all(
         sources.map(source =>
           transformFile(source, data => {
@@ -357,14 +320,11 @@ const HOOKS: Record<HookName, Hook> = {
                 "",
               );
 
-              // Transform Python 3
-              if (!args["python-version"]?.startsWith("2")) {
-                // Remove unnecessary encoding declarations
-                data = data.replace(/^# -\*- coding: utf-?8.*?\n/gim, "");
+              // Remove unnecessary encoding declarations
+              data = data.replace(/^# -\*- coding: utf-?8.*?\n/gim, "");
 
-                // Remove unnecessary base class declarations
-                data = data.replace(/(?<=^ *class \S+?)\(object\)(?=:)/gm, "");
-              }
+              // Remove unnecessary base class declarations
+              data = data.replace(/(?<=^ *class \S+?)\(object\)(?=:)/gm, "");
             }
 
             return data;
@@ -493,8 +453,6 @@ const prefixLines = (() => {
       /^\s*$/,
       // ktfmt spams this for every file that has no violations
       /\bDone formatting .+\.kts?$/,
-      // Black 21.12b0 spams this when running on Python 2 source code
-      /\bDEPRECATION: Python 2 support\b/,
     ]
       .map(regex => regex.source)
       .join("|"),
@@ -522,6 +480,12 @@ const prefixLines = (() => {
         args[matches[1] as Arg] = matches[2] as string;
       }
     }
+  }
+
+  // Python 2 is no longer supported
+  if (args["python-version"]?.startsWith("2")) {
+    console.error("This hook no longer supports Python 2.");
+    process.exit(1);
   }
 
   // Augment hook definitions to make them lockable
