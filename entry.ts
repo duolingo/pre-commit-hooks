@@ -155,7 +155,7 @@ const HOOKS: Record<HookName, Hook> = {
   [HookName.ClangFormat]: {
     action: sources =>
       run(
-        "/clang-format",
+        "clang-format",
         "-i", // Edit files in-place
         "--style=file:/.clang-format",
         ...sources,
