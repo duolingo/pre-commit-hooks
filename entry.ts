@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { exec } from "child_process";
+import { randomUUID } from "crypto";
 import { createReadStream } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import { createInterface } from "readline";
@@ -279,10 +280,59 @@ const HOOKS: Record<HookName, Hook> = {
       if (args["python-version"]?.startsWith("2")) {
         return;
       }
+
+      // Get a Ruff config file based on our default config file, extended with
+      // any Ruff config declared in the consumer's pyproject.toml
+      const config = await (async () => {
+        const baseConfig = "/ruff.toml";
+        let pyprojectToml: string;
+        try {
+          pyprojectToml = await readFile("pyproject.toml", "utf8");
+        } catch {
+          return baseConfig;
+        }
+
+        // Detect, parse, and "shift up" any Ruff config sections
+        const sectionRe = /^\s*\[([^\[\]]+)\]\s*(?:#.*)?$/;
+        const topLevel: string[] = [];
+        const subsections: string[] = [];
+        let target: string[] | null = null;
+        for (const line of pyprojectToml.split("\n")) {
+          const match = line.match(sectionRe);
+          if (match) {
+            const name = match[1].trim();
+            if (name === "tool.ruff") {
+              target = topLevel;
+            } else if (name.startsWith("tool.ruff.")) {
+              target = subsections;
+              subsections.push(`[${name.slice("tool.ruff.".length)}]`);
+            } else {
+              target = null;
+            }
+          } else if (target) {
+            target.push(line);
+          }
+        }
+        if (!topLevel.length && !subsections.length) {
+          return baseConfig;
+        }
+        if (topLevel.some(line => /^\s*extend\s*=/.test(line))) {
+          throw new Error("This hook doesn't support `extend` in [tool.ruff]");
+        }
+
+        const mergedPath = `/tmp/ruff-merged-${randomUUID()}.toml`;
+        await writeFile(
+          mergedPath,
+          [`extend = "${baseConfig}"`, ...topLevel, ...subsections].join("\n"),
+          "utf8",
+        );
+        return mergedPath;
+      })();
+
       // Sometimes Ruff requires multiple passes, which is ok since it's fast
       for (let i = 0; i < 2; ++i) {
-        await run("ruff", "check", "--config", "/ruff.toml", ...sources);
-        await run("ruff", "format", "--config", "/ruff.toml", ...sources);
+        await run("ruff", "check", "--config", config, ...sources);
+        await run("ruff", "format", "--config", config, ...sources);
       }
     },
     include: /\.py$/,
