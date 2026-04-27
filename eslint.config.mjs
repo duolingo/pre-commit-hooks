@@ -7,6 +7,10 @@ import sortKeys from "eslint-plugin-sort-keys";
 import unicorn from "eslint-plugin-unicorn";
 import tseslint from "typescript-eslint";
 
+// Sort properties before methods to avoid conflicts with
+// @typescript-eslint/member-ordering, which expects that order by default
+const PERFECTIONIST_CONFIG = ["error", { groups: ["property", "method"] }];
+
 const config = {
   files: ["**/*.{js,jsx,mjs,ts,tsx}"],
   languageOptions: { parser: tseslint.parser },
@@ -137,14 +141,15 @@ const config = {
     // "jsdoc/text-escaping": "error",
 
     // perfectionist rules. https://perfectionist.dev/rules
+    "perfectionist/sort-classes": PERFECTIONIST_CONFIG,
     // "perfectionist/sort-enums" // Reordering can change numeric enum values
     // "perfectionist/sort-heritage-clauses" // Not worth the churn when interfaces are involved
     // "perfectionist/sort-imports" // TODO: Enable once grouping is more configurable
-    "perfectionist/sort-interfaces": "error",
+    "perfectionist/sort-interfaces": PERFECTIONIST_CONFIG,
     // "perfectionist/sort-intersection-types" // Not worth the churn when interfaces are involved
     "perfectionist/sort-named-exports": "error",
     "perfectionist/sort-named-imports": "error",
-    "perfectionist/sort-object-types": "error",
+    "perfectionist/sort-object-types": PERFECTIONIST_CONFIG,
     // "perfectionist/sort-objects // Prefer sort-keys because it leaves computed properties alone
     // "perfectionist/sort-switch-case" // TODO: Enable once it supports partitionByNewLine
     // "perfectionist/sort-union-types" // Not worth the churn when interfaces are involved
