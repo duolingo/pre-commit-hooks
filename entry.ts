@@ -232,6 +232,7 @@ const HOOKS: Record<HookName, Hook> = {
         );
       }
     },
+    exclude: /build\.gradle\.kts$/,
     include: /\.kts?$/,
     runAfter: [HookName.Sed],
   },
