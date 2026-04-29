@@ -12,7 +12,7 @@ The main hook that runs several code formatters in parallel:
 - [autoflake](https://github.com/myint/autoflake) v1.7.8 for Python <!-- TODO: Remove in favor of Ruff rule F401 once our Python 3 repos that were converted from Python 2 no longer use type hint comments: https://github.com/PyCQA/autoflake/issues/222#issuecomment-1419089254 -->
 - [google-java-format](https://github.com/google/google-java-format) v1.35.0 for Java
 - [ktfmt](https://github.com/facebookincubator/ktfmt) v0.62 for Kotlin
-- [gradle-dependencies-sorter](https://github.com/square/gradle-dependencies-sorter) v0.16 for Gradle Kotlin
+- [gradle-dependencies-sorter](https://github.com/square/gradle-dependencies-sorter) v0.17.1 for Gradle Kotlin
 - [gofmt](https://pkg.go.dev/cmd/gofmt) v1.26.2 for Go
 - [scalafmt](https://scalameta.org/scalafmt/) v3.11.0 for Scala
 - [shfmt](https://github.com/mvdan/sh) v3.13.1 for Shell
