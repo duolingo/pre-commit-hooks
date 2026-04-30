@@ -28,13 +28,16 @@ class OutputGenerator(ABC):
         """Return start and end markers for auto-generated section."""
 
     @property
+    def gitattributes_patterns(self) -> List[str]:
+        """Glob patterns (repo-root-relative) to mark as linguist-generated in .gitattributes."""
+        return []
+
+    @property
     def is_multi_file(self) -> bool:
         """Whether this generator creates files directly via generate_files()."""
         return False
 
-    def generate_files(
-        self, rules: Dict[str, List[RuleMetadata]], project_root: str
-    ) -> None:
+    def generate_files(self, rules: Dict[str, List[RuleMetadata]], project_root: str) -> None:
         """Generate multiple files directly. Only called when is_multi_file is True."""
         raise NotImplementedError(
             f"{type(self).__name__} sets is_multi_file=True but does not implement generate_files()"
