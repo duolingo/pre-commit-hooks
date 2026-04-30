@@ -39,6 +39,12 @@ interface Options {
   Cache: boolean;
 }
 
+interface Mixed {
+  a(): 3;
+  c: 1;
+  b: () => 2;
+}
+
 type Point = { y: number; x: number };
 
 export type { Options, Combined, Level, Point };

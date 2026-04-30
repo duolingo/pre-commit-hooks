@@ -7,6 +7,29 @@ import sortKeys from "eslint-plugin-sort-keys";
 import unicorn from "eslint-plugin-unicorn";
 import tseslint from "typescript-eslint";
 
+// Match @typescript-eslint/member-ordering's default order for interfaces and
+// type literals: index signatures, then properties, then methods.
+// Perfectionist's `method` selector captures both real method signatures
+// (`foo(): void`, a TSMethodSignature) and function-typed properties (`foo: ()
+// => void`, a TSPropertySignature), but typescript-eslint and most readers
+// treat the latter as a field. We carve those out via a custom group: only
+// TSPropertySignature exposes elementValue, so `selector: method` +
+// `elementValuePattern` matches them and not real methods. The nested array
+// merges them back into `property`.
+const PERFECTIONIST_CONFIG = [
+  "error",
+  {
+    customGroups: [
+      {
+        elementValuePattern: ".",
+        groupName: "function-property",
+        selector: "method",
+      },
+    ],
+    groups: ["index-signature", ["property", "function-property"], "method"],
+  },
+];
+
 const config = {
   files: ["**/*.{js,jsx,mjs,ts,tsx}"],
   languageOptions: { parser: tseslint.parser },
@@ -137,14 +160,15 @@ const config = {
     // "jsdoc/text-escaping": "error",
 
     // perfectionist rules. https://perfectionist.dev/rules
+    // "perfectionist/sort-classes" // Not worth all the config needed to match @typescript-eslint/member-ordering perfectly
     // "perfectionist/sort-enums" // Reordering can change numeric enum values
     // "perfectionist/sort-heritage-clauses" // Not worth the churn when interfaces are involved
     // "perfectionist/sort-imports" // TODO: Enable once grouping is more configurable
-    "perfectionist/sort-interfaces": "error",
+    "perfectionist/sort-interfaces": PERFECTIONIST_CONFIG,
     // "perfectionist/sort-intersection-types" // Not worth the churn when interfaces are involved
     "perfectionist/sort-named-exports": "error",
     "perfectionist/sort-named-imports": "error",
-    "perfectionist/sort-object-types": "error",
+    "perfectionist/sort-object-types": PERFECTIONIST_CONFIG,
     // "perfectionist/sort-objects // Prefer sort-keys because it leaves computed properties alone
     // "perfectionist/sort-switch-case" // TODO: Enable once it supports partitionByNewLine
     // "perfectionist/sort-union-types" // Not worth the churn when interfaces are involved
