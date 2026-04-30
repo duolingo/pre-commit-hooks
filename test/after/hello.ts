@@ -42,6 +42,12 @@ interface Options {
   verbose: boolean;
 }
 
+interface Mixed {
+  b: () => 2;
+  c: 1;
+  a(): 3;
+}
+
 type Point = { x: number; y: number };
 
 export type { Combined, Level, Options, Point };
