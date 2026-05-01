@@ -28,11 +28,6 @@ class OutputGenerator(ABC):
         """Return start and end markers for auto-generated section."""
 
     @property
-    def gitattributes_patterns(self) -> List[str]:
-        """Glob patterns (repo-root-relative) to mark as linguist-generated in .gitattributes."""
-        return []
-
-    @property
     def is_multi_file(self) -> bool:
         """Whether this generator creates files directly via generate_files()."""
         return False

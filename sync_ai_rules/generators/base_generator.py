@@ -18,10 +18,6 @@ class BaseGenerator(OutputGenerator):
             ".github/copilot-instructions.md",
         ]
 
-    @property
-    def gitattributes_patterns(self) -> List[str]:
-        return self.default_filenames
-
     def _format_heading(self, category: str) -> str:
         """Format category as heading."""
         return category.replace("-", " ").replace("_", " ").title()
