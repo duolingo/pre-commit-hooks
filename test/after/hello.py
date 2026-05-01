@@ -12,7 +12,7 @@ class Bar(Foo):
 
 
 x = {}
-y = []
+y = []  # noqa
 z = ()
 s = set()
 f = frozenset()
