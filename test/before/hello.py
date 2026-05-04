@@ -6,7 +6,7 @@ class Bar( Foo ):
       def __init__( self ):
             super(Bar,  self).__init__(  )
 x =dict()
-y=  list()
+y=  list()  # noqa
 z  =tuple()
 s = set([])
 f=frozenset([])
