@@ -32,9 +32,7 @@ class OutputGenerator(ABC):
         """Whether this generator creates files directly via generate_files()."""
         return False
 
-    def generate_files(
-        self, rules: Dict[str, List[RuleMetadata]], project_root: str
-    ) -> None:
+    def generate_files(self, rules: Dict[str, List[RuleMetadata]], project_root: str) -> None:
         """Generate multiple files directly. Only called when is_multi_file is True."""
         raise NotImplementedError(
             f"{type(self).__name__} sets is_multi_file=True but does not implement generate_files()"
