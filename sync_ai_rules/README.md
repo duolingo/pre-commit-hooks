@@ -1,13 +1,14 @@
 # sync-ai-rules
 
-Synchronizes AI rules to configuration files for Claude, GitHub Copilot, and other AI assistants. Parses rules from source directories and generates documentation sections automatically.
+Synchronizes AI rules from `.cursor/rules/` to configuration files for Claude Code, GitHub Copilot, and other AI assistants. Parses rules from source directories and generates tool-specific output automatically.
 
-## Supported Formats
+**Skills vs rules**: This tool handles _rules_ (guidance, conventions, constraints) -- not _skills_ (step-by-step workflows). Skills should be authored directly in `.agents/skills/` following the [Agent Skills](https://agentskills.io) open standard, which is natively supported by Cursor, Codex, Copilot, and 30+ other tools. Claude Code reads from `.claude/skills/` only; this tool auto-creates a symlink from `.claude/skills` to `.agents/skills` to bridge the gap.
 
-- **Development Rules** - `.cursor/rules/*.mdc` files (YAML frontmatter) → Development Rules section
-- **Code Review Guidelines** - `.code_review/*.md` files (HTML comment frontmatter) → Code Review Guidelines section
+## Pipelines
 
-Target files: `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`
+- **Claude Rules** - `.cursor/rules/*.mdc` → `.claude/rules/generated/*.md` (path-scoped rules with `paths` frontmatter)
+- **Development Rules** - `.cursor/rules/*.mdc` → `AGENTS.md` + `.github/copilot-instructions.md` (auto-generated sections)
+- **Code Review Guidelines** - `.code_review/*.md` → `AGENTS.md` + `.github/copilot-instructions.md` (auto-generated sections)
 
 ## Extending the System
 

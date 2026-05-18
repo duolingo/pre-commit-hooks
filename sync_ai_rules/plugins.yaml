@@ -1,14 +1,14 @@
 # Plugin configuration for sync_ai_rules
 
 pipelines:
-  - name: claude-skills
-    description: Generate Claude Code skills in .claude/skills/ directory
+  - name: claude-rules
+    description: Generate Claude Code rules in .claude/rules/generated/ directory
     parser:
       module: mdc_parser
       class: MDCParser
     generator:
-      module: skills_generator
-      class: SkillsGenerator
+      module: claude_rules_generator
+      class: ClaudeRulesGenerator
 
   - name: development-rules
     description: Generate development rules documentation from .cursor/rules/

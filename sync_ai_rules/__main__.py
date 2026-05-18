@@ -3,9 +3,12 @@
 This script uses a plugin architecture to parse rules and generate documentation.
 """
 
+import logging
 import os
 from pathlib import Path
 from typing import Dict, List
+
+logger = logging.getLogger(__name__)
 
 from sync_ai_rules.core.plugin_manager import PluginManager
 from sync_ai_rules.core.rule_metadata import RuleMetadata
@@ -68,6 +71,31 @@ def _write_gitattributes(directory: str, filenames: List[str]) -> None:
             f.write(f"{name} linguist-generated\n")
 
 
+def _ensure_agents_skills_symlink(project_root: str) -> None:
+    """Create .claude/skills -> .agents/skills so Claude Code discovers Agent Skills."""
+    agents_skills = os.path.join(project_root, ".agents", "skills")
+    if not os.path.isdir(agents_skills):
+        return
+
+    symlink_path = os.path.join(project_root, ".claude", "skills")
+    target = os.path.join("..", ".agents", "skills")
+
+    if os.path.islink(symlink_path):
+        if os.readlink(symlink_path) == target:
+            return
+        os.remove(symlink_path)
+    elif os.path.exists(symlink_path):
+        logger.warning("Skipping symlink: .claude/skills/ already exists as a directory")
+        return
+
+    try:
+        os.makedirs(os.path.join(project_root, ".claude"), exist_ok=True)
+        os.symlink(target, symlink_path)
+        print("  ✓ Created symlink: .claude/skills -> .agents/skills")
+    except OSError as e:
+        logger.warning("Failed to create agents skills symlink: %s", e)
+
+
 def main():
     """Main orchestration: load pipelines → parse → generate → update files."""
     # Setup
@@ -123,6 +151,9 @@ def main():
 
     for dir_path, filenames in output_dirs.items():
         _write_gitattributes(os.path.join(project_root, dir_path), sorted(set(filenames)))
+
+    # Create symlink so Claude Code can discover skills from .agents/skills/
+    _ensure_agents_skills_symlink(project_root)
 
     print("\n✓ Rules synchronization completed!")
 
