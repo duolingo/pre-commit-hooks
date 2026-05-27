@@ -42,9 +42,14 @@ fi
 # Trim, deduplicate, and sort image list
 images="$(echo "${images}" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)"
 
-# Pull images in parallel
+# Pull images in parallel, skipping any that are already cached locally (`docker
+# pull` on a cached image still round-trips to the registry to verify the
+# digest, which takes ~400ms)
 pids=""
 for image in ${images}; do
+  if docker image inspect "${image}" > /dev/null 2>&1; then
+    continue
+  fi
   docker pull --quiet "${image}" &
   pids="${pids} $!"
 done
