@@ -33,6 +33,8 @@ upgrade to pre-commit-hooks {NEW_HOOK_VERSION}.
 - Rules **with** `globs:` set remain as rules (handled by the new `ClaudeRulesGenerator`).
 - Rules **without** `globs:` are converted to `SKILL.md` files under `.agents/skills/<name>/`.
 - Legacy `.claude/skills/generated_*` directories from the old `SkillsGenerator` are removed.
+- Hand-crafted skills in `.claude/skills/` (e.g. `e2e-test-execution`) are moved to `.agents/skills/`.
+- `.claude/skills/` directory is removed so the symlink (`.claude/skills -> .agents/skills`) can be created on the next sync.
 - The `pre-commit-hooks` pin is bumped to `{NEW_HOOK_VERSION}`.
 
 Context: https://github.com/duolingo/pre-commit-hooks/pull/84
@@ -56,7 +58,7 @@ REPOS = [
 
 def transform(org: str, repo: str) -> None:
     _migrate_cursor_rules_to_skills()
-    _remove_legacy_generated_skills()
+    _consolidate_claude_skills()
     _bump_precommit_hook_version(NEW_HOOK_VERSION)
 
 
@@ -95,16 +97,30 @@ def _migrate_cursor_rules_to_skills() -> None:
     _prune_empty_dirs(cursor_rules_dir)
 
 
-# --- Cleanup: remove legacy generated_* skill dirs ---
+# --- Consolidate .claude/skills/ into .agents/skills/ ---
 
 
-def _remove_legacy_generated_skills() -> None:
+def _consolidate_claude_skills() -> None:
     skills_root = Path(".claude/skills")
-    if not skills_root.is_dir():
+    if not skills_root.is_dir() or skills_root.is_symlink():
         return
+
+    agents_skills = Path(".agents/skills")
+
     for entry in list(skills_root.iterdir()):
-        if entry.is_dir() and entry.name.startswith("generated_"):
+        if entry.name.startswith("generated_") and entry.is_dir():
             shutil.rmtree(entry)
+        elif entry.is_dir():
+            dest = agents_skills / entry.name
+            if dest.exists():
+                continue
+            agents_skills.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(entry), str(dest))
+        elif entry.name == ".gitattributes":
+            entry.unlink()
+
+    if skills_root.is_dir() and not any(skills_root.iterdir()):
+        skills_root.rmdir()
 
 
 # --- Version bump ---
