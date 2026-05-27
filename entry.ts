@@ -431,7 +431,7 @@ const HOOKS: Record<HookName, Hook> = {
 /** Files that match this pattern should never be processed */
 const GLOBAL_EXCLUDES = (() => {
   const FOLDER_EXCLUDES = [
-    "\\.claude/skills/generated_[^/]+",
+    "\\.claude/rules/generated",
     "build",
     "node_modules",
   ];
