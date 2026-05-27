@@ -10,6 +10,7 @@ Rules WITHOUT globs become .agents/skills/<slug>/SKILL.md (situational guidance)
 Context: https://github.com/duolingo/pre-commit-hooks/pull/84
 """
 
+import os
 import re
 import shutil
 from pathlib import Path
@@ -121,6 +122,10 @@ def _consolidate_claude_skills() -> None:
 
     if skills_root.is_dir() and not any(skills_root.iterdir()):
         skills_root.rmdir()
+
+    if agents_skills.is_dir() and not skills_root.exists():
+        skills_root.parent.mkdir(parents=True, exist_ok=True)
+        os.symlink(os.path.join("..", ".agents", "skills"), str(skills_root))
 
 
 # --- Version bump ---
