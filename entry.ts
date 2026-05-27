@@ -432,7 +432,6 @@ const HOOKS: Record<HookName, Hook> = {
 const GLOBAL_EXCLUDES = (() => {
   const FOLDER_EXCLUDES = [
     "\\.claude/rules/generated",
-    "\\.claude/skills/generated_[^/]+",
     "build",
     "node_modules",
   ];

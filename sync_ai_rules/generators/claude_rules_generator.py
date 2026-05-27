@@ -8,7 +8,6 @@ with optional paths frontmatter for file-scoped activation.
 import logging
 import os
 import re
-import shutil
 from typing import Any, Dict, List
 
 from sync_ai_rules.core.generator_interface import OutputGenerator
@@ -41,8 +40,6 @@ class ClaudeRulesGenerator(OutputGenerator):
 
     def generate_files(self, rules: Dict[str, List[RuleMetadata]], project_root: str) -> None:
         """Generate rule files in .claude/rules/generated/."""
-        _remove_legacy_skills(project_root)
-
         rules_root = os.path.join(project_root, _RULES_DIR)
 
         # Remove all existing generated files before regenerating
@@ -75,17 +72,6 @@ class ClaudeRulesGenerator(OutputGenerator):
 
     def get_section_markers(self) -> tuple[str, str]:
         return ("", "")
-
-
-def _remove_legacy_skills(project_root: str) -> None:
-    """Remove old generated_* skill directories from .claude/skills/."""
-    skills_root = os.path.join(project_root, ".claude", "skills")
-    if not os.path.isdir(skills_root):
-        return
-    for entry in os.listdir(skills_root):
-        if entry.startswith("generated_") and os.path.isdir(os.path.join(skills_root, entry)):
-            shutil.rmtree(os.path.join(skills_root, entry))
-            print(f"  ✓ Removed legacy skill: {entry}")
 
 
 def _write_gitattributes(rules_root: str) -> None:
