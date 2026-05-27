@@ -41,7 +41,7 @@ upgrade to pre-commit-hooks {NEW_HOOK_VERSION}.
 Context: https://github.com/duolingo/pre-commit-hooks/pull/84
 
 ## Actions for Reviewer
-- [ ] Vibe-check that the converted skill names still match the original rule intent.
+- [ ] Verify converted skill names and descriptions match the original rule intent.
 - [ ] Uncheck if you wish to merge manually (auto-merge is on by default).
 
 Questions: #help-ai-dev-tools
