@@ -1,0 +1,7 @@
+---
+description: GitHub Actions workflow guidelines
+globs: "**/.github/workflows/*.yml, **/.github/actions/**/*.yml"
+alwaysApply: false
+---
+
+Pin third-party actions to a full commit SHA.
