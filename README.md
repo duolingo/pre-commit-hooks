@@ -52,7 +52,7 @@ Repo maintainers can declare these hooks in `.pre-commit-config.yaml`:
 
 ```yaml
 - repo: https://github.com/duolingo/pre-commit-hooks.git
-  rev: 1.15.1
+  rev: 1.15.2
   hooks:
     # Optimization hook for `language: docker_image`
     - id: precache-docker
