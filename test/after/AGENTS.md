@@ -20,6 +20,14 @@ When you decide to apply a rule, you MUST read the entire contents of the actual
 - **File scope**: **/*.swift
 - **Always apply**: false
 
+### Build Deploy
+
+**Github Actions** → `@.cursor/rules/build-deploy/github-actions.mdc`
+
+- **Description**: GitHub Actions workflow guidelines
+- **File scope**: **/.github/workflows/*.yml, **/.github/actions/**/*.yml
+- **Always apply**: false
+
 ### Root
 
 **Rule** → `@.cursor/rules/rule.mdc`

@@ -50,9 +50,9 @@ class MDCParser(InputParser):
             globs = frontmatter.get("globs", [])
             always_apply = frontmatter.get("alwaysApply", False)
 
-        # Ensure globs is a list
+        # Ensure globs is a list; Cursor stores them as a comma-separated string
         if isinstance(globs, str):
-            globs = [globs] if globs else []
+            globs = [g.strip() for g in globs.split(",") if g.strip()]
         elif not isinstance(globs, list):
             globs = []
 
