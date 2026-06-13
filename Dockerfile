@@ -83,6 +83,8 @@ coursier bootstrap org.scalameta:scalafmt-cli_2.13:3.11.0 \
 wget https://github.com/google/google-java-format/releases/download/v1.35.0/google-java-format-1.35.0-all-deps.jar -O google-java-format
 wget https://github.com/facebook/ktfmt/releases/download/v0.63/ktfmt-0.63-with-dependencies.jar -O ktfmt
 wget https://repo1.maven.org/maven2/com/squareup/sort-gradle-dependencies-app/0.18.0/sort-gradle-dependencies-app-0.18.0-all.jar -O gradle-dependencies-sorter
+wget "https://github.com/bazelbuild/buildtools/releases/download/v8.5.1/buildifier-linux-${TARGETARCH}" -O buildifier
+chmod +x buildifier
 wget "https://github.com/mvdan/sh/releases/download/v3.13.1/shfmt_v3.13.1_linux_${TARGETARCH}" -O shfmt
 chmod +x shfmt
 wget "https://github.com/tamasfe/taplo/releases/download/0.10.0/taplo-linux-${TAPLO_ARCH}.gz" -O taplo.gz

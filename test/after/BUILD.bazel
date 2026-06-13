@@ -1,0 +1,16 @@
+load("@rules_java//java:defs.bzl", "java_binary", "java_library")
+
+java_binary(
+    name = "hello",
+    srcs = ["Hello.java"],
+    deps = [":lib"],
+)
+
+java_library(
+    name = "lib",
+    srcs = ["Lib.java"],
+    deps = [
+        "//third_party:guava",
+        "//third_party:jsr305",
+    ],
+)
