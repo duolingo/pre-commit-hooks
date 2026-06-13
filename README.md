@@ -10,6 +10,7 @@ The main hook that runs several code formatters in parallel:
 - [ESLint](https://eslint.org/) v10.2.0 for JS, TypeScript
 - [Ruff](https://docs.astral.sh/ruff/) v0.15.10 for Python
 - [autoflake](https://github.com/myint/autoflake) v1.7.8 for Python <!-- TODO: Remove in favor of Ruff rule F401 once our Python 3 repos that were converted from Python 2 no longer use type hint comments: https://github.com/PyCQA/autoflake/issues/222#issuecomment-1419089254 -->
+- [Buildifier](https://github.com/bazelbuild/buildtools) v8.5.1 for Bazel
 - [google-java-format](https://github.com/google/google-java-format) v1.35.0 for Java
 - [ktfmt](https://github.com/facebookincubator/ktfmt) v0.63 for Kotlin
 - [gradle-dependencies-sorter](https://github.com/square/gradle-dependencies-sorter) v0.18.0 for Gradle Kotlin
@@ -68,6 +69,4 @@ Repo maintainers can declare these hooks in `.pre-commit-config.yaml`:
 
 Directories named `build` and `node_modules` are excluded by default - no need to declare them in the hook's `exclude` key.
 
-Contributors can copy or symlink this repo's `.editorconfig` file to their home directory in order to have their [text editors and IDEs](https://editorconfig.org/) automatically pick up the same linter/formatter settings that this hook uses.
-
-_Duolingo is hiring! Apply at https://www.duolingo.com/careers_
+Contributors can copy or symlink this repo's `.editorconfig` file to their home directory in order to have their [text editors and IDEs](https://editorconfig.org/) automatically pick up the same linter/formatter settings that this ho
