@@ -130,7 +130,7 @@ const HOOKS: Record<HookName, Hook> = {
     runAfter: [HookName.Sed],
   },
   [HookName.Buildifier]: {
-    action: sources => run("/buildifier", ...sources),
+    action: sources => run("/buildifier", "--lint=fix", ...sources),
     include:
       /(?:^|\/)(?:BUILD|BUILD\.bazel|WORKSPACE|WORKSPACE\.bazel|MODULE\.bazel)$|\.bzl$/,
     runAfter: [HookName.Sed],
