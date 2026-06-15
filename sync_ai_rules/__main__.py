@@ -71,29 +71,29 @@ def _write_gitattributes(directory: str, filenames: List[str]) -> None:
             f.write(f"{name} linguist-generated\n")
 
 
-def _ensure_agents_skills_symlink(project_root: str) -> None:
-    """Create .claude/skills -> .agents/skills so Claude Code discovers Agent Skills."""
-    agents_skills = os.path.join(project_root, ".agents", "skills")
-    if not os.path.isdir(agents_skills):
-        return
+def _ensure_agents_skills_symlinks(project_root: str) -> None:
+    """Create .claude/skills -> .agents/skills wherever .agents/skills/ exists."""
+    for dirpath, _, _ in os.walk(project_root):
+        agents_dir = os.path.join(dirpath, ".agents", "skills")
+        if not os.path.isdir(agents_dir):
+            continue
 
-    symlink_path = os.path.join(project_root, ".claude", "skills")
-    target = os.path.join("..", ".agents", "skills")
+        claude_dir = os.path.join(dirpath, ".claude")
+        symlink_path = os.path.join(claude_dir, "skills")
+        # Relative target: .claude/skills -> ../.agents/skills
+        target = os.path.join("..", ".agents", "skills")
 
-    if os.path.islink(symlink_path):
-        if os.readlink(symlink_path) == target:
-            return
-        os.remove(symlink_path)
-    elif os.path.exists(symlink_path):
-        logger.warning("Skipping symlink: .claude/skills/ already exists as a directory")
-        return
+        if os.path.islink(symlink_path) or os.path.exists(symlink_path):
+            continue
 
-    try:
-        os.makedirs(os.path.join(project_root, ".claude"), exist_ok=True)
-        os.symlink(target, symlink_path)
-        print("  ✓ Created symlink: .claude/skills -> .agents/skills")
-    except OSError as e:
-        logger.warning("Failed to create agents skills symlink: %s", e)
+        try:
+            os.makedirs(claude_dir, exist_ok=True)
+            os.symlink(target, symlink_path)
+            rel = os.path.relpath(symlink_path, project_root)
+            print(f"  ✓ Created symlink: {rel} -> .agents/skills")
+        except OSError as e:
+            rel = os.path.relpath(dirpath, project_root)
+            logger.warning("Failed to create agents skills symlink at %s: %s", rel, e)
 
 
 def main():
@@ -152,8 +152,8 @@ def main():
     for dir_path, filenames in output_dirs.items():
         _write_gitattributes(os.path.join(project_root, dir_path), sorted(set(filenames)))
 
-    # Create symlink so Claude Code can discover skills from .agents/skills/
-    _ensure_agents_skills_symlink(project_root)
+    # Create symlinks so Claude Code can discover skills from .agents/skills/
+    _ensure_agents_skills_symlinks(project_root)
 
     print("\n✓ Rules synchronization completed!")
 
