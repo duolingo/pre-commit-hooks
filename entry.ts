@@ -67,6 +67,7 @@ const transformFile = async (
 
 const enum HookName {
   Autoflake = "autoflake",
+  Buildifier = "Buildifier",
   ClangFormat = "ClangFormat",
   EsLint = "ESLint",
   Gofmt = "gofmt",
@@ -126,6 +127,12 @@ const HOOKS: Record<HookName, Hook> = {
         ...sources,
       ),
     include: /\.py$/,
+    runAfter: [HookName.Sed],
+  },
+  [HookName.Buildifier]: {
+    action: sources => run("/buildifier", "--lint=fix", ...sources),
+    include:
+      /(?:^|\/)(?:BUILD|BUILD\.bazel|WORKSPACE|WORKSPACE\.bazel|MODULE\.bazel)$|\.bzl$/,
     runAfter: [HookName.Sed],
   },
   [HookName.ClangFormat]: {
