@@ -86,9 +86,14 @@ def _ensure_agents_skills_symlinks(project_root: str) -> None:
         if os.path.islink(symlink_path) or os.path.exists(symlink_path):
             continue
 
-        os.makedirs(claude_dir, exist_ok=True)
-        os.symlink(target, symlink_path)
-        print(f"  ✓ Created symlink: {symlink_path} -> .agents/skills")
+        try:
+            os.makedirs(claude_dir, exist_ok=True)
+            os.symlink(target, symlink_path)
+            rel = os.path.relpath(symlink_path, project_root)
+            print(f"  ✓ Created symlink: {rel} -> .agents/skills")
+        except OSError as e:
+            rel = os.path.relpath(dirpath, project_root)
+            logger.warning("Failed to create agents skills symlink at %s: %s", rel, e)
 
 
 def main():
