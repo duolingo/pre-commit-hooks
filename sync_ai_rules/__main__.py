@@ -71,41 +71,24 @@ def _write_gitattributes(directory: str, filenames: List[str]) -> None:
             f.write(f"{name} linguist-generated\n")
 
 
-_SKIP_DIRS = frozenset(("build", "node_modules", "DerivedData", "Pods", "vendor"))
-
-
 def _ensure_agents_skills_symlinks(project_root: str) -> None:
     """Create .claude/skills -> .agents/skills wherever .agents/skills/ exists."""
-    for dirpath, dirnames, _ in os.walk(project_root):
-        dirnames[:] = [
-            d for d in dirnames if not d.startswith(".") and d not in _SKIP_DIRS
-        ]
-
+    for dirpath, _, _ in os.walk(project_root):
         agents_dir = os.path.join(dirpath, ".agents", "skills")
         if not os.path.isdir(agents_dir):
             continue
 
         claude_dir = os.path.join(dirpath, ".claude")
         symlink_path = os.path.join(claude_dir, "skills")
+        # Relative target: .claude/skills -> ../.agents/skills
         target = os.path.join("..", ".agents", "skills")
 
-        if os.path.islink(symlink_path):
-            if os.readlink(symlink_path) == target:
-                continue
-            os.remove(symlink_path)
-        elif os.path.exists(symlink_path):
-            rel = os.path.relpath(symlink_path, project_root)
-            logger.warning("Skipping symlink: %s already exists as a directory", rel)
+        if os.path.islink(symlink_path) or os.path.exists(symlink_path):
             continue
 
-        try:
-            os.makedirs(claude_dir, exist_ok=True)
-            os.symlink(target, symlink_path)
-            rel = os.path.relpath(symlink_path, project_root)
-            print(f"  ✓ Created symlink: {rel} -> .agents/skills")
-        except OSError as e:
-            rel = os.path.relpath(dirpath, project_root)
-            logger.warning("Failed to create agents skills symlink at %s: %s", rel, e)
+        os.makedirs(claude_dir, exist_ok=True)
+        os.symlink(target, symlink_path)
+        print(f"  ✓ Created symlink: {symlink_path} -> .agents/skills")
 
 
 def main():
