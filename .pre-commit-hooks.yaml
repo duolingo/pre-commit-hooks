@@ -17,11 +17,36 @@
   files: &sync_ai_rules_files (^\.cursor/rules/.*\.mdc$|^\.code_review/.*\.md$)
   pass_filenames: false
 
-# Nobody should ever use these hooks in production. They're just for testing PRs in
-# the duolingo/pre-commit-hooks repo more easily without having to tag and push
-# temporary images to Docker Hub. Usage: edit a consumer repo's hook config to
-# instead declare `id: duolingo-dev` or `id: sync-ai-rules-dev` and `rev: <PR branch SHA>`,
-# then run `pre-commit run <hook-id> --all-files`
+- id: codex-review
+  name: Codex AI Code Review
+  description: On-demand AI code review using OpenAI Codex CLI. Requires codex CLI installed and authenticated.
+  entry: codex review
+  language: system
+  pass_filenames: false
+  stages: [manual]
+  verbose: true
+
+- id: codex-review-pr-grade
+  name: Codex AI Code Review (PR-grade)
+  description: Profile-aware multi-pass Codex review via ./codexw/__main__.py (auto-generates and auto-syncs local-review-profile.yaml).
+  entry: ./codexw/__main__.py review
+  language: script
+  pass_filenames: false
+  stages: [manual]
+  verbose: true
+
+- id: codexw
+  name: Codexw (alias)
+  description: Alias for codex-review-pr-grade.
+  entry: ./codexw/__main__.py review
+  language: script
+  pass_filenames: false
+  stages: [manual]
+  verbose: true
+
+# Dev hooks for testing PRs in the duolingo/pre-commit-hooks repo.
+# Usage: edit a consumer repo's hook config to declare `id: duolingo-dev`
+# and `rev: <PR branch SHA>`, then run `pre-commit run <hook-id> --all-files`
 - id: duolingo-dev
   name: Duolingo (dev)
   entry: /entry
@@ -34,3 +59,27 @@
   language: docker
   files: *sync_ai_rules_files
   pass_filenames: false
+
+- id: codex-review-dev
+  name: Codex AI Code Review (dev)
+  entry: codex review
+  language: system
+  pass_filenames: false
+  stages: [manual]
+  verbose: true
+
+- id: codex-review-pr-grade-dev
+  name: Codex AI Code Review (PR-grade, dev)
+  entry: ./codexw/__main__.py review
+  language: script
+  pass_filenames: false
+  stages: [manual]
+  verbose: true
+
+- id: codexw-dev
+  name: Codexw (alias, dev)
+  entry: ./codexw/__main__.py review
+  language: script
+  pass_filenames: false
+  stages: [manual]
+  verbose: true

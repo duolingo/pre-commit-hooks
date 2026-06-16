@@ -1,0 +1,66 @@
+version: 1
+
+repo:
+  name: Duolingo Android
+
+review:
+  default_base: master
+  strict_gate: true
+  depth_hotspots: 3
+  output_root: .codex/review-runs
+
+rules:
+  include:
+    - AGENTS.md
+    - .cursor/rules/**/*.mdc
+
+domains:
+  default:
+    - core
+    - experiments
+    - compose
+    - coroutines
+    - testing
+  allowed:
+    - core
+    - experiments
+    - compose
+    - coroutines
+    - testing
+
+prompts:
+  global: |
+    Prioritize behavior-changing issues over style concerns.
+    Treat AGENTS.md and synced AI rules as enforcement sources.
+  by_domain:
+    experiments: |
+      Focus on experiment gating correctness, control/treatment isolation, and cleanup safety.
+    compose: |
+      Focus on design-system conformance, state/recomposition behavior, and lifecycle safety.
+    coroutines: |
+      Focus on structured concurrency, cancellation behavior, and dispatcher/lifecycle correctness.
+    testing: |
+      Focus on missing tests for high-risk paths and weak assertions around side effects.
+
+pipeline:
+  include_policy_pass: true
+  include_core_passes: true
+  include_domain_passes: true
+  include_depth_passes: true
+  core_passes:
+    - id: core-breadth
+      name: Core breadth coverage
+      instructions: |
+        Review every changed file in this shard and report actionable findings only.
+    - id: core-regressions
+      name: Core regressions
+      instructions: |
+        Focus on behavioral regressions, crash/nullability, and security/privacy issues.
+    - id: core-architecture
+      name: Core architecture
+      instructions: |
+        Focus on architecture boundaries, concurrency, and lifecycle correctness.
+    - id: core-tests
+      name: Core tests
+      instructions: |
+        Focus on missing tests and high-risk edge cases without coverage.
