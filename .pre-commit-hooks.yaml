@@ -14,10 +14,6 @@
   name: Sync AI Rules
   entry: duolingo/pre-commit-hooks:1.16.1 sh -c "PYTHONPATH=/ python3 -m sync_ai_rules"
   language: docker_image
-  # always_run is needed because pre-commit uses --diff-filter=ACMRTUXB
-  # (everything except D), so deleting a rule file never matches the files
-  # pattern and the hook is silently skipped. The wipe-and-regenerate logic
-  # inside the hook handles no-op detection on its own.
   always_run: true
   pass_filenames: false
 
