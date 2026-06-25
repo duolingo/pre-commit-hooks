@@ -74,7 +74,7 @@ def _write_gitattributes(directory: str, filenames: List[str]) -> None:
 def _ensure_agents_skills_symlinks(project_root: str) -> None:
     """Create .claude/skills -> .agents/skills wherever .agents/skills/ exists."""
     # Directories that should be completely ignored during traversal
-    IGNORE_DIRS = {'.git', 'node_modules', '.venv', 'venv', '.build', '.idea', '__pycache__'}
+    IGNORE_DIRS = {".git", "node_modules", ".venv", "venv", ".build", ".idea", "__pycache__"}
 
     for dirpath, dirnames, _ in os.walk(project_root):
         # Modify dirnames in-place to prevent os.walk from descending into them
