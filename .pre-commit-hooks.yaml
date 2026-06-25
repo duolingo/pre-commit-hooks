@@ -1,6 +1,6 @@
 - id: duolingo
   name: Duolingo
-  entry: duolingo/pre-commit-hooks:1.16.1 /entry
+  entry: duolingo/pre-commit-hooks:1.16.2 /entry
   language: docker_image
   types: [text]
 
@@ -12,7 +12,7 @@
 
 - id: sync-ai-rules
   name: Sync AI Rules
-  entry: duolingo/pre-commit-hooks:1.16.1 sh -c "PYTHONPATH=/ python3 -m sync_ai_rules"
+  entry: duolingo/pre-commit-hooks:1.16.2 sh -c "PYTHONPATH=/ python3 -m sync_ai_rules"
   language: docker_image
   always_run: true
   pass_filenames: false
