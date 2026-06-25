@@ -5,6 +5,7 @@ This script uses a plugin architecture to parse rules and generate documentation
 
 import logging
 import os
+import subprocess
 from pathlib import Path
 from typing import Dict, List
 
@@ -96,8 +97,29 @@ def _ensure_agents_skills_symlinks(project_root: str) -> None:
             logger.warning("Failed to create agents skills symlink at %s: %s", rel, e)
 
 
+_SOURCE_PREFIXES = (".cursor/", ".code_review/", ".agents/")
+
+
+def _has_relevant_staged_changes() -> bool:
+    """Check if any staged files (including deletions) touch source directories."""
+    try:
+        result = subprocess.run(
+            ["git", "diff", "--cached", "--name-only"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return True
+
+    return any(line.startswith(_SOURCE_PREFIXES) for line in result.stdout.splitlines())
+
+
 def main():
     """Main orchestration: load pipelines → parse → generate → update files."""
+    if not _has_relevant_staged_changes():
+        return
+
     # Setup
     project_root = str(Path.cwd())
     script_dir = os.path.dirname(os.path.abspath(__file__))
