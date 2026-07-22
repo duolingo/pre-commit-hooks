@@ -26,7 +26,7 @@ class CodeReviewGuidelinesGenerator(BaseGenerator):
             "<code-review-guidelines>",
             "<!-- DO NOT EDIT THIS SECTION - Auto-generated from .code_review/ -->",
             "",
-            "## Review guidelines",
+            "## Code Review Rules",
             "",
         ]
 
