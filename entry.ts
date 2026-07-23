@@ -205,6 +205,8 @@ const HOOKS: Record<HookName, Hook> = {
         );
       }
     },
+    // Tools like DAGP buggily handle some code produced by ktfmt
+    exclude: /build\.gradle\.kts$/,
     include: /\.kts?$/,
     runAfter: [HookName.Sed],
   },
