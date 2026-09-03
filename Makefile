@@ -48,7 +48,7 @@ shell:
 # Runs tests
 .PHONY: test
 test:
-	# Ruff creates its project-local cache in the copied fixture tree; remove it before comparison.
+	# /entry may create tool caches; remove standard cache directories before comparing fixtures.
 	docker run --rm -v "$${PWD}/test:/test" "$$(docker build --network=host -q .)" sh -c \
 		'cd /tmp \
 			&& cp -r /test/before actual \
@@ -59,6 +59,6 @@ test:
 			&& echo "Running duolingo hook..." \
 			&& /entry $$(find . -type f | tr "\n" " ") \
 			&& cd .. \
-			&& rm -rf actual/.ruff_cache \
+			&& find actual -type d -exec test -f {}/CACHEDIR.TAG \; -prune -exec rm -rf {} \; \
 			&& diff -r expected actual \
 			&& echo "All tests passed!"'
