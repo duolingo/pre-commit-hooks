@@ -48,6 +48,7 @@ shell:
 # Runs tests
 .PHONY: test
 test:
+	# Ruff creates its project-local cache in the copied fixture tree; remove it before comparison.
 	docker run --rm -v "$${PWD}/test:/test" "$$(docker build --network=host -q .)" sh -c \
 		'cd /tmp \
 			&& cp -r /test/before actual \
