@@ -251,8 +251,22 @@ const HOOKS: Record<HookName, Hook> = {
     action: async sources => {
       // Sometimes Ruff requires multiple passes, which is ok since it's fast
       for (let i = 0; i < 2; ++i) {
-        await run("ruff", "check", "--config", "/ruff.toml", ...sources);
-        await run("ruff", "format", "--config", "/ruff.toml", ...sources);
+        await run(
+          "ruff",
+          "check",
+          "--no-cache",
+          "--config",
+          "/ruff.toml",
+          ...sources,
+        );
+        await run(
+          "ruff",
+          "format",
+          "--no-cache",
+          "--config",
+          "/ruff.toml",
+          ...sources,
+        );
       }
     },
     include: /\.py$/,
