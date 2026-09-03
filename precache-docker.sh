@@ -28,7 +28,8 @@ if [ -f .pre-commit-config.yaml ]; then
       # Extract `entry` from hooks with language `docker_image`
       select(.language=="docker_image") | .entry |
 
-      # Remove leading --entrypoint option
+      # Remove leading Docker options
+      sub("^ *--volume(=| +)[^ ]+ +"; "") |
       sub("^ *--entrypoint(=| +)[^ ]+ +"; "") |
 
       # Extract first word as possible image name
