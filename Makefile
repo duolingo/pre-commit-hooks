@@ -15,7 +15,7 @@ release: test
 	# Update source files and commit
 	echo 'Creating release commit...'
 	git grep --cached -z -l '' | xargs -0 sed -E -i '' -e \
-		"s@( rev: | entry: $(_IMAGE_NAME):)$(_LATEST_TAG)@\1${V}@g"
+		"s@( rev: |$(_IMAGE_NAME):)$(_LATEST_TAG)@\1${V}@g"
 	git add -A
 	git commit -m "Release ${V}" -n
 

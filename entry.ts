@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { exec } from "child_process";
+import { createHash } from "crypto";
 import { createReadStream } from "fs";
 import { readFile, writeFile } from "fs/promises";
 import { createInterface } from "readline";
@@ -13,6 +14,24 @@ const EMPTY_FILE = "/emptyfile";
 
 /** Minified JS files to exclude from formatting */
 const MINIFIED_JS_REGEX = /\bmin\b|\.(custom|pack)\./;
+
+/** Returns a cache path isolated by host user and Git repository. */
+const ruffCacheDir = async () => {
+  let repositoryIdentity = process.cwd();
+  for (const path of [".git", ".git/config"]) {
+    try {
+      repositoryIdentity = await readFile(path, "utf8");
+      break;
+    } catch {
+      // A normal checkout has a .git directory; a worktree has a .git file.
+    }
+  }
+  const repositoryHash = createHash("sha256")
+    .update(repositoryIdentity)
+    .digest("hex")
+    .slice(0, 16);
+  return `/cache/${process.getuid?.() ?? 0}/ruff/${repositoryHash}`;
+};
 
 /** CLI options to use in all Prettier invocations */
 const PRETTIER_OPTIONS = [
@@ -249,10 +268,27 @@ const HOOKS: Record<HookName, Hook> = {
   },
   [HookName.Ruff]: {
     action: async sources => {
+      const cacheDir = await ruffCacheDir();
       // Sometimes Ruff requires multiple passes, which is ok since it's fast
       for (let i = 0; i < 2; ++i) {
-        await run("ruff", "check", "--config", "/ruff.toml", ...sources);
-        await run("ruff", "format", "--config", "/ruff.toml", ...sources);
+        await run(
+          "ruff",
+          "check",
+          "--cache-dir",
+          cacheDir,
+          "--config",
+          "/ruff.toml",
+          ...sources,
+        );
+        await run(
+          "ruff",
+          "format",
+          "--cache-dir",
+          cacheDir,
+          "--config",
+          "/ruff.toml",
+          ...sources,
+        );
       }
     },
     include: /\.py$/,
