@@ -99,8 +99,6 @@ rm packer.zip LICENSE.txt
 
 # Create an empty file for the linters that need one for some reason
 touch /emptyfile
-# Named volumes copy this directory's permissions on first use.
-mkdir -m 1777 /cache
 
 # Strip unused metadata from node_modules
 find /usr/local/lib/node_modules \

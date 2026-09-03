@@ -15,7 +15,7 @@ release: test
 	# Update source files and commit
 	echo 'Creating release commit...'
 	git grep --cached -z -l '' | xargs -0 sed -E -i '' -e \
-		"s@( rev: |$(_IMAGE_NAME):)$(_LATEST_TAG)@\1${V}@g"
+		"s@( rev: | entry: $(_IMAGE_NAME):)$(_LATEST_TAG)@\1${V}@g"
 	git add -A
 	git commit -m "Release ${V}" -n
 
@@ -58,5 +58,6 @@ test:
 			&& echo "Running duolingo hook..." \
 			&& /entry $$(find . -type f | tr "\n" " ") \
 			&& cd .. \
+			&& rm -rf actual/.ruff_cache \
 			&& diff -r expected actual \
 			&& echo "All tests passed!"'
