@@ -79,6 +79,7 @@ const enum HookName {
   PrettierJs = "Prettier (JS)",
   PrettierXml = "Prettier (XML)",
   Ruff = "Ruff",
+  Rustfmt = "rustfmt",
   Scalafmt = "scalafmt",
   Sed = "sed",
   Shfmt = "shfmt",
@@ -257,6 +258,19 @@ const HOOKS: Record<HookName, Hook> = {
     },
     include: /\.py$/,
     runAfter: [HookName.Autoflake],
+  },
+  [HookName.Rustfmt]: {
+    action: sources =>
+      run(
+        "/rustfmt",
+        "--config-path",
+        EMPTY_FILE,
+        "--edition",
+        "2024",
+        ...sources,
+      ),
+    include: /\.rs$/,
+    runAfter: [HookName.Sed],
   },
   [HookName.Scalafmt]: {
     action: async (sources, args) =>
