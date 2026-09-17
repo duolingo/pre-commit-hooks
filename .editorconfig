@@ -21,3 +21,7 @@ include_trailing_comma=true
 indent_size=4
 max_line_length=100
 multi_line_output=3
+
+[*.rs]
+indent_size=4
+max_line_length=100
