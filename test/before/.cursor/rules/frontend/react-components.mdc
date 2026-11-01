@@ -1,0 +1,7 @@
+---
+description: React component conventions
+globs: **/*.tsx,**/*.jsx
+alwaysApply: false
+---
+
+Use function components and hooks; no class components.

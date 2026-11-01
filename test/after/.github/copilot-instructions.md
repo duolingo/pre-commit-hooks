@@ -28,6 +28,14 @@ When you decide to apply a rule, you MUST read the entire contents of the actual
 - **File scope**: **/.github/workflows/*.yml, **/.github/actions/**/*.yml
 - **Always apply**: false
 
+### Frontend
+
+**React Components** → `@.cursor/rules/frontend/react-components.mdc`
+
+- **Description**: React component conventions
+- **File scope**: **/*.tsx, **/*.jsx
+- **Always apply**: false
+
 ### Root
 
 **Rule** → `@.cursor/rules/rule.mdc`
