@@ -16,15 +16,18 @@ from sync_ai_rules.core.rule_metadata import RuleMetadata
 # `globs: **/*.tsx,**/*.jsx`. In YAML an unquoted value starting with `*` is an
 # alias, so yaml.safe_load() rejects the whole frontmatter. Quote that one value
 # before parsing; values that are already quoted or a list are left alone.
-_BARE_GLOBS_RE = re.compile(r"^(globs:[ \t]*)(\*[^\n]*?)[ \t]*$", re.MULTILINE)
+_BARE_GLOBS_RE = re.compile(r"^globs:[ \t]*(\*[^\r\n]*?)[ \t]*\r?$", re.MULTILINE)
+_YAML_COMMENT_RE = re.compile(r"\s+#.*$")
 
 
 def _quote_bare_globs(frontmatter: str) -> str:
     """Quote a bare `globs:` value that starts with `*` so YAML can parse it."""
 
     def quote(match: re.Match) -> str:
-        value = match.group(2).replace('"', '\\"')
-        return f'{match.group(1)}"{value}"'
+        # Single quotes: the only escape YAML needs is doubling a quote, so
+        # backslashes and double quotes in the globs survive as written.
+        value = _YAML_COMMENT_RE.sub("", match.group(1)).replace("'", "''")
+        return f"globs: '{value}'"
 
     return _BARE_GLOBS_RE.sub(quote, frontmatter)
 
