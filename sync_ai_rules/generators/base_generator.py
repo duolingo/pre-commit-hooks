@@ -15,7 +15,6 @@ class BaseGenerator(OutputGenerator):
         """Default target files for all generators."""
         return [
             "AGENTS.md",
-            ".github/copilot-instructions.md",
         ]
 
     def _format_heading(self, category: str) -> str:
