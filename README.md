@@ -13,7 +13,7 @@ The main hook that runs several code formatters in parallel:
 - [Buildifier](https://github.com/bazelbuild/buildtools) v8.5.1 for Bazel
 - [google-java-format](https://github.com/google/google-java-format) v1.35.0 for Java
 - [ktfmt](https://github.com/facebookincubator/ktfmt) v0.63 for Kotlin
-- [gradle-dependencies-sorter](https://github.com/square/gradle-dependencies-sorter) v0.18.0 for Gradle Kotlin
+- [gradle-dependencies-sorter](https://github.com/square/gradle-dependencies-sorter) v0.21.0 for Gradle Kotlin
 - [gofmt](https://pkg.go.dev/cmd/gofmt) v1.26.2 for Go
 - [scalafmt](https://scalameta.org/scalafmt/) v3.11.0 for Scala
 - [shfmt](https://github.com/mvdan/sh) v3.13.1 for Shell
