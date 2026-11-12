@@ -27,6 +27,14 @@ RUN apk add binutils && jlink \
   --output /jre \
   --strip-debug
 
+FROM rust:1.98.1-alpine3.23 AS rustfmt
+RUN rustup component add rustfmt \
+  && rustfmt_path="$(rustup which rustfmt)" \
+  && cp "${rustfmt_path}" /rustfmt \
+  && mkdir /rustfmt-libs \
+  && cp "$(dirname "${rustfmt_path}")"/../lib/librustc_driver-*.so /rustfmt-libs/ \
+  && strip /rustfmt /rustfmt-libs/*
+
 FROM alpine:3.23.4
 ARG TARGETARCH
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -50,6 +58,7 @@ apk add --no-cache --virtual .build-deps \
   py3-pip \
   python3-dev
 apk add --no-cache \
+  libgcc \
   nodejs \
   python3
 pip3 install --break-system-packages \
@@ -125,6 +134,8 @@ rm -rf \
 EOF
 # https://stackoverflow.com/a/59485924
 COPY --from=golang:1.26.2-alpine3.23 /usr/local/go/bin/gofmt /gofmt
+COPY --from=rustfmt /rustfmt /rustfmt
+COPY --from=rustfmt /rustfmt-libs/ /usr/lib/
 ENV PATH="/jre/bin:${PATH}"
 COPY --from=jre /jre /jre
 COPY . .

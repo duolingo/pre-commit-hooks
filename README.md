@@ -15,6 +15,7 @@ The main hook that runs several code formatters in parallel:
 - [ktfmt](https://github.com/facebookincubator/ktfmt) v0.63 for Kotlin
 - [gradle-dependencies-sorter](https://github.com/square/gradle-dependencies-sorter) v0.18.0 for Gradle Kotlin
 - [gofmt](https://pkg.go.dev/cmd/gofmt) v1.26.2 for Go
+- [rustfmt](https://github.com/rust-lang/rustfmt) v1.9.0 for Rust
 - [scalafmt](https://scalameta.org/scalafmt/) v3.11.0 for Scala
 - [shfmt](https://github.com/mvdan/sh) v3.13.1 for Shell
 - [terraform fmt](https://github.com/hashicorp/terraform) v1.14.8 for Terraform
