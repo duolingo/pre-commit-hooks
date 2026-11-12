@@ -362,6 +362,8 @@ const HOOKS: Record<HookName, Hook> = {
                 reader.close();
                 resolve(line);
               });
+              // Empty files emit no "line" event
+              reader.on("close", () => resolve(""));
             });
             if (/^#!.*\b(bash|sh|zsh)\b/.test(firstLine)) {
               return source;
