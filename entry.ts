@@ -32,19 +32,31 @@ const PRETTIER_OPTIONS = [
   "warn",
   "--no-config",
   "--no-editorconfig",
+  // The experimental CLI's worker pool starts one worker per CPU core, which
+  // takes longer than formatting the few files of a typical commit
+  "--no-parallel",
   "--object-wrap",
   "collapse",
   "--write",
 ];
 
+/**
+ * Command prefix for all Java invocations. Each run is too short to benefit
+ * from the C2 compiler, which competes with the formatter for CPU
+ */
+const JAVA = ["java", "-XX:TieredStopAtLevel=1"];
+
 /** Runs a shell command, promising combined stdout and stderr */
 const run = (...args: string[]) =>
   new Promise<string>((resolve, reject) => {
-    exec(
+    const child = exec(
       args.map(arg => `'${arg.replace(/'/g, "'\"'\"'")}'`).join(" "),
       { maxBuffer: Infinity },
       (ex, stdout, stderr) => (ex ? reject : resolve)(stdout + stderr),
     );
+    // Close stdin because no tool reads it, and Prettier's experimental CLI
+    // otherwise waits about a second for input that never arrives
+    child.stdin?.end();
   });
 
 /** Type guard that returns true iff the given value is truthy */
@@ -172,13 +184,13 @@ const HOOKS: Record<HookName, Hook> = {
   },
   [HookName.GoogleJavaFormat]: {
     action: sources =>
-      run("java", "-jar", "/google-java-format", "--replace", ...sources),
+      run(...JAVA, "-jar", "/google-java-format", "--replace", ...sources),
     include: /\.java$/,
     runAfter: [HookName.Sed],
   },
   [HookName.GradleDependenciesSorter]: {
     action: sources =>
-      run("java", "-jar", "/gradle-dependencies-sorter", ...sources),
+      run(...JAVA, "-jar", "/gradle-dependencies-sorter", ...sources),
     // We skip Groovy for now because some language features (e.g. variables)
     // can cause parsing errors
     include: /build\.gradle\.kts$/,
@@ -190,7 +202,7 @@ const HOOKS: Record<HookName, Hook> = {
       const MAX_FILES_PER_PROCESS = 200;
       for (let i = 0; i < sources.length; i += MAX_FILES_PER_PROCESS) {
         await run(
-          "java",
+          ...JAVA,
           // By default, ktfmt was OOMing our 36-core CI server with errors
           // like "There is insufficient memory for the Java Runtime
           // Environment to continue. Native memory allocation (mmap) failed to
